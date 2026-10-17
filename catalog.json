@@ -4,41 +4,47 @@
     "category": "Unity",
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvcar.json",
     "name": "PTVCar",
-    "id": "ptvcar"
+    "id": "ptvcar",
+    "cover": "assets/ptvcar.png"
   },
   {
     "description": "เกม SuMo สำหรับ Windows",
     "category": "Unity",
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/sumo.json",
     "name": "SuMo",
-    "id": "sumo"
+    "id": "sumo",
+    "cover": "assets/sumo.png"
   },
   {
     "description": "แมพ Roblox • 78508971781182",
     "category": "Roblox",
     "placeId": "78508971781182",
-    "name": "Box",
-    "id": "roblox-box-1"
+    "name": "Per Fun Box",
+    "id": "roblox-box-1",
+    "cover": "assets/roblox-box-1.png"
   },
   {
     "description": "แมพ Roblox • 72721337468698",
     "category": "Roblox",
     "placeId": "72721337468698",
-    "name": "unnamed",
-    "id": "roblox-unnamed"
+    "name": "Fun Ladder",
+    "id": "roblox-unnamed",
+    "cover": "assets/roblox-unnamed.png"
   },
   {
     "description": "แมพ Roblox • 117977885975665",
     "category": "Roblox",
     "placeId": "117977885975665",
     "name": "PTY jump",
-    "id": "roblox-pty-jump"
+    "id": "roblox-pty-jump",
+    "cover": "assets/roblox-pty-jump.png"
   },
   {
     "description": "แมพ Roblox • 86222058260862",
     "category": "Roblox",
     "placeId": "86222058260862",
-    "name": "Box",
-    "id": "roblox-box-2"
+    "name": "Gear Box",
+    "id": "roblox-box-2",
+    "cover": "assets/roblox-box-2.png"
   }
 ]
