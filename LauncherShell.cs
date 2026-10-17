@@ -103,7 +103,7 @@ namespace PTVgame {
    cover.MouseLeftButtonUp+=(s,e)=>{selected=g.id;Render();};cover.Cursor=Cursors.Hand;
    var fav=Btn(settings.favorites.Contains(g.id)?"♥":"♡",ColorBrush("#9900172B"));fav.Width=29;fav.Height=29;fav.Padding=new Thickness(0);fav.HorizontalAlignment=HorizontalAlignment.Left;fav.VerticalAlignment=VerticalAlignment.Top;fav.Margin=new Thickness(8);fav.Click+=(s,e)=>ToggleFavorite(g);art.Children.Add(fav);
    panel.Children.Add(art);var name=Text(g.name,16);name.FontWeight=FontWeights.SemiBold;name.HorizontalAlignment=HorizontalAlignment.Center;name.Margin=new Thickness(0,7,0,2);panel.Children.Add(name);
-   if(g.category!="Roblox") { var installed=Storage.Current(g); var action=Btn(installed==null?"↓  ติดตั้งเกม":"▶  เล่นเกม",installed==null?ColorBrush("#104875"):accent);action.IsEnabled=!busy;action.HorizontalContentAlignment=HorizontalAlignment.Center;action.FontSize=12;action.Margin=new Thickness(0,6,0,0);action.Click+=async(s,e)=>{if(Storage.Current(g)==null)await Install(g,false);else Play(g);};panel.Children.Add(action); }
+   if(g.category!="Roblox") { var installed=Storage.Current(g); var action=Btn(installed==null?"↓  ติดตั้งเกม":"▶  เล่นเกม",installed==null?ColorBrush("#104875"):accent);action.IsEnabled=!busy;action.HorizontalContentAlignment=HorizontalAlignment.Center;action.FontSize=12;action.Margin=new Thickness(0,6,0,0);action.Click+=async(s,e)=>{if(Storage.Current(g)==null)await Install(g,false);else await Play(g);};panel.Children.Add(action); }
    return panel;
   }
   void ToggleFavorite(Game g) { if(!settings.favorites.Remove(g.id))settings.favorites.Add(g.id);Save();Render(); }
@@ -112,7 +112,7 @@ namespace PTVgame {
    var image=new Border { Height=280,CornerRadius=new CornerRadius(12),ClipToBounds=true,Margin=new Thickness(0,15,0,18),Child=Picture(g) };sections.Children.Add(image);var title=Text(g.name,32);title.FontWeight=FontWeights.Bold;sections.Children.Add(title);
    var desc=Text(g.description,15,muted);desc.Margin=new Thickness(0,12,0,15);desc.TextWrapping=TextWrapping.Wrap;sections.Children.Add(desc);
    var installed=Storage.Current(g);sections.Children.Add(Text(g.category=="Roblox"?"ROBLOX EXPERIENCE":installed==null?"ยังไม่ได้ติดตั้ง":"ติดตั้งแล้ว • v"+installed.version,12,muted));
-   var row=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,15,0,0) };sections.Children.Add(row);var play=Btn(g.category=="Roblox"?"▶  เปิด Roblox":installed==null?"↓  ติดตั้งเกม":"▶  เล่นเกม",accent);play.IsEnabled=!busy;row.Children.Add(play);play.Click+=async(s,e)=>{if(g.category=="Roblox")OpenRoblox(g);else if(Storage.Current(g)==null)await Install(g,false);else Play(g);};
+   var row=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,15,0,0) };sections.Children.Add(row);var play=Btn(g.category=="Roblox"?"▶  เปิด Roblox":installed==null?"↓  ติดตั้งเกม":"▶  เล่นเกม",accent);play.IsEnabled=!busy;row.Children.Add(play);play.Click+=async(s,e)=>{if(g.category=="Roblox")OpenRoblox(g);else if(Storage.Current(g)==null)await Install(g,false);else await Play(g);};
    if(g.category!="Roblox") { var update=Btn("ตรวจสอบอัปเดต",ColorBrush("#193B58"));update.Margin=new Thickness(10,0,0,0);update.IsEnabled=!busy;row.Children.Add(update);update.Click+=async(s,e)=>await Install(g,true); }
    var favorite=Btn(settings.favorites.Contains(g.id)?"♥  นำออกจากรายการโปรด":"♡  เพิ่มรายการโปรด");row.Children.Add(favorite);favorite.Click+=(s,e)=>ToggleFavorite(g);
   }
@@ -121,11 +121,28 @@ namespace PTVgame {
    var themes=new ComboBox { ItemsSource=new[]{"Midnight","Ember","Frost","Neon"},SelectedItem=settings.theme,Width=250,HorizontalAlignment=HorizontalAlignment.Left };sections.Children.Add(themes);themes.SelectionChanged+=(s,e)=>{settings.theme=(string)themes.SelectedItem;Save();Build();};
    var auto=new CheckBox { Content="อัปเดตเกมที่ติดตั้งเมื่อเปิด Launcher",IsChecked=settings.autoUpdate,Foreground=Foreground,Margin=new Thickness(0,25,0,20) };sections.Children.Add(auto);auto.Click+=(s,e)=>{settings.autoUpdate=auto.IsChecked==true;Save();};
    var folder=Btn("เปิดโฟลเดอร์เกม",ColorBrush("#193B58"));folder.HorizontalAlignment=HorizontalAlignment.Left;sections.Children.Add(folder);folder.Click+=(s,e)=>{Directory.CreateDirectory(Storage.Root);Process.Start("explorer.exe",Storage.Root);};
-   sections.Children.Add(new TextBlock { Text="PTVgame • Launcher 1.2\nภาพปก Roblox จากหน้าเกมจริง\nดาวน์โหลดเกมผ่าน GitHub Releases",Foreground=muted,Margin=new Thickness(0,30,0,0),TextWrapping=TextWrapping.Wrap });
+   sections.Children.Add(new TextBlock { Text="PTVgame • Launcher 1.3\nภาพปก Roblox จากหน้าเกมจริง\nดาวน์โหลดเกมผ่าน GitHub Releases",Foreground=muted,Margin=new Thickness(0,30,0,0),TextWrapping=TextWrapping.Wrap });
   }
   void Save() { try { Storage.Save(settingsPath,settings); }catch(Exception ex){status.Text="บันทึกการตั้งค่าไม่สำเร็จ: "+ex.Message;} }
   void OpenRoblox(Game g) { long id;if(!long.TryParse(g.placeId,out id)||id<=0)return;try{Process.Start("roblox://placeId="+id);status.Text="กำลังเปิด "+g.name+" ใน Roblox";}catch(Exception ex){status.Text="เปิด Roblox ไม่สำเร็จ: "+ex.Message;} }
-  void Play(Game g) {try{Updater.Play(g);status.Text="เปิด "+g.name+" แล้ว";}catch(Exception ex){status.Text=ex.Message;} }
+  async Task Play(Game g) {
+   if(busy)return;busy=true;cancellation=new CancellationTokenSource();progress.Visibility=Visibility.Visible;cancel.Visibility=Visibility.Visible;Render();
+   try {
+    status.Text="กำลังตรวจเวอร์ชันก่อนเล่น "+g.name+"…";
+    var manifest=await Updater.Check(g,cancellation.Token);
+    if(Updater.Newer(manifest,Storage.Current(g))) {
+     status.Text="จำเป็นต้องอัปเดต "+g.name+" ก่อนเล่น…";
+     await Updater.Install(g,manifest,new Progress<string>(t=>status.Text=t),cancellation.Token);
+    }
+    cancellation.Token.ThrowIfCancellationRequested();
+    var current=Storage.Current(g);
+    if(current==null||new Version(current.version)!=new Version(manifest.version)||!string.Equals(current.executable,manifest.executable,StringComparison.OrdinalIgnoreCase))throw new Exception("ต้องติดตั้งเวอร์ชันที่เซิร์ฟเวอร์กำหนดก่อนเล่น");
+    if(!string.IsNullOrEmpty(current.sha256)&&!string.Equals(current.sha256,manifest.sha256,StringComparison.OrdinalIgnoreCase))throw new Exception("ไฟล์เวอร์ชันที่ติดตั้งไม่ตรงกับเซิร์ฟเวอร์ กรุณาอัปเดต");
+    Updater.Play(g);status.Text="เปิด "+g.name+" v"+current.version+" แล้ว";
+   }catch(OperationCanceledException){status.Text="ยกเลิกแล้ว • ต้องอัปเดตให้สำเร็จก่อนเล่น";}
+   catch(Exception ex){status.Text="ยังเปิดเกมไม่ได้: "+ex.Message+" • ต้องเชื่อมต่อและตรวจเวอร์ชันให้สำเร็จ";}
+   finally{busy=false;cancellation.Dispose();cancellation=null;progress.Visibility=Visibility.Collapsed;cancel.Visibility=Visibility.Collapsed;Render();}
+  }
   async Task Install(Game g,bool ask) {
    if(busy)return;busy=true;cancellation=new CancellationTokenSource();progress.Visibility=Visibility.Visible;cancel.Visibility=Visibility.Visible;Render();
    try { status.Text="กำลังตรวจเวอร์ชัน "+g.name+"…";var manifest=await Updater.Check(g,cancellation.Token);if(!Updater.Newer(manifest,Storage.Current(g))){status.Text=g.name+" เป็นเวอร์ชันล่าสุดแล้ว";return;}
@@ -135,4 +152,6 @@ namespace PTVgame {
   }
  }
 }
+
+
 
