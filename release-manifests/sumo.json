@@ -1,8 +1,7 @@
 {
-  "executable": "SuMo/SuMo.exe",
   "version": "1.0.0",
-  "sha256": "691bff0232e39883b6a9995beb2149e5d9726aa3d9ff57dee15e09aebcad1f08",
-  "size": 195038907,
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/v1.0.0/SuMo.v1.0.0.zip"
+  "executable": "PTVvs/PTVvs.exe",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/v1.0.0/PTVvs.v1.0.0.zip",
+  "sha256": "621fe191cf4610481fbad89231618940061456ec47622ea83ddcc9b25696029a",
+  "size": 195046894
 }
-
