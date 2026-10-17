@@ -1,0 +1,44 @@
+[
+  {
+    "description": "เกม PTVCar สำหรับ Windows",
+    "category": "Unity",
+    "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvcar.json",
+    "name": "PTVCar",
+    "id": "ptvcar"
+  },
+  {
+    "description": "เกม SuMo สำหรับ Windows",
+    "category": "Unity",
+    "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/sumo.json",
+    "name": "SuMo",
+    "id": "sumo"
+  },
+  {
+    "description": "แมพ Roblox • 78508971781182",
+    "category": "Roblox",
+    "placeId": "78508971781182",
+    "name": "Box",
+    "id": "roblox-box-1"
+  },
+  {
+    "description": "แมพ Roblox • 72721337468698",
+    "category": "Roblox",
+    "placeId": "72721337468698",
+    "name": "unnamed",
+    "id": "roblox-unnamed"
+  },
+  {
+    "description": "แมพ Roblox • 117977885975665",
+    "category": "Roblox",
+    "placeId": "117977885975665",
+    "name": "PTY jump",
+    "id": "roblox-pty-jump"
+  },
+  {
+    "description": "แมพ Roblox • 86222058260862",
+    "category": "Roblox",
+    "placeId": "86222058260862",
+    "name": "Box",
+    "id": "roblox-box-2"
+  }
+]
