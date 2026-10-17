@@ -5,15 +5,15 @@
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvcar.json",
     "name": "PTVCar",
     "id": "ptvcar",
-    "cover": "assets/ptvcar.png"
+    "cover": "assets/ptvcar-v2.png"
   },
   {
-    "description": "เกม SuMo สำหรับ Windows",
+    "description": "PTVvs • นักสู้ประลองในสนามจากโปรเจกต์ SuMo",
     "category": "Unity",
-    "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/sumo.json",
-    "name": "SuMo",
+    "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvvs.json",
+    "name": "PTVvs",
     "id": "sumo",
-    "cover": "assets/sumo.png"
+    "cover": "assets/ptvvs.png"
   },
   {
     "description": "แมพ Roblox • 78508971781182",
