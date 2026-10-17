@@ -18,7 +18,7 @@ using System.Windows.Media;
 namespace PTVgame {
  public class Game { public string id,name,description,manifestUrl,category; public string placeId,cover; }
  public class Manifest { public string version,url,sha256,executable; public long size; }
- public class Installed { public string version,folder,executable; }
+ public class Installed { public string version,folder,executable,sha256; }
  public class Settings { public string theme="Midnight"; public bool autoUpdate=true; public List<string> favorites=new List<string>(); }
  public static class Storage {
   public static readonly string Root=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"PTVgame");
@@ -54,7 +54,7 @@ namespace PTVgame {
    string prefix=Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar)+Path.DirectorySeparatorChar;
    if(!full.StartsWith(prefix,StringComparison.OrdinalIgnoreCase)||entry.Contains(":")) throw new Exception("ZIP มีตำแหน่งไฟล์ที่ไม่ปลอดภัย"); return full;
   }
-  public static bool Newer(Manifest m,Installed i) { return i==null||new Version(m.version)>new Version(i.version); }
+  public static bool Newer(Manifest m,Installed i) { if(i==null)return true;int compare=new Version(m.version).CompareTo(new Version(i.version)); return compare>0||(compare==0&&(!string.Equals(m.executable,i.executable,StringComparison.OrdinalIgnoreCase)||(!string.IsNullOrEmpty(i.sha256)&&!string.Equals(m.sha256,i.sha256,StringComparison.OrdinalIgnoreCase)))); }
   public static async Task Install(Game g,Manifest m,IProgress<string> progress,CancellationToken token) {
    Validate(m); string root=Storage.GameRoot(g); Directory.CreateDirectory(root);
    using(var gate=new FileStream(Path.Combine(root,"update.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)) {
@@ -80,7 +80,7 @@ namespace PTVgame {
      token.ThrowIfCancellationRequested();
      string dest=Path.Combine(root,"build-"+m.version+"-"+Guid.NewGuid().ToString("N").Substring(0,8));
      Directory.Move(payload,dest);
-     Storage.Save(Path.Combine(root,"installed.json"),new Installed { version=m.version,folder=dest,executable=m.executable });
+     Storage.Save(Path.Combine(root,"installed.json"),new Installed { version=m.version,folder=dest,executable=m.executable,sha256=m.sha256 });
      progress.Report("ติดตั้งสำเร็จ • v"+m.version);
     } finally { try { Directory.Delete(stage,true); } catch {} }
    }
@@ -189,6 +189,9 @@ namespace PTVgame {
     foreach(string bad in new[]{"../escape.exe","/escape.exe","C:\\escape.exe","file.exe:stream"}) { bool blocked=false; try { Updater.SafePath(root,bad); } catch { blocked=true; } Assert(blocked,"block "+bad); }
     var m=new Manifest { version="1.2.0",url="https://example.org/game.zip",sha256=new string('a',64),size=100,executable="Game.exe" }; Updater.Validate(m);
     Assert(Updater.Newer(m,new Installed { version="1.1.0" }),"new version"); Assert(!Updater.Newer(m,new Installed { version="1.3.0" }),"prevent downgrade");
+    Assert(Updater.Newer(m,new Installed {version="1.2.0",executable="OldGame.exe"}),"same version executable rename");
+    Assert(Updater.Newer(m,new Installed {version="1.2.0",executable="Game.exe",sha256=new string('b',64)}),"same version changed package");
+    Assert(!Updater.Newer(m,new Installed {version="1.2.0",executable="Game.exe",sha256=m.sha256}),"identical package stays current");
     string zip=Path.Combine(root,"bad.zip"); using(var a=ZipFile.Open(zip,ZipArchiveMode.Create)) { using(var w=new StreamWriter(a.CreateEntry("../escape.txt").Open())) w.Write("bad"); }
     bool rejected=false; try { Updater.Extract(zip,Path.Combine(root,"out"),CancellationToken.None); } catch { rejected=true; } Assert(rejected,"zip traversal");
     string good=Path.Combine(root,"good.zip"); using(var a=ZipFile.Open(good,ZipArchiveMode.Create)) { using(var w=new StreamWriter(a.CreateEntry("Game/Data.txt").Open())) w.Write("ok"); }
