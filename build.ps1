@@ -6,6 +6,8 @@ $arguments = @('/nologo','/target:winexe',('/out:' + (Join-Path $PSScriptRoot $O
 foreach ($ref in $refs) { $arguments += '/reference:' + (Join-Path $framework $ref) }
 $arguments += Join-Path $PSScriptRoot 'Launcher.cs'
 $arguments += Join-Path $PSScriptRoot 'LauncherShell.cs'
+$arguments += Join-Path $PSScriptRoot 'LauncherUpdate.cs'
 & (Join-Path $framework 'csc.exe') $arguments
 if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 Write-Host "Build complete: $OutputName"
+
