@@ -143,7 +143,7 @@ namespace PTVgame {
     themes.SelectionChanged+=(s,e)=> { settings.theme=(string)themes.SelectedItem; SaveSettings(); ApplyTheme(); };
     var auto=new CheckBox { Content="อัปเดตเกมที่ติดตั้งโดยอัตโนมัติเมื่อเปิด Launcher",IsChecked=settings.autoUpdate,Foreground=Brushes.White }; p.Children.Add(auto); auto.Click+=(s,e)=> { settings.autoUpdate=auto.IsChecked==true; SaveSettings(); };
     var folder=Button("เปิดโฟลเดอร์เกมและการตั้งค่า"); p.Children.Add(folder); folder.Click+=(s,e)=> { Directory.CreateDirectory(Storage.Root); Process.Start("explorer.exe",Storage.Root); };
-    p.Children.Add(new TextBlock { Text="ตั้งค่าเกมและ GitHub manifest ใน catalog.json ข้างโปรแกรม\nเกมเก่าเก็บไว้ในโฟลเดอร์ build เพื่อใช้กู้คืนได้\nระบบนี้อัปเดตตัวเกม ยังไม่อัปเดตตัว Launcher",TextWrapping=TextWrapping.Wrap,Foreground=Brushes.LightSteelBlue,Margin=new Thickness(0,24,0,0) }); return;
+    p.Children.Add(new TextBlock { Text="ตั้งค่าเกมและ GitHub manifest ใน catalog.json ข้างโปรแกรม\nเกมเก่าเก็บไว้ในโฟลเดอร์ build เพื่อใช้กู้คืนได้\nLauncher ตรวจและอัปเดตตัวเองเมื่อเริ่มโปรแกรม",TextWrapping=TextWrapping.Wrap,Foreground=Brushes.LightSteelBlue,Margin=new Thickness(0,24,0,0) }); return;
    }
    var filtered=games.Where(g=> (g.name??"").IndexOf(search.Text,StringComparison.OrdinalIgnoreCase)>=0);
    if(page=="ไลบรารี") filtered=filtered.Where(g=>Storage.Current(g)!=null); if(page=="รายการโปรด") filtered=filtered.Where(g=>settings.favorites.Contains(g.id));
@@ -178,7 +178,7 @@ namespace PTVgame {
    } catch(OperationCanceledException) { status.Text="ยกเลิกแล้ว • เวอร์ชันเดิมยังใช้งานได้"; } catch(Exception ex) { status.Text="อัปเดตไม่สำเร็จ: "+ex.Message; } finally { busy=false; cts.Dispose(); cts=null; Render(); }
   }
   async Task AutoUpdate() { foreach(var g in games.Where(g=>g.category!="Roblox"&&!string.IsNullOrWhiteSpace(g.manifestUrl)&&Storage.Current(g)!=null)) await Update(g,false); }
-  [STAThread] public static void Main(string[] args) { if(args.Contains("--self-test")) { try { Tests.Run(); } catch(Exception ex) { File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-results.txt"),ex.ToString()); Environment.ExitCode=1; } return; } var app=new Application(); app.DispatcherUnhandledException+=(s,e)=> { MessageBox.Show(e.Exception.Message,"PTVgame"); e.Handled=true; }; app.Run(new LauncherShell()); }
+  [STAThread] public static void Main(string[] args) { if(LauncherUpdate.Handle(args))return; if(args.Contains("--self-test")) { try { Tests.Run(); } catch(Exception ex) { File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-results.txt"),ex.ToString()); Environment.ExitCode=1; } return; } var app=new Application(); app.DispatcherUnhandledException+=(s,e)=> { MessageBox.Show(e.Exception.Message,"PTVgame"); e.Handled=true; }; app.Run(new LauncherShell()); }
  }
  public static class Tests {
   static void Assert(bool b,string name) { if(!b) throw new Exception("FAIL: "+name); }
@@ -192,14 +192,17 @@ namespace PTVgame {
     Assert(Updater.Newer(m,new Installed {version="1.2.0",executable="OldGame.exe"}),"same version executable rename");
     Assert(Updater.Newer(m,new Installed {version="1.2.0",executable="Game.exe",sha256=new string('b',64)}),"same version changed package");
     Assert(!Updater.Newer(m,new Installed {version="1.2.0",executable="Game.exe",sha256=m.sha256}),"identical package stays current");
+    LauncherUpdate.Test(root);
     string zip=Path.Combine(root,"bad.zip"); using(var a=ZipFile.Open(zip,ZipArchiveMode.Create)) { using(var w=new StreamWriter(a.CreateEntry("../escape.txt").Open())) w.Write("bad"); }
     bool rejected=false; try { Updater.Extract(zip,Path.Combine(root,"out"),CancellationToken.None); } catch { rejected=true; } Assert(rejected,"zip traversal");
     string good=Path.Combine(root,"good.zip"); using(var a=ZipFile.Open(good,ZipArchiveMode.Create)) { using(var w=new StreamWriter(a.CreateEntry("Game/Data.txt").Open())) w.Write("ok"); }
     Updater.Extract(good,Path.Combine(root,"ok"),CancellationToken.None); Assert(File.ReadAllText(Path.Combine(root,"ok","Game","Data.txt"))=="ok","valid extraction");
     var file=Path.Combine(root,"state.json"); Storage.Save(file,new Installed { version="1.0.0" }); Storage.Save(file,new Installed { version="2.0.0" }); Assert(Storage.Read<Installed>(file,null).version=="2.0.0","atomic state");
-    File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-results.txt"),"PASS: safe paths, ZIP traversal rejection, extraction, versions, downgrade prevention, manifest validation, atomic state writes.");
+    File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-results.txt"),"PASS: safe paths, ZIP traversal rejection, extraction, versions, downgrade prevention, manifest validation, atomic state writes, launcher version policy, replacement, rollback, unexpected payload rejection.");
    } finally { Directory.Delete(root,true); }
   }
  }
 }
+
+
 
