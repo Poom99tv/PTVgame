@@ -9,3 +9,7 @@ PTVvs: assets/ptvvs.png. References: SuMo project screenshots TikTokViewerArena.
 Roblox covers are the official experience icons for the four linked maps. Controller and tilted Roblox square are native WPF vector shapes, matching the supplied launcher reference. Vertical scrollbars are hidden; mouse-wheel scrolling remains available.
 
 The internal game ID remains sumo to preserve previous installed game directories and favorites; display name, executable, cover and manifest are now PTVvs. Updates at equal version numbers detect renamed executables and, for new installs, changed ZIP hashes.
+
+## Paint World — Launcher 1.5.0
+
+assets/paintworld.png is an original image_gen cover, derived from a camera capture of the actual paint gun project (CyanCourtyard scene). The white-gray walled courtyard, gabled buildings, arched gate, planters, low-poly cyan/orange/white paint blaster and cyan-versus-red paint gameplay come from the real game. The cover adds comic PAINT WORLD lettering and illustrated paint splashes. No player account text is included in the cover.
