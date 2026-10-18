@@ -1,7 +1,7 @@
 {
+  "size": 195588564,
   "executable": "PTVvs/PTVvs.exe",
-  "sha256": "b5ff74be8ec34fc668b98f5a9d3a96a47a5b34f57b50df23514860e8e6f0010a",
-  "version": "1.0.1",
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/v1.0.1/PTVvs.v1.0.1.zip",
-  "size": 195588495
+  "sha256": "6b710aab8a40ae522a429531fe483aec5b4b9be8d698a6fe65b7eff55aa3f44c",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/v1.0.2/PTVvs.v1.0.2.zip",
+  "version": "1.0.2"
 }
