@@ -1,8 +1,8 @@
 {
-  "sha256": "81a364b9639a2738d158a44cfca1e60409e07d7a3a983ce24336d4a45f80e3df",
-  "version": "1.4.0",
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/launcher-v1.4.0/PTVgame-Windows-v1.4.0.zip",
+  "version": "1.5.0",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/paintworld-v1.0.0/PTVgame-Windows-v1.5.0.zip",
   "executable": "PTVgame-Launcher.exe",
-  "size": 11834222
+  "size": 15439019,
+  "sha256": "1322e2f536c4b595c7a2c8a3903ad2cd115e7c6db68c2528b7c2f47dbfeadefe"
 }
 
