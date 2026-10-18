@@ -4,7 +4,7 @@
 
 ## เริ่มใช้
 
-ดับเบิลคลิก `PTVgame-Launcher.exe` เปิดหน้าแรก คลังเกม รายการโปรด และการตั้งค่าได้ เลือกธีม Midnight / Ember / Frost / Neon ได้ รุ่น 1.4.0 มี PTVCar และ PTVvs ที่ดาวน์โหลดจาก GitHub Releases พร้อมแมพ Roblox 4 รายการ ภาพปก Roblox มาจากหน้าเกมจริง ส่วน PTVCar/PTVvs วาดใหม่ด้วย image_gen ดู ARTWORK.md
+ดับเบิลคลิก `PTVgame-Launcher.exe` เปิดหน้าแรก คลังเกม รายการโปรด และการตั้งค่าได้ เลือกธีม Midnight / Ember / Frost / Neon ได้ รุ่น 1.5.0 มี PTVCar, PTVvs และ Paint World ที่ดาวน์โหลดจาก GitHub Releases พร้อมแมพ Roblox 4 รายการ ภาพปก Roblox มาจากหน้าเกมจริง ส่วน PTVCar/PTVvs วาดใหม่ด้วย image_gen ดู ARTWORK.md
 
 ## เชื่อมเกม Unity ของคุณ
 
@@ -53,3 +53,7 @@ Roblox: ใส่ `placeId` ที่ต้องการใน catalog แล�
 The launcher checks `release-manifests/launcher.json` at startup, independently of the game auto-update setting. A newer numeric version downloads automatically, verifies size and SHA-256, then runs a temporary helper. The helper waits for the launcher process to exit, backs up replaced files, applies only the launcher EXE, catalog, README and assets, and restarts the launcher. Replacement errors roll back files already changed. Games, favorites and settings remain in LocalAppData. A manual launcher-update button is available in Settings. If checking fails, the launcher remains usable and reports the error; game version enforcement still applies.
 
 To publish the next launcher: increment LauncherUpdate.Version, build and ZIP only PTVgame-Launcher.exe, catalog.json, README.md and assets at ZIP root. Upload the release asset first; generate release-manifests/launcher.json with publish-manifest.ps1 and publish the JSON last. Versions 1.3 and earlier need this one manual upgrade to gain self-update. GitHub raw caches may delay discovery by a few minutes. Portable folders must be writable; no admin elevation is performed.
+
+## Paint World (1.5.0)
+Third Unity game: Paint World (project paint gun), ID paintworld, stable manifest release-manifests/paintworld.json, executable PaintWorld/PaintWorld.exe. Game version 1.0.0 uses the silent mandatory update gate. The launcher cover was drawn from the actual game view. Launcher 1.4.0 users receive this catalog and artwork through launcher self-update.
+
