@@ -2,7 +2,7 @@
 
 Both Unity projects now contain `Assets/PTVUpdate/PTVVersionGate.cs` and `Assets/PTVUpdate/Editor/PTVMandatoryBuild.cs`.
 
-The new Windows builds are **1.0.2**. They begin with the empty `PTVVersionGate` scene, and load the actual gameplay scene only after the HTTPS manifest reports the same version as `Application.version`. Missing internet, malformed responses and version mismatches block entry. Retry, download-launcher and quit buttons remain available.
+The new Windows builds are **1.0.3**. They begin with the empty `PTVVersionGate` scene, and load the actual gameplay scene only after the HTTPS manifest reports the same version as `Application.version`. Missing internet, malformed responses and version mismatches block entry. Retry, download-launcher and quit buttons remain available.
 
 The gate checks again every 60 seconds and when the game regains focus. If verification then fails, the overlay blocks input, simulation pauses, and the gameplay scene is unloaded back to the bootstrap scene. Verification is online; no offline grace period is enabled.
 
@@ -15,7 +15,7 @@ Game identity and update URLs:
 
 ## Future releases
 
-1. Increment the version in `PTVMandatoryBuild.cs` (currently `PlayerSettings.bundleVersion="1.0.2"`) and the build output folder name.
+1. Increment the version in `PTVMandatoryBuild.cs` (currently `PlayerSettings.bundleVersion="1.0.3"`) and the build output folder name.
 2. Build using `PTVMandatoryBuild.Run()` in the Unity Editor, or a build command that retains `Assets/Scenes/PTVVersionGate.unity` as the first scene. The build validator rejects a scene list that omits the gate at index zero.
 3. Include the game's TikTokBridge, licenses and relevant supporting files when packing the entire build folder.
 4. Upload the complete ZIP to GitHub Releases first.
@@ -35,4 +35,7 @@ EXEs already distributed before the gate existed cannot be revoked retroactively
 PTVvs uses TMP Essential Resources for the version-screen text; these resources were imported non-interactively into the SuMo project.
 
 Verification that already succeeded does not change the game's existing pause or audio-pause state. The gate canvas uses sorting order 32767 so it remains above the normal game menus.
+
+
+Version 1.0.3 checks silently without creating a checking canvas. Warning UI is created only for a version mismatch, connection failure or invalid response. Gameplay still waits for verification; successful recurring checks leave gameplay and pause state unchanged.
 
