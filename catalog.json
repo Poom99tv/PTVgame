@@ -16,6 +16,14 @@
     "cover": "assets/ptvvs.png"
   },
   {
+    "id": "paintworld",
+    "name": "Paint World",
+    "description": "ยิงสีฟ้าระบายลานให้ทั่ว พร้อมรับมือสีแดงที่เข้ามารบกวน",
+    "category": "Unity",
+    "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/paintworld.json",
+    "cover": "assets/paintworld.png"
+  },
+  {
     "description": "แมพ Roblox • 78508971781182",
     "category": "Roblox",
     "placeId": "78508971781182",
