@@ -25,7 +25,7 @@ public sealed class PTVVersionGate : MonoBehaviour {
  [Serializable] public class RemoteManifest {public string version;}
  [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] static void ResetStatics(){instance=null;Authorized=false;}
  [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)] static void Bootstrap(){if(!instance)new GameObject("PTV Mandatory Version Gate").AddComponent<PTVVersionGate>();}
- void Awake(){if(instance&&instance!=this){Destroy(gameObject);return;}instance=this;DontDestroyOnLoad(gameObject);Authorized=false;State="checking";BuildUI();Block("CHECKING VERSION","Connecting to the update server...");}
+ void Awake(){if(instance&&instance!=this){Destroy(gameObject);return;}instance=this;DontDestroyOnLoad(gameObject);Authorized=false;State="checking";Time.timeScale=0;AudioListener.pause=true;}
  IEnumerator Start(){yield return Check();while(true){yield return new WaitForSecondsRealtime(60);if(!checking)yield return Check();}}
  void OnApplicationFocus(bool focused){if(focused&&gameplayLoaded&&!checking)StartCoroutine(Check());}
  void LateUpdate(){if(!Authorized){Time.timeScale=0;AudioListener.pause=true;}}
@@ -34,7 +34,7 @@ public sealed class PTVVersionGate : MonoBehaviour {
  public static string Evaluate(string local,string remote,bool requestSucceeded){if(!requestSucceeded)return "connection_failed";Version parsed;if(!Version.TryParse(local,out parsed)||!Version.TryParse(remote,out parsed))return "invalid_manifest";return SameVersion(local,remote)?"allowed":"update_required";}
  public IEnumerator Check(){
   if(checking)yield break;checking=true;bool wasAuthorized=Authorized;
-  if(!Authorized){State="checking";Block("CHECKING VERSION","Please wait. An internet connection is required.");}
+  if(!Authorized)State="checking";
   string url=ManifestUrl+"?check="+Guid.NewGuid().ToString("N");
   using(var request=UnityWebRequest.Get(url)){
    request.timeout=15;request.SetRequestHeader("Cache-Control","no-cache");
@@ -45,7 +45,7 @@ public sealed class PTVVersionGate : MonoBehaviour {
    RemoteVersion=remote;State=Evaluate(Application.version,remote,ok);
    Debug.Log("PTV_GATE "+State+" game="+GameName+" local="+Application.version+" remote="+(remote??"unavailable"));
    if(State=="allowed"){
-    Authorized=true;Detail="Version verified";overlay.SetActive(false);eventSystem.SetActive(false);ApplyVerifiedTiming(wasAuthorized,previousScale);
+    Authorized=true;Detail="Version verified";if(overlay)overlay.SetActive(false);if(eventSystem)eventSystem.SetActive(false);ApplyVerifiedTiming(wasAuthorized,previousScale);
     if(!gameplayLoaded){while(unloading)yield return null;gameplayLoaded=true;var load=SceneManager.LoadSceneAsync(EntryScene,LoadSceneMode.Single);if(load!=null)yield return load;}
    }else{
     string detail=State=="update_required"?"Installed: "+Application.version+"    Required: "+remote+"\nUpdate this game in PTVgame Launcher before playing.":State=="invalid_manifest"?"The update server returned an invalid version.\nPlaying is blocked until verification succeeds.":"Cannot verify the game version.\nCheck your internet connection, then retry.";
@@ -55,15 +55,15 @@ public sealed class PTVVersionGate : MonoBehaviour {
   }
   checking=false;
  }
- void Block(string heading,string detail){if(Authorized)previousScale=Time.timeScale>0?Time.timeScale:1;Authorized=false;Detail=detail;Time.timeScale=0;AudioListener.pause=true;if(overlay){overlay.SetActive(true);title.text=heading;body.text=GameName+"  •  v"+Application.version+"\n\n"+detail;}if(eventSystem)eventSystem.SetActive(true);}
+ void Block(string heading,string detail){if(!overlay)BuildUI();if(Authorized)previousScale=Time.timeScale>0?Time.timeScale:1;Authorized=false;Detail=detail;Time.timeScale=0;AudioListener.pause=true;if(overlay){overlay.SetActive(true);title.text=heading;body.text=GameName+"  •  v"+Application.version+"\n\n"+detail;}if(eventSystem)eventSystem.SetActive(true);}
  void BuildUI(){
   overlay=new GameObject("Version Gate Screen",typeof(RectTransform),typeof(Canvas),typeof(UnityEngine.UI.CanvasScaler),typeof(UnityEngine.UI.GraphicRaycaster));overlay.transform.SetParent(transform,false);
   var canvas=overlay.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;canvas.sortingOrder=32767;
   var scaler=overlay.GetComponent<UnityEngine.UI.CanvasScaler>();scaler.uiScaleMode=UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;scaler.referenceResolution=new Vector2(1280,720);scaler.matchWidthOrHeight=.5f;
   var background=new GameObject("Input Blocker",typeof(RectTransform),typeof(UnityEngine.UI.Image));background.transform.SetParent(overlay.transform,false);var bg=background.GetComponent<RectTransform>();bg.anchorMin=Vector2.zero;bg.anchorMax=Vector2.one;bg.offsetMin=bg.offsetMax=Vector2.zero;background.GetComponent<UnityEngine.UI.Image>().color=new Color(.015f,.045f,.085f,1);
   Label("PTVgame",new Vector2(0,225),new Vector2(950,64),42,new Color(.2f,.65f,1));
-  title=Label("CHECKING VERSION",new Vector2(0,125),new Vector2(1000,72),42,Color.white);
-  body=Label("Connecting...",new Vector2(0,5),new Vector2(1000,180),24,new Color(.7f,.82f,.94f));
+  title=Label("UPDATE REQUIRED",new Vector2(0,125),new Vector2(1000,72),42,Color.white);
+  body=Label("",new Vector2(0,5),new Vector2(1000,180),24,new Color(.7f,.82f,.94f));
   Button("RETRY",new Vector2(-290,-165),()=>{if(!checking)StartCoroutine(Check());});
   Button("GET LAUNCHER / UPDATE",new Vector2(0,-165),()=>Application.OpenURL(LauncherPage));
   Button("QUIT",new Vector2(290,-165),()=>Application.Quit());
@@ -74,4 +74,5 @@ public sealed class PTVVersionGate : MonoBehaviour {
  TextMeshProUGUI Label(string text,Vector2 position,Vector2 size,int fontSize,Color color){var go=new GameObject("Gate Label",typeof(RectTransform),typeof(TextMeshProUGUI));go.transform.SetParent(overlay.transform,false);var rect=go.GetComponent<RectTransform>();rect.anchorMin=rect.anchorMax=new Vector2(.5f,.5f);rect.anchoredPosition=position;rect.sizeDelta=size;var label=go.GetComponent<TextMeshProUGUI>();label.text=text;label.fontSize=fontSize;label.alignment=TextAlignmentOptions.Center;label.color=color;label.raycastTarget=false;label.enableAutoSizing=true;label.fontSizeMin=16;label.fontSizeMax=fontSize;return label;}
  void Button(string label,Vector2 position,Action action){var go=new GameObject(label,typeof(RectTransform),typeof(UnityEngine.UI.Image),typeof(UnityEngine.UI.Button));go.transform.SetParent(overlay.transform,false);var rect=go.GetComponent<RectTransform>();rect.anchorMin=rect.anchorMax=new Vector2(.5f,.5f);rect.anchoredPosition=position;rect.sizeDelta=new Vector2(265,62);go.GetComponent<UnityEngine.UI.Image>().color=new Color(.06f,.28f,.52f);go.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(()=>action());var text=Label(label,Vector2.zero,new Vector2(250,54),18,Color.white);text.transform.SetParent(go.transform,false);text.rectTransform.anchoredPosition=Vector2.zero;}
 }
+
 
