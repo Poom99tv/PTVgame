@@ -84,7 +84,7 @@ namespace PTVgame {
    if(page=="ไลบรารี")list=list.Where(g=>g.category=="Roblox"||Storage.Current(g)!=null);
    if(page=="รายการโปรด")list=list.Where(g=>settings.favorites.Contains(g.id));
    var regular=list.Where(g=>g.category!="Roblox").ToList(); var roblox=list.Where(g=>g.category=="Roblox").ToList();
-   if(regular.Count>0) Group("🎮","เกมทั่วไป",regular,3); if(roblox.Count>0) Group("▧","เกม Roblox",roblox,4);
+   if(regular.Count>0) Group("🎮","เกมทั่วไป",regular,regular.Count>=4?4:3); if(roblox.Count>0) Group("▧","เกม Roblox",roblox,4);
    if(regular.Count+roblox.Count==0) sections.Children.Add(Text("ยังไม่มีเกมในหน้านี้",22,muted));
   }
   void Group(string icon,string title,List<Game> items,int columns) {
@@ -122,7 +122,7 @@ namespace PTVgame {
    var auto=new CheckBox { Content="อัปเดตเกมที่ติดตั้งเมื่อเปิด Launcher",IsChecked=settings.autoUpdate,Foreground=Foreground,Margin=new Thickness(0,25,0,20) };sections.Children.Add(auto);auto.Click+=(s,e)=>{settings.autoUpdate=auto.IsChecked==true;Save();};
    var launcherUpdate=Btn("ตรวจอัปเดต Launcher",accent);sections.Children.Add(launcherUpdate);launcherUpdate.Click+=async(s,e)=>await UpdateLauncher();
    var folder=Btn("เปิดโฟลเดอร์เกม",ColorBrush("#193B58"));folder.HorizontalAlignment=HorizontalAlignment.Left;sections.Children.Add(folder);folder.Click+=(s,e)=>{Directory.CreateDirectory(Storage.Root);Process.Start("explorer.exe",Storage.Root);};
-   sections.Children.Add(new TextBlock { Text="PTVgame • Launcher 1.5.0\nภาพปก Roblox จากหน้าเกมจริง\nดาวน์โหลดเกมผ่าน GitHub Releases",Foreground=muted,Margin=new Thickness(0,30,0,0),TextWrapping=TextWrapping.Wrap });
+   sections.Children.Add(new TextBlock { Text="PTVgame • Launcher 1.6.0\nภาพปก Roblox จากหน้าเกมจริง\nดาวน์โหลดเกมผ่าน GitHub Releases",Foreground=muted,Margin=new Thickness(0,30,0,0),TextWrapping=TextWrapping.Wrap });
   }
   async Task<bool> UpdateLauncher() { if(busy)return false;busy=true;cancellation=new CancellationTokenSource(TimeSpan.FromMinutes(5));try { bool restart=await LauncherUpdate.Check(new Progress<string>(t=>status.Text=t),cancellation.Token);if(restart){busy=false;Application.Current.Shutdown();return true;} }catch(Exception ex){status.Text="ตรวจอัปเดต Launcher ไม่สำเร็จ: "+ex.Message;}finally{busy=false;cancellation.Dispose();}return false; }
   void Save() { try { Storage.Save(settingsPath,settings); }catch(Exception ex){status.Text="บันทึกการตั้งค่าไม่สำเร็จ: "+ex.Message;} }
@@ -154,6 +154,7 @@ namespace PTVgame {
   }
  }
 }
+
 
 
 
