@@ -15,3 +15,4 @@ The internal game ID remains sumo to preserve previous installed game directorie
 assets/paintworld-wide.png is an original image_gen cover, derived from a camera capture of the actual paint gun project (CyanCourtyard scene). The white-gray walled courtyard, gabled buildings, arched gate, planters, low-poly cyan/orange/white paint blaster and cyan-versus-red paint gameplay come from the real game. The cover adds comic PAINT WORLD lettering and illustrated paint splashes. No player account text is included in the cover.
 
 
+PTVBoat: assets/ptvboat.png was generated with image_gen from a live close-up of PTVBoat_Ocean in the PTVBoat Unity project. It preserves the angular white-gray patrol ship, teal waterline, dark stern helipad and red-white fittings, with tropical ocean islands. Landscape composition fits the four-game row.
