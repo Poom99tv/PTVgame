@@ -24,6 +24,14 @@
     "cover": "assets/paintworld-wide.png"
   },
   {
+    "id": "ptvboat",
+    "name": "PTVBoat",
+    "description": "เรือรบประลองกลางทะเลและเกาะ พร้อมระบบ TikTok Live",
+    "category": "Unity",
+    "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvboat.json",
+    "cover": "assets/ptvboat.png"
+  },
+  {
     "description": "แมพ Roblox • 78508971781182",
     "category": "Roblox",
     "placeId": "78508971781182",
@@ -56,5 +64,3 @@
     "cover": "assets/roblox-box-2.png"
   }
 ]
-
-
