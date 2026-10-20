@@ -1,7 +1,7 @@
 {
-  "version": "1.0.3",
-  "size": 374190584,
+  "version": "1.0.4",
+  "size": 374674550,
   "executable": "PTVCar/PTVCar.exe",
-  "sha256": "2ae8f9eae295eabf6478ca1a984f7bd4a54e2f40cf3c81b1abd6703091d5b922",
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/v1.0.3/PTVCar.v1.0.3.zip"
+  "sha256": "de920aca67def1e88be06ec19869cb73a079f65de0bdb6e28b8048fff08a2baf",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/ptvcar-v1.0.4/PTVCar.v1.0.4.zip"
 }
