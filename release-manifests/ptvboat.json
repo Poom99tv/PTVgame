@@ -1,7 +1,7 @@
 {
-  "version": "1.0.4",
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/ptvboat-v1.0.4/PTVBoat.v1.0.4.zip",
-  "sha256": "dd7464ac068e8cd0b5b870c9b49a6609ec09ec9a77650faa68c1197ae94e8003",
-  "size": 147392115,
+  "version": "1.0.5",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/ptvboat-v1.0.5/PTVBoat.v1.0.5.zip",
+  "sha256": "b774b488135fc00f9a448df260badef59cf71df4bd4e1fea1473982e01ae3a83",
+  "size": 147392095,
   "executable": "PTVBoat/PTVBoat.exe"
 }
