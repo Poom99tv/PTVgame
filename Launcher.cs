@@ -178,7 +178,7 @@ namespace PTVgame {
    } catch(OperationCanceledException) { status.Text="ยกเลิกแล้ว • เวอร์ชันเดิมยังใช้งานได้"; } catch(Exception ex) { status.Text="อัปเดตไม่สำเร็จ: "+ex.Message; } finally { busy=false; cts.Dispose(); cts=null; Render(); }
   }
   async Task AutoUpdate() { foreach(var g in games.Where(g=>g.category!="Roblox"&&!string.IsNullOrWhiteSpace(g.manifestUrl)&&Storage.Current(g)!=null)) await Update(g,false); }
-  [STAThread] public static void Main(string[] args) { if(LauncherUpdate.Handle(args))return; if(args.Contains("--self-test")) { try { Tests.Run(); } catch(Exception ex) { File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-results.txt"),ex.ToString()); Environment.ExitCode=1; } return; } var app=new Application(); app.DispatcherUnhandledException+=(s,e)=> { MessageBox.Show(e.Exception.Message,"PTVgame"); e.Handled=true; }; app.Run(new LauncherShell()); }
+  [STAThread] public static void Main(string[] args) { if(args.Contains("--update-exit-test")){Thread.Sleep(300);return;} if(LauncherUpdate.Handle(args))return; if(args.Contains("--self-test")) { try { Tests.Run(); } catch(Exception ex) { File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-results.txt"),ex.ToString()); Environment.ExitCode=1; } return; } var app=new Application(); app.DispatcherUnhandledException+=(s,e)=> { MessageBox.Show(e.Exception.Message,"PTVgame"); e.Handled=true; }; app.Run(new LauncherShell()); }
  }
  public static class Tests {
   static void Assert(bool b,string name) { if(!b) throw new Exception("FAIL: "+name); }

@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace PTVgame {
  public static class LauncherUpdate {
-  public const string Version="1.7.1";
+  public const string Version="1.7.2";
   public const string ManifestUrl="https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/launcher.json";
   public static bool IsNewer(string version) { return new System.Version(version)>new System.Version(Version); }
   public static async Task<bool> Check(IProgress<string> progress,CancellationToken token) {
@@ -21,17 +21,28 @@ namespace PTVgame {
    var installed=Storage.Current(game);
    string target=AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
    string work=Path.Combine(Path.GetTempPath(),"PTVgame-update-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(work);
-   string helper=Path.Combine(work,"Updater.exe");File.Copy(Process.GetCurrentProcess().MainModule.FileName,helper);
+   // Run the verified NEW updater, so old updater bugs are not copied forward.
+   string helper=Path.Combine(work,"Updater.exe");File.Copy(Path.Combine(installed.folder,"PTVgame-Launcher.exe"),helper);
    Process.Start(new ProcessStartInfo(helper,"--apply-launcher "+Process.GetCurrentProcess().Id+" "+Quote(target)+" "+Quote(installed.folder)) {UseShellExecute=false,WorkingDirectory=work});
    return true;
   }
   static string Quote(string value){return "\""+value+"\"";}
+  public static void WaitForParentExit(int pid,int timeoutMillis) {
+   Process parent;
+   try{parent=Process.GetProcessById(pid);}catch(ArgumentException){return;}
+   using(parent){
+    // Wait on the process handle only. MainModule reads process memory and can
+    // fail with ERROR_PARTIAL_COPY (299) while the old launcher is exiting.
+    try{if(!parent.WaitForExit(timeoutMillis))throw new TimeoutException("Launcher ยังไม่ปิด กรุณาปิดแล้วลองใหม่");}
+    catch(InvalidOperationException){} // it exited before the handle was opened
+   }
+  }
   public static bool Handle(string[] args) {
    if(args.Length==0||args[0]!="--apply-launcher")return false;
    try {
     if(args.Length!=4)throw new Exception("Invalid update arguments");
     int pid=int.Parse(args[1]);string target=Path.GetFullPath(args[2]),source=Path.GetFullPath(args[3]);
-    try {using(var parent=Process.GetProcessById(pid)){if(!string.Equals(Path.GetDirectoryName(parent.MainModule.FileName),target,StringComparison.OrdinalIgnoreCase))throw new Exception("Launcher process mismatch");if(!parent.WaitForExit(60000))throw new Exception("Launcher ยังไม่ปิด กรุณาลองใหม่");}}catch(ArgumentException){}
+    WaitForParentExit(pid,60000);
     Apply(source,target);
     Process.Start(new ProcessStartInfo(Path.Combine(target,"PTVgame-Launcher.exe")){WorkingDirectory=target,UseShellExecute=false});
    }catch(Exception ex){File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"update-error.txt"),ex.ToString());MessageBox.Show("อัปเดต Launcher ไม่สำเร็จ รุ่นเดิมยังอยู่\n"+ex.Message,"PTVgame");}
@@ -52,6 +63,15 @@ namespace PTVgame {
   public static void Test(string root) {
    var currentVersion=new Version(Version);var nextVersion=new Version(currentVersion.Major,currentVersion.Minor+1,0);
    if(!IsNewer(nextVersion.ToString())||IsNewer(Version)||IsNewer("1.3.0"))throw new Exception("Self-update version policy failed");
+   WaitForParentExit(int.MaxValue,100);
+   bool timedOut=false;try{WaitForParentExit(Process.GetCurrentProcess().Id,20);}catch(TimeoutException){timedOut=true;}
+   if(!timedOut)throw new Exception("Updater must wait while parent is running");
+   string self=System.Reflection.Assembly.GetExecutingAssembly().Location;
+   using(var child=Process.Start(new ProcessStartInfo(self,"--update-exit-test"){UseShellExecute=false,CreateNoWindow=true})){
+    int childPid=child.Id;WaitForParentExit(childPid,10000);
+    if(!child.HasExited)throw new Exception("Updater did not wait for exiting process");
+    WaitForParentExit(childPid,100);
+   }
    string source=Path.Combine(root,"payload"),target=Path.Combine(root,"launcher");Directory.CreateDirectory(source);Directory.CreateDirectory(target);
    File.WriteAllText(Path.Combine(source,"PTVgame-Launcher.exe"),"new");File.WriteAllText(Path.Combine(source,"catalog.json"),"new catalog");
    File.WriteAllText(Path.Combine(target,"PTVgame-Launcher.exe"),"old");File.WriteAllText(Path.Combine(target,"catalog.json"),"old catalog");
