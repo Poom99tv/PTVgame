@@ -25,4 +25,7 @@ if($LASTEXITCODE-ne 0){throw 'Bridge compile failed'}
 $env:BRIDGE_TEST_ONLY='1'
 try{$p=Start-Process $exe -ArgumentList @('--smoke-test',('"'+(Join-Path $dist 'bridge-smoke')+'"'),('"'+(Join-Path $dist 'bridge-smoke.json')+'"')) -WindowStyle Hidden -Wait -PassThru;if($p.ExitCode-ne 0){throw 'Bridge smoke test failed'}}finally{Remove-Item Env:BRIDGE_TEST_ONLY -ErrorAction SilentlyContinue}
 Get-Content (Join-Path $dist 'bridge-smoke.json')
-
+$clipboardReport=Join-Path $dist 'clipboard-test.txt'
+$p=Start-Process $exe -ArgumentList @('--clipboard-test',('"'+$clipboardReport+'"')) -WindowStyle Hidden -Wait -PassThru
+Get-Content $clipboardReport
+if($p.ExitCode-ne 0){throw 'Clipboard retry/fallback test failed'}

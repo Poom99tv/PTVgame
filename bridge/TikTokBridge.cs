@@ -13,7 +13,7 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 class BridgeRuntime {
- public const string Version="2026.10.23.7";
+ public const string Version="2026.10.23.8";
  public Process TunnelProcess;
  public string PairCode="";
  volatile string tunnelUrl="";
@@ -86,17 +86,31 @@ class BridgeRuntime {
  public void Stop(){if(TunnelProcess!=null&&!TunnelProcess.HasExited){try{TunnelProcess.Kill();}catch{}}if(OwnedProcess!=null&&!OwnedProcess.HasExited){try{OwnedProcess.Kill();OwnedProcess.WaitForExit(2000);}catch{}}}
 }
 
+static class PairCodeClipboard {
+ public static async Task<bool> TryCopy(string text,Action<string> write){
+  for(int attempt=0;attempt<5;attempt++){
+   try{write(text);return true;}
+   catch(System.Runtime.InteropServices.ExternalException){}
+   catch(ThreadStateException){return false;}
+   if(attempt<4)await Task.Delay(150);
+  }
+  return false;
+ }
+}
+
 class BridgeWindow:Form {
  BridgeRuntime runtime;
  TextBox account;
  Button connect,disconnect;
  Button copyCode;
  Label gameState;
+ TextBox pairingCode;
+ DateTime copyMessageUntil=DateTime.MinValue;
  Label state,detail,count;
  System.Windows.Forms.Timer timer;
  bool polling=false;
  public BridgeWindow(){
-  Text="TikTok LIVE • Island Race v7";ClientSize=new Size(470,382);MinimumSize=new Size(486,421);MaximumSize=MinimumSize;FormBorderStyle=FormBorderStyle.FixedSingle;MaximizeBox=false;StartPosition=FormStartPosition.CenterScreen;
+  Text="TikTok LIVE • Island Race v7.0.1";ClientSize=new Size(470,430);MinimumSize=new Size(486,469);MaximumSize=MinimumSize;FormBorderStyle=FormBorderStyle.FixedSingle;MaximizeBox=false;StartPosition=FormStartPosition.CenterScreen;
   Font=new Font("Segoe UI",10);BackColor=Color.FromArgb(12,20,35);ForeColor=Color.White;
   Label title=new Label(){Text="TikTok LIVE",Location=new Point(24,20),Size=new Size(410,35),Font=new Font("Segoe UI",22,FontStyle.Bold)};Controls.Add(title);
   Label label=new Label(){Text="บัญชี TikTok",Location=new Point(24,68),Size=new Size(200,24)};Controls.Add(label);
@@ -107,8 +121,20 @@ class BridgeWindow:Form {
   count=new Label(){Location=new Point(24,226),Size=new Size(420,22),ForeColor=Color.FromArgb(174,194,217)};Controls.Add(count);
   detail=new Label(){Location=new Point(24,250),Size=new Size(420,32),Font=new Font("Segoe UI",8),ForeColor=Color.FromArgb(174,194,217),AutoEllipsis=true};Controls.Add(detail);
   copyCode=new Button(){Text="คัดลอกรหัสจับคู่เกม",Location=new Point(24,290),Size=new Size(420,36),FlatStyle=FlatStyle.Flat,BackColor=Color.FromArgb(43,58,78),Enabled=false};Controls.Add(copyCode);
-  gameState=new Label(){Text="เปิดห้องส่วนตัว → รูปเฟือง → เชื่อม TikTokBridge",Location=new Point(24,338),Size=new Size(420,34),ForeColor=Color.FromArgb(174,194,217)};Controls.Add(gameState);
-  copyCode.Click+=delegate{if(runtime!=null&&runtime.PairCode!=""){Clipboard.SetText(runtime.PairCode);gameState.Text="คัดลอกแล้ว • วางรหัสในรูปเฟืองของห้องส่วนตัว";}};
+  pairingCode=new TextBox(){Name="PairingCode",ReadOnly=true,Location=new Point(24,337),Size=new Size(420,28),Font=new Font("Consolas",10),BackColor=Color.FromArgb(25,39,57),ForeColor=Color.White,BorderStyle=BorderStyle.FixedSingle};Controls.Add(pairingCode);
+  pairingCode.Click+=delegate{pairingCode.SelectAll();};
+  gameState=new Label(){Text="เปิดห้องส่วนตัว → รูปเฟือง → เชื่อม TikTokBridge",Location=new Point(24,380),Size=new Size(420,42),ForeColor=Color.FromArgb(174,194,217)};Controls.Add(gameState);
+  copyCode.Click+=async delegate{
+   if(runtime==null||runtime.PairCode=="")return;
+   string code=runtime.PairCode;pairingCode.Text=code;copyCode.Enabled=false;
+   bool copied=false;
+   try{copied=await PairCodeClipboard.TryCopy(code,value=>Clipboard.SetDataObject(value,true,2,80));}
+   catch(Exception){copied=false;}
+   finally{copyCode.Enabled=runtime!=null&&runtime.PairCode!="";}
+   copyMessageUntil=DateTime.UtcNow.AddSeconds(10);
+   gameState.Text=copied?"คัดลอกแล้ว • วางรหัสในรูปเฟืองของห้องส่วนตัว":"คลิปบอร์ดไม่ว่าง • คลิกช่องรหัสด้านบน แล้วกด Ctrl+C อีกครั้ง";
+   if(!copied){pairingCode.Focus();pairingCode.SelectAll();}
+  };
   connect.Click+=async delegate{await Connect();};disconnect.Click+=async delegate{await Disconnect();};
   FormClosing+=delegate{if(timer!=null)timer.Stop();if(runtime!=null)runtime.Stop();};
   Shown+=async delegate{await Initialize();};
@@ -124,7 +150,7 @@ class BridgeWindow:Form {
  async Task Connect(){
   string name=account.Text.Trim().TrimStart('@');
   if(!System.Text.RegularExpressions.Regex.IsMatch(name,"^[A-Za-z0-9_.]{2,24}$")){state.Text="กรุณาใส่ชื่อ TikTok ให้ถูกต้อง";return;}
-  connect.Enabled=false;state.Text="กำลังเปิดการเชื่อมต่อ HTTPS…";try{await Task.Run(delegate{runtime.EnsureBackend();runtime.EnsureTunnel();runtime.Request("/ui/connect",new {username=name});});copyCode.Enabled=true;await Poll();}catch(Exception e){state.Text="เชื่อมต่อไม่สำเร็จ";detail.Text=e.Message;}finally{connect.Enabled=true;}
+  connect.Enabled=false;state.Text="กำลังเปิดการเชื่อมต่อ HTTPS…";try{await Task.Run(delegate{runtime.EnsureBackend();runtime.EnsureTunnel();runtime.Request("/ui/connect",new {username=name});});pairingCode.Text=runtime.PairCode;copyCode.Enabled=true;await Poll();}catch(Exception e){state.Text="เชื่อมต่อไม่สำเร็จ";detail.Text=e.Message;}finally{connect.Enabled=true;}
  }
  async Task Disconnect(){disconnect.Enabled=false;try{await Task.Run(delegate{runtime.Request("/ui/disconnect",new {});});await Poll();}catch(Exception e){state.Text="ตัดการเชื่อมต่อไม่สำเร็จ";detail.Text=e.Message;}finally{disconnect.Enabled=true;}}
  async Task Poll(){if(polling||runtime==null)return;polling=true;try{
@@ -134,13 +160,20 @@ class BridgeWindow:Form {
   state.ForeColor=status=="Connected"?Color.FromArgb(36,216,188):Color.FromArgb(255,191,64);
   object seq;data.TryGetValue("sequence",out seq);count.Text="รับข้อมูลแล้ว "+Convert.ToString(seq??0)+" รายการ";
   object reason;data.TryGetValue("detail",out reason);detail.Text=Convert.ToString(reason);
-  object room;if(data.TryGetValue("game",out room)){var g=room as Dictionary<string,object>;if(g!=null&&g.ContainsKey("paired")&&Convert.ToBoolean(g["paired"]))gameState.Text="เกมเชื่อมแล้ว • รับข้อมูลแยกเฉพาะห้องของคุณ";else if(runtime.PairCode!="")gameState.Text="รอจับคู่เกม • คัดลอกรหัสไปวางในรูปเฟือง";}
+  object room;if(DateTime.UtcNow>=copyMessageUntil&&data.TryGetValue("game",out room)){var g=room as Dictionary<string,object>;if(g!=null&&g.ContainsKey("paired")&&Convert.ToBoolean(g["paired"]))gameState.Text="เกมเชื่อมแล้ว • รับข้อมูลแยกเฉพาะห้องของคุณ";else if(runtime.PairCode!="")gameState.Text="รอจับคู่เกม • คัดลอกรหัสไปวางในรูปเฟือง";}
   if(runtime.TunnelProcess!=null&&runtime.TunnelProcess.HasExited){copyCode.Enabled=false;gameState.Text="HTTPS หยุดทำงาน • กดเชื่อมต่ออีกครั้งแล้วจับคู่ใหม่";}
  }catch{state.Text="ตัวรับข้อมูลหยุดทำงาน";detail.Text="กดเชื่อมต่อเพื่อเริ่มใหม่";}finally{polling=false;}}
 }
 
 static class Program {
  [STAThread]static int Main(string[] args){
+  if(args.Length>0&&args[0]=="--clipboard-test"){
+   int attempts=0;bool recovered=PairCodeClipboard.TryCopy("test",delegate(string value){attempts++;if(attempts<3)throw new System.Runtime.InteropServices.ExternalException("busy");}).GetAwaiter().GetResult();
+   int failures=0;bool failed=PairCodeClipboard.TryCopy("test",delegate(string value){failures++;throw new System.Runtime.InteropServices.ExternalException("busy");}).GetAwaiter().GetResult();
+   bool immediate=PairCodeClipboard.TryCopy("test",delegate(string value){}).GetAwaiter().GetResult();
+   bool ok=recovered&&attempts==3&&!failed&&failures==5&&immediate;
+   if(args.Length>1)File.WriteAllText(args[1],"Clipboard retry/fallback: "+(ok?"PASS":"FAIL"));return ok?0:1;
+  }
   if(args.Length>0&&args[0]=="--smoke-test"){
    string dir=args[1],report=args[2];BridgeRuntime r=new BridgeRuntime(dir);
    try{r.Prepare(18867);r.EnsureBackend();var health=r.Request("/health");var skills=r.Request("/ui/skills",new {version=3,skills=new {rose=new {giftOn=true,gift="1dc1fd9347876fbd",giftCount=1}}});var follow=r.Request("/test-event",new {kind="follow",viewer="smoke"});var events=r.Request("/events");var connect=r.Request("/ui/connect",new {username="smoke_test"});r.Request("/ui/disconnect",new {});File.WriteAllText(report,new JavaScriptSerializer().Serialize(new {ok=true,status=health["status"],settingsSaved=skills["ok"],rawEvents=follow["ok"],connectOk=connect["ok"],bundledNode=File.Exists(Path.Combine(dir,"node.exe"))}));return 0;}

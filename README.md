@@ -1,5 +1,7 @@
 # PTVgame — Windows Launcher
 
+TikTokBridge 7.0.1 / Launcher 1.7.1: fixes the unhandled “Requested Clipboard operation did not succeed” error. Copy retries when another application temporarily locks the clipboard. The pairing code is also visible in a read-only field for manual selection and Ctrl+C. Clipboard failure does not disconnect LIVE. Close the old bridge before opening the updated version and pair the game again.
+
 ## PTVRunner — Launcher 1.7.0
 
 PTVRunner เพิ่มในหมวด Roblox: กดเล่นแล้ว Launcher จะดาวน์โหลด/ตรวจ SHA-256 ของ TikTokBridge-v7 ให้อัตโนมัติ จากนั้นเปิดทั้งโปรแกรมและแมพ Roblox `71880688656931` พร้อมกัน เกมอื่นและค่าของผู้ใช้ยังอยู่เหมือนเดิม
