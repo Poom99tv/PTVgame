@@ -1,7 +1,7 @@
 {
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/launcher-v1.7.2/PTVgame-Windows-v1.7.2.zip",
-  "size": 18237605,
-  "sha256": "12c60cced62dd5ef1ff84ce8eee3104d5a85d3932811d41c096c8bf31b4410c7",
-  "version": "1.7.2",
-  "executable": "PTVgame-Launcher.exe"
+  "version": "1.7.3",
+  "size": 18363726,
+  "executable": "PTVgame-Launcher.exe",
+  "sha256": "97700639ca78ef7961ae5d6fbfa33602bc89b4d193d34fadd2f5d6a14671853f",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/launcher-v1.7.3/PTVgame-Windows-v1.7.3.zip"
 }
