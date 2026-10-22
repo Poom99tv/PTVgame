@@ -8,15 +8,15 @@ using System.Windows;
 
 namespace PTVgame {
  public static class LauncherUpdate {
-  public const string Version="1.7.3";
+  public const string Version="1.7.4";
   public const string ManifestUrl="https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/launcher.json";
   public static bool IsNewer(string version) { return new System.Version(version)>new System.Version(Version); }
   public static async Task<bool> Check(IProgress<string> progress,CancellationToken token) {
    var game=new Game {id="launcher",manifestUrl=ManifestUrl+"?check="+Guid.NewGuid().ToString("N")};
-   progress.Report("กำลังตรวจอัปเดต Launcher…");
+   progress.Report(AppLanguage.T("กำลังตรวจอัปเดต Launcher…"));
    var manifest=await Updater.Check(game,token);
-   if(!IsNewer(manifest.version)){progress.Report("Launcher "+Version+" เป็นเวอร์ชันล่าสุดแล้ว");return false;}
-   if(manifest.executable!="PTVgame-Launcher.exe")throw new Exception("ไฟล์ Launcher ใน manifest ไม่ถูกต้อง");
+   if(!IsNewer(manifest.version)){progress.Report("Launcher "+Version+AppLanguage.T(" เป็นเวอร์ชันล่าสุดแล้ว"));return false;}
+   if(manifest.executable!="PTVgame-Launcher.exe")throw new Exception(AppLanguage.T("ไฟล์ Launcher ใน manifest ไม่ถูกต้อง"));
    await Updater.Install(game,manifest,progress,token);
    var installed=Storage.Current(game);
    string target=AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
@@ -33,7 +33,7 @@ namespace PTVgame {
    using(parent){
     // Wait on the process handle only. MainModule reads process memory and can
     // fail with ERROR_PARTIAL_COPY (299) while the old launcher is exiting.
-    try{if(!parent.WaitForExit(timeoutMillis))throw new TimeoutException("Launcher ยังไม่ปิด กรุณาปิดแล้วลองใหม่");}
+    try{if(!parent.WaitForExit(timeoutMillis))throw new TimeoutException(AppLanguage.T("Launcher ยังไม่ปิด กรุณาปิดแล้วลองใหม่"));}
     catch(InvalidOperationException){} // it exited before the handle was opened
    }
   }
@@ -45,11 +45,11 @@ namespace PTVgame {
     WaitForParentExit(pid,60000);
     Apply(source,target);
     Process.Start(new ProcessStartInfo(Path.Combine(target,"PTVgame-Launcher.exe")){WorkingDirectory=target,UseShellExecute=false});
-   }catch(Exception ex){File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"update-error.txt"),ex.ToString());MessageBox.Show("อัปเดต Launcher ไม่สำเร็จ รุ่นเดิมยังอยู่\n"+ex.Message,"PTVgame");}
+   }catch(Exception ex){File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"update-error.txt"),ex.ToString());MessageBox.Show(AppLanguage.T("อัปเดต Launcher ไม่สำเร็จ รุ่นเดิมยังอยู่\n")+ex.Message,"PTVgame");}
    return true;
   }
   public static void Apply(string source,string target) {
-   if(!File.Exists(Path.Combine(source,"PTVgame-Launcher.exe"))||!File.Exists(Path.Combine(source,"catalog.json")))throw new Exception("แพ็กเกจ Launcher ไม่ครบ");
+   if(!File.Exists(Path.Combine(source,"PTVgame-Launcher.exe"))||!File.Exists(Path.Combine(source,"catalog.json")))throw new Exception(AppLanguage.T("แพ็กเกจ Launcher ไม่ครบ"));
    var files=Directory.GetFiles(source,"*",SearchOption.AllDirectories);
    string prefix=Path.GetFullPath(source).TrimEnd(Path.DirectorySeparatorChar)+Path.DirectorySeparatorChar;
    // Only launcher payload files are replaced. Games and user settings live elsewhere.

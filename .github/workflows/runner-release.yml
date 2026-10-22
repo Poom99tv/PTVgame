@@ -20,7 +20,7 @@ jobs:
     runs-on: windows-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      RELEASE_TAG: launcher-v1.7.3
+      RELEASE_TAG: launcher-v1.7.4
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,15 +45,15 @@ jobs:
           New-Item -ItemType Directory dist/launcher -Force|Out-Null
           Copy-Item PTVgame-Launcher.exe,catalog.json,README.md dist/launcher
           Copy-Item assets dist/launcher -Recurse
-          Compress-Archive dist/launcher/* dist/PTVgame-Windows-v1.7.3.zip
-          Compress-Archive dist/TikTokBridge-v7.exe dist/PTVRunner-Bridge-v7.0.1.zip
+          Compress-Archive dist/launcher/* dist/PTVgame-Windows-v1.7.4.zip
+          Compress-Archive dist/TikTokBridge-v7.exe dist/PTVRunner-Bridge-v7.0.2.zip
       - name: Upload release assets before changing manifests
         shell: pwsh
         run: |
           gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY 2>$null
-          if($LASTEXITCODE-ne 0){gh release create $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'PTVRunner + Launcher 1.7.3' --notes 'PTVRunner opens Roblox and TikTokBridge together. Pair your private server from the in-game gear. Includes illustrated PTVRunner cover based on the actual map.' --latest=false}
+          if($LASTEXITCODE-ne 0){gh release create $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'PTVRunner + Launcher 1.7.4' --notes 'PTVRunner opens Roblox and TikTokBridge together. Pair your private server from the in-game gear. Includes illustrated PTVRunner cover based on the actual map.' --latest=false}
           if($LASTEXITCODE-ne 0){throw 'Release creation failed'}
-          gh release upload $env:RELEASE_TAG dist/PTVgame-Windows-v1.7.3.zip dist/PTVRunner-Bridge-v7.0.1.zip dist/TikTokBridge-v7.exe --repo $env:GITHUB_REPOSITORY --clobber
+          gh release upload $env:RELEASE_TAG dist/PTVgame-Windows-v1.7.4.zip dist/PTVRunner-Bridge-v7.0.2.zip dist/TikTokBridge-v7.exe --repo $env:GITHUB_REPOSITORY --clobber
           if($LASTEXITCODE-ne 0){throw 'Asset upload failed'}
       - name: Publish verified manifests
         shell: pwsh
@@ -62,10 +62,10 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git pull --rebase origin main
           $base="https://github.com/$env:GITHUB_REPOSITORY/releases/download/$env:RELEASE_TAG/"
-          foreach($s in @(@{file='PTVgame-Windows-v1.7.3.zip';version='1.7.3';exe='PTVgame-Launcher.exe';manifest='launcher.json'},@{file='PTVRunner-Bridge-v7.0.1.zip';version='7.0.1';exe='TikTokBridge-v7.exe';manifest='ptvrunner-bridge.json'})){
+          foreach($s in @(@{file='PTVgame-Windows-v1.7.4.zip';version='1.7.4';exe='PTVgame-Launcher.exe';manifest='launcher.json'},@{file='PTVRunner-Bridge-v7.0.2.zip';version='7.0.2';exe='TikTokBridge-v7.exe';manifest='ptvrunner-bridge.json'})){
             $p=Join-Path dist $s.file
             @{version=$s.version;url=$base+$s.file;sha256=(Get-FileHash $p -Algorithm SHA256).Hash.ToLower();size=(Get-Item $p).Length;executable=$s.exe}|ConvertTo-Json|Set-Content (Join-Path release-manifests $s.manifest) -Encoding utf8NoBOM
           }
           git add release-manifests/launcher.json release-manifests/ptvrunner-bridge.json
           git diff --cached --quiet
-          if($LASTEXITCODE-ne 0){git commit -m 'Publish PTVRunner and Launcher 1.7.3 download manifests';git push origin HEAD:main;if($LASTEXITCODE-ne 0){throw 'Manifest push failed'}}
+          if($LASTEXITCODE-ne 0){git commit -m 'Publish PTVRunner and Launcher 1.7.4 download manifests';git push origin HEAD:main;if($LASTEXITCODE-ne 0){throw 'Manifest push failed'}}

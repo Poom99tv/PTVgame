@@ -7,6 +7,7 @@ foreach ($ref in $refs) { $arguments += '/reference:' + (Join-Path $framework $r
 $arguments += Join-Path $PSScriptRoot 'Launcher.cs'
 $arguments += Join-Path $PSScriptRoot 'LauncherShell.cs'
 $arguments += Join-Path $PSScriptRoot 'LauncherUpdate.cs'
+$arguments += Join-Path $PSScriptRoot 'LauncherLanguage.cs'
 & (Join-Path $framework 'csc.exe') $arguments
 if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 Write-Host "Build complete: $OutputName"

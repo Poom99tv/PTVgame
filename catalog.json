@@ -5,7 +5,8 @@
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvcar.json",
     "name": "PTVCar",
     "id": "ptvcar",
-    "cover": "assets/ptvcar-v2.png"
+    "cover": "assets/ptvcar-v2.png",
+    "descriptionEn": "PTVCar for Windows"
   },
   {
     "description": "PTVvs • นักสู้ประลองในสนามจากโปรเจกต์ SuMo",
@@ -13,7 +14,8 @@
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvvs.json",
     "name": "PTVvs",
     "id": "sumo",
-    "cover": "assets/ptvvs.png"
+    "cover": "assets/ptvvs.png",
+    "descriptionEn": "PTVvs • Arena fighting from the SuMo project"
   },
   {
     "id": "paintworld",
@@ -21,7 +23,8 @@
     "description": "ยิงสีฟ้าระบายลานให้ทั่ว พร้อมรับมือสีแดงที่เข้ามารบกวน",
     "category": "Unity",
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/paintworld.json",
-    "cover": "assets/paintworld-wide.png"
+    "cover": "assets/paintworld-wide.png",
+    "descriptionEn": "Cover the arena in blue paint while holding off the red team"
   },
   {
     "id": "ptvboat",
@@ -29,7 +32,8 @@
     "description": "เรือรบประลองกลางทะเลและเกาะ พร้อมระบบ TikTok Live",
     "category": "Unity",
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvboat.json",
-    "cover": "assets/ptvboat.png"
+    "cover": "assets/ptvboat.png",
+    "descriptionEn": "Naval battles across islands with TikTok LIVE integration"
   },
   {
     "id": "ptvrunner",
@@ -40,7 +44,8 @@
     "category": "Roblox",
     "placeId": "71880688656931",
     "companionManifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvrunner-bridge.json",
-    "cover": "assets/ptvrunner.jpg"
+    "cover": "assets/ptvrunner.jpg",
+    "descriptionEn": "Race 12 km across islands • Launch Roblox and TikTokBridge together, then pair your LIVE in private server settings"
   },
   {
     "description": "แมพ Roblox • 78508971781182",
@@ -48,7 +53,8 @@
     "placeId": "78508971781182",
     "name": "Per Fun Box",
     "id": "roblox-box-1",
-    "cover": "assets/roblox-box-1.png"
+    "cover": "assets/roblox-box-1.png",
+    "descriptionEn": "Roblox experience • 78508971781182"
   },
   {
     "description": "แมพ Roblox • 72721337468698",
@@ -56,7 +62,8 @@
     "placeId": "72721337468698",
     "name": "Fun Ladder",
     "id": "roblox-unnamed",
-    "cover": "assets/roblox-unnamed.png"
+    "cover": "assets/roblox-unnamed.png",
+    "descriptionEn": "Roblox experience • 72721337468698"
   },
   {
     "description": "แมพ Roblox • 117977885975665",
@@ -64,7 +71,8 @@
     "placeId": "117977885975665",
     "name": "PTY jump",
     "id": "roblox-pty-jump",
-    "cover": "assets/roblox-pty-jump.png"
+    "cover": "assets/roblox-pty-jump.png",
+    "descriptionEn": "Roblox experience • 117977885975665"
   },
   {
     "description": "แมพ Roblox • 86222058260862",
@@ -72,6 +80,7 @@
     "placeId": "86222058260862",
     "name": "Gear Box",
     "id": "roblox-box-2",
-    "cover": "assets/roblox-box-2.png"
+    "cover": "assets/roblox-box-2.png",
+    "descriptionEn": "Roblox experience • 86222058260862"
   }
 ]
