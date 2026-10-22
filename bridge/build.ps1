@@ -2,7 +2,8 @@ $ErrorActionPreference='Stop'
 $stage=Join-Path $PSScriptRoot 'payload'
 $dist=Join-Path (Split-Path $PSScriptRoot -Parent) 'dist'
 New-Item -ItemType Directory -Path $stage,$dist -Force|Out-Null
-$nodeRelease=Invoke-RestMethod 'https://nodejs.org/dist/index.json' | Where-Object {$_.version -like 'v24.*' -and $_.lts} | Select-Object -First 1
+$nodeIndex=Invoke-RestMethod 'https://nodejs.org/dist/index.json'
+$nodeRelease=$nodeIndex | Where-Object {$_.version -like 'v24.*' -and $_.lts} | Select-Object -First 1
 if(-not $nodeRelease){throw 'Node 24 LTS unavailable'}
 $nodeBase='https://nodejs.org/dist/'+$nodeRelease.version
 Invoke-WebRequest ($nodeBase+'/win-x64/node.exe') -OutFile (Join-Path $stage 'node.exe')
@@ -24,3 +25,4 @@ if($LASTEXITCODE-ne 0){throw 'Bridge compile failed'}
 $env:BRIDGE_TEST_ONLY='1'
 try{$p=Start-Process $exe -ArgumentList @('--smoke-test',('"'+(Join-Path $dist 'bridge-smoke')+'"'),('"'+(Join-Path $dist 'bridge-smoke.json')+'"')) -WindowStyle Hidden -Wait -PassThru;if($p.ExitCode-ne 0){throw 'Bridge smoke test failed'}}finally{Remove-Item Env:BRIDGE_TEST_ONLY -ErrorAction SilentlyContinue}
 Get-Content (Join-Path $dist 'bridge-smoke.json')
+
