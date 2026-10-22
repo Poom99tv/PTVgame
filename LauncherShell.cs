@@ -93,7 +93,10 @@ namespace PTVgame {
    sections.Children.Add(new Border { Height=1,Background=ColorBrush("#18405D"),Margin=new Thickness(0,19,0,19) });
   }
   Image Picture(Game g) {
-   var image=new Image { Stretch=Stretch.UniformToFill }; try { string file=System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,g.cover??("assets/"+g.id+".png")); if(File.Exists(file)) { var bitmap=new BitmapImage(); bitmap.BeginInit(); bitmap.CacheOption=BitmapCacheOption.OnLoad; bitmap.UriSource=new Uri(file); bitmap.EndInit(); bitmap.Freeze(); image.Source=bitmap; } } catch {} return image;
+   var image=new Image { Stretch=Stretch.UniformToFill }; try { string file=System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,g.cover??("assets/"+g.id+".png")); if(File.Exists(file)) { var bitmap=new BitmapImage(); bitmap.BeginInit(); bitmap.CacheOption=BitmapCacheOption.OnLoad; bitmap.UriSource=new Uri(file); bitmap.EndInit(); bitmap.Freeze(); image.Source=bitmap; } } catch {} if(!string.IsNullOrWhiteSpace(g.universeId))RefreshRobloxPicture(g,image);return image;
+  }
+  async void RefreshRobloxPicture(Game g,Image image){
+   try{var bytes=await RobloxArtwork.Get(g.universeId);using(var stream=new MemoryStream(bytes)){var bitmap=new BitmapImage();bitmap.BeginInit();bitmap.CacheOption=BitmapCacheOption.OnLoad;bitmap.StreamSource=stream;bitmap.EndInit();bitmap.Freeze();image.Source=bitmap;}}catch{} // keep packaged artwork if Roblox is unavailable
   }
   UIElement Card(Game g,double height) {
    var panel=new StackPanel { Margin=new Thickness(6,0,6,0) }; var art=new Grid { Height=height };
@@ -101,7 +104,13 @@ namespace PTVgame {
    var overlay=new Border { VerticalAlignment=VerticalAlignment.Bottom,Height=52,Background=new LinearGradientBrush(Colors.Transparent,Color.FromArgb(175,0,10,22),90),CornerRadius=new CornerRadius(0,0,8,8),IsHitTestVisible=false }; art.Children.Add(overlay);
    var play=Btn("▶",ColorBrush("#B000203B")); play.Template=(ControlTemplate)System.Windows.Markup.XamlReader.Parse("<ControlTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' TargetType='Button'><Border Background='{TemplateBinding Background}' BorderBrush='White' BorderThickness='2' CornerRadius='18'><ContentPresenter HorizontalAlignment='Center' VerticalAlignment='Center'/></Border></ControlTemplate>"); play.Width=36;play.Height=36;play.Padding=new Thickness(0);play.HorizontalAlignment=HorizontalAlignment.Right;play.VerticalAlignment=VerticalAlignment.Bottom;play.Margin=new Thickness(0,0,10,10);play.BorderBrush=Brushes.White;play.BorderThickness=new Thickness(2);play.ToolTip=g.category=="Roblox"?"เปิดแมพ Roblox":"เปิดรายละเอียดและเล่นเกม"; art.Children.Add(play); play.Click+=(s,e)=> { if(g.category=="Roblox")OpenRoblox(g);else { selected=g.id;Render(); } };
    cover.MouseLeftButtonUp+=(s,e)=>{selected=g.id;Render();};cover.Cursor=Cursors.Hand;
-   var fav=Btn(settings.favorites.Contains(g.id)?"♥":"♡",ColorBrush("#9900172B"));fav.Width=29;fav.Height=29;fav.Padding=new Thickness(0);fav.HorizontalAlignment=HorizontalAlignment.Left;fav.VerticalAlignment=VerticalAlignment.Top;fav.Margin=new Thickness(8);fav.Click+=(s,e)=>ToggleFavorite(g);art.Children.Add(fav);
+   if(!string.IsNullOrWhiteSpace(g.newBadge)){
+    string file=Updater.SafePath(AppDomain.CurrentDomain.BaseDirectory,g.newBadge);
+    if(File.Exists(file)){
+     var badge=new Image {Source=new BitmapImage(new Uri(file)),Width=height*.45,Height=height*.45,HorizontalAlignment=HorizontalAlignment.Left,VerticalAlignment=VerticalAlignment.Top,Margin=new Thickness(-2,-2,0,0),IsHitTestVisible=false,Stretch=Stretch.Uniform};art.Children.Add(badge);
+    }
+   }
+   var fav=Btn(settings.favorites.Contains(g.id)?"♥":"♡",ColorBrush("#9900172B"));fav.Width=29;fav.Height=29;fav.Padding=new Thickness(0);fav.HorizontalAlignment=string.IsNullOrWhiteSpace(g.newBadge)?HorizontalAlignment.Left:HorizontalAlignment.Right;fav.VerticalAlignment=VerticalAlignment.Top;fav.Margin=new Thickness(8);fav.Click+=(s,e)=>ToggleFavorite(g);art.Children.Add(fav);
    panel.Children.Add(art);var name=Text(g.name,16);name.FontWeight=FontWeights.SemiBold;name.HorizontalAlignment=HorizontalAlignment.Center;name.Margin=new Thickness(0,7,0,2);panel.Children.Add(name);
    if(g.category!="Roblox") { var installed=Storage.Current(g); var action=Btn(installed==null?"↓  ติดตั้งเกม":"▶  เล่นเกม",installed==null?ColorBrush("#104875"):accent);action.IsEnabled=!busy;action.HorizontalContentAlignment=HorizontalAlignment.Center;action.FontSize=12;action.Margin=new Thickness(0,6,0,0);action.Click+=async(s,e)=>{if(Storage.Current(g)==null)await Install(g,false);else await Play(g);};panel.Children.Add(action); }
    return panel;
@@ -122,7 +131,7 @@ namespace PTVgame {
    var auto=new CheckBox { Content="อัปเดตเกมที่ติดตั้งเมื่อเปิด Launcher",IsChecked=settings.autoUpdate,Foreground=Foreground,Margin=new Thickness(0,25,0,20) };sections.Children.Add(auto);auto.Click+=(s,e)=>{settings.autoUpdate=auto.IsChecked==true;Save();};
    var launcherUpdate=Btn("ตรวจอัปเดต Launcher",accent);sections.Children.Add(launcherUpdate);launcherUpdate.Click+=async(s,e)=>await UpdateLauncher();
    var folder=Btn("เปิดโฟลเดอร์เกม",ColorBrush("#193B58"));folder.HorizontalAlignment=HorizontalAlignment.Left;sections.Children.Add(folder);folder.Click+=(s,e)=>{Directory.CreateDirectory(Storage.Root);Process.Start("explorer.exe",Storage.Root);};
-   sections.Children.Add(new TextBlock { Text="PTVgame • Launcher 1.7.2\nภาพปก Roblox จากหน้าเกมจริง\nดาวน์โหลดเกมผ่าน GitHub Releases",Foreground=muted,Margin=new Thickness(0,30,0,0),TextWrapping=TextWrapping.Wrap });
+   sections.Children.Add(new TextBlock { Text="PTVgame • Launcher 1.7.3\nภาพปก Roblox จากหน้าเกมจริง\nดาวน์โหลดเกมผ่าน GitHub Releases",Foreground=muted,Margin=new Thickness(0,30,0,0),TextWrapping=TextWrapping.Wrap });
   }
   async Task<bool> UpdateLauncher() { if(busy)return false;busy=true;cancellation=new CancellationTokenSource(TimeSpan.FromMinutes(5));try { bool restart=await LauncherUpdate.Check(new Progress<string>(t=>status.Text=t),cancellation.Token);if(restart){busy=false;Application.Current.Shutdown();return true;} }catch(Exception ex){status.Text="ตรวจอัปเดต Launcher ไม่สำเร็จ: "+ex.Message;}finally{busy=false;cancellation.Dispose();}return false; }
   void Save() { try { Storage.Save(settingsPath,settings); }catch(Exception ex){status.Text="บันทึกการตั้งค่าไม่สำเร็จ: "+ex.Message;} }

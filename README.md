@@ -1,5 +1,7 @@
 # PTVgame — Windows Launcher
 
+Launcher 1.7.3 adds the selected gold NEW ribbon as a separate transparent PNG on the PTVRunner card. Its cover refreshes from the published Roblox experience thumbnail (universe 10771728798), with packaged artwork as an offline fallback. The ribbon does not modify the Roblox cover itself; favorites move to the card's upper right to keep the ribbon clear.
+
 Launcher 1.7.2 fixes updater ERROR_PARTIAL_COPY (ReadProcessMemory/WriteProcessMemory) when the old launcher exits. The updater now waits on a process handle without inspecting MainModule, handles already-exited processes, and runs the newly downloaded updater. Users currently blocked in an older Updater should close that dialog, extract the 1.7.2 ZIP to a fresh folder, and run PTVgame-Launcher.exe once from there. Installed games/settings remain in LocalAppData.
 
 TikTokBridge 7.0.1 / Launcher 1.7.1: fixes the unhandled “Requested Clipboard operation did not succeed” error. Copy retries when another application temporarily locks the clipboard. The pairing code is also visible in a read-only field for manual selection and Ctrl+C. Clipboard failure does not disconnect LIVE. Close the old bridge before opening the updated version and pair the game again.

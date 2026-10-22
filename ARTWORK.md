@@ -21,3 +21,7 @@ PTVBoat: assets/ptvboat.png was generated with image_gen from a live close-up of
 `assets/ptvrunner.jpg` was generated with the built-in imagegen tool using actual PTVRunner Studio screenshots as visual references: the waterfront numbered starting grid, navy/cyan/gold barriers, cheering crowd and forest island. It is illustrated promotional art, not an unaltered gameplay screenshot. Title: PTVRunner.
 
 Prompt: 16:9 stylized 3D promotional cover grounded in the actual map; blocky runners racing toward camera on numbered asphalt grid, turquoise ocean, cheering crowd, cyan/gold barriers, golden lightning on leading runner; bold white/cyan PTVRunner title; no settings UI or Studio chrome.
+# Gold NEW ribbon (2026-10-23)
+
+`assets/new-gold.png` is a transparent PNG drawn with built-in imagegen, selected option 2. Prompt: standalone diagonal gold corner ribbon, exact bold black NEW, white/gold bevel and restrained glow, folded ends, transparent outside; no game scene. Original retained in workspace outputs/PTVRunner/NEW-designs/new-gold-original.png. Launcher renders this image separately at the top left of the PTVRunner card.
+

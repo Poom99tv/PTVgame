@@ -16,10 +16,28 @@ using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace PTVgame {
- public class Game { public string id,name,description,manifestUrl,category; public string placeId,cover,companionManifestUrl; }
+ public class Game { public string id,name,description,manifestUrl,category; public string placeId,cover,companionManifestUrl,universeId,newBadge; }
  public class Manifest { public string version,url,sha256,executable; public long size; }
  public class Installed { public string version,folder,executable,sha256; }
  public class Settings { public string theme="Midnight"; public bool autoUpdate=true; public List<string> favorites=new List<string>(); }
+ public class RobloxThumbnail { public string state,imageUrl; }
+ public class RobloxThumbnailGroup { public RobloxThumbnail[] thumbnails; }
+ public class RobloxThumbnailResponse { public RobloxThumbnailGroup[] data; }
+ public static class RobloxArtwork {
+  static readonly HttpClient Http=new HttpClient {Timeout=TimeSpan.FromSeconds(8),MaxResponseContentBufferSize=8*1024*1024};
+  static readonly Dictionary<string,Task<byte[]>> Cache=new Dictionary<string,Task<byte[]>>();
+  public static Task<byte[]> Get(string universeId){
+   long id;if(!long.TryParse(universeId,out id)||id<=0)throw new Exception("Invalid Roblox universe");
+   lock(Cache){Task<byte[]> pending;if(!Cache.TryGetValue(universeId,out pending)){pending=Download(id);Cache[universeId]=pending;}return pending;}
+  }
+  static async Task<byte[]> Download(long id){
+   var json=await Http.GetStringAsync("https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds="+id+"&countPerUniverse=1&defaults=false&size=768x432&format=Png&isCircular=false");
+   var data=new JavaScriptSerializer().Deserialize<RobloxThumbnailResponse>(json);
+   var thumbnail=(data.data??new RobloxThumbnailGroup[0]).SelectMany(g=>g.thumbnails??new RobloxThumbnail[0]).FirstOrDefault(t=>t.state=="Completed");
+   Uri uri;if(thumbnail==null||!Uri.TryCreate(thumbnail.imageUrl,UriKind.Absolute,out uri)||uri.Scheme!="https"||!(uri.Host=="rbxcdn.com"||uri.Host.EndsWith(".rbxcdn.com",StringComparison.OrdinalIgnoreCase)))throw new Exception("Roblox cover is pending");
+   return await Http.GetByteArrayAsync(uri);
+  }
+ }
  public static class Storage {
   public static readonly string Root=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"PTVgame");
   public static readonly JavaScriptSerializer Json=new JavaScriptSerializer();
@@ -200,6 +218,8 @@ namespace PTVgame {
     Updater.Https(runner.companionManifestUrl);
     Assert(runner.companionManifestUrl.EndsWith("/ptvrunner-bridge.json"),"PTVRunner companion is updateable");
     Assert(File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,runner.cover)),"PTVRunner cover packaged");
+    Assert(runner.universeId=="10771728798","PTVRunner uses the actual Roblox cover");
+    Assert(runner.newBadge=="assets/new-gold.png"&&File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,runner.newBadge)),"Gold NEW artwork packaged");
     string zip=Path.Combine(root,"bad.zip"); using(var a=ZipFile.Open(zip,ZipArchiveMode.Create)) { using(var w=new StreamWriter(a.CreateEntry("../escape.txt").Open())) w.Write("bad"); }
     bool rejected=false; try { Updater.Extract(zip,Path.Combine(root,"out"),CancellationToken.None); } catch { rejected=true; } Assert(rejected,"zip traversal");
     string good=Path.Combine(root,"good.zip"); using(var a=ZipFile.Open(good,ZipArchiveMode.Create)) { using(var w=new StreamWriter(a.CreateEntry("Game/Data.txt").Open())) w.Write("ok"); }
