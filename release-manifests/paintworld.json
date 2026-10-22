@@ -1,8 +1,7 @@
 {
-  "size": 109358926,
+  "size": 109359374,
   "executable": "PaintWorld/PaintWorld.exe",
-  "version": "1.0.0",
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/paintworld-v1.0.0/PaintWorld.v1.0.0.zip",
-  "sha256": "f7695bceab23db1c9366dff33c32f52bea71a671f2ae0aed95986a839d52790c"
+  "version": "1.0.1",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/paintworld-v1.0.1/PaintWorld.v1.0.1.zip",
+  "sha256": "68d971d266b41d540e2196dc68b22fbf28b3ccb0e2682e776936d5f35f391501"
 }
-
