@@ -1,8 +1,7 @@
 {
+  "sha256": "2af07d32d5dfe29934ad804133ddf0b260205513fe5b69270eb5b93bc05120f3",
+  "version": "1.7.0",
   "executable": "PTVgame-Launcher.exe",
-  "sha256": "92c7f1a7b7c2f074b5461804820adf7cc87bf34f9e3e112ed1dab575124667d4",
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/ptvboat-v1.0.0/PTVgame-Windows-v1.6.0.zip",
-  "size": 17940871,
-  "version": "1.6.0"
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/launcher-v1.7.0/PTVgame-Windows-v1.7.0.zip",
+  "size": 18236816
 }
-
