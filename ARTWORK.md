@@ -16,3 +16,8 @@ assets/paintworld-wide.png is an original image_gen cover, derived from a camera
 
 
 PTVBoat: assets/ptvboat.png was generated with image_gen from a live close-up of PTVBoat_Ocean in the PTVBoat Unity project. It preserves the angular white-gray patrol ship, teal waterline, dark stern helipad and red-white fittings, with tropical ocean islands. Landscape composition fits the four-game row.
+# PTVRunner cover (2026-10-23)
+
+`assets/ptvrunner.jpg` was generated with the built-in imagegen tool using actual PTVRunner Studio screenshots as visual references: the waterfront numbered starting grid, navy/cyan/gold barriers, cheering crowd and forest island. It is illustrated promotional art, not an unaltered gameplay screenshot. Title: PTVRunner.
+
+Prompt: 16:9 stylized 3D promotional cover grounded in the actual map; blocky runners racing toward camera on numbered asphalt grid, turquoise ocean, cheering crowd, cyan/gold barriers, golden lightning on leading runner; bold white/cyan PTVRunner title; no settings UI or Studio chrome.

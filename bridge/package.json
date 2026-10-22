@@ -1,0 +1,14 @@
+{
+  "name": "island-race-tiktok-bridge",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "sharp": "0.35.5",
+    "tiktok-live-connector": "2.5.0"
+  }
+}

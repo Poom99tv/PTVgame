@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace PTVgame {
  public static class LauncherUpdate {
-  public const string Version="1.6.0";
+  public const string Version="1.7.0";
   public const string ManifestUrl="https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/launcher.json";
   public static bool IsNewer(string version) { return new System.Version(version)>new System.Version(Version); }
   public static async Task<bool> Check(IProgress<string> progress,CancellationToken token) {
@@ -50,7 +50,8 @@ namespace PTVgame {
    }catch{foreach(string rel in changed.AsEnumerable().Reverse()){string dest=Updater.SafePath(target,rel),saved=Updater.SafePath(backup,rel);if(File.Exists(saved))File.Copy(saved,dest,true);else if(File.Exists(dest))File.Delete(dest);}throw;}
   }
   public static void Test(string root) {
-   if(!IsNewer("1.7.0")||IsNewer("1.6.0")||IsNewer("1.3.0"))throw new Exception("Self-update version policy failed");
+   var currentVersion=new Version(Version);var nextVersion=new Version(currentVersion.Major,currentVersion.Minor+1,0);
+   if(!IsNewer(nextVersion.ToString())||IsNewer(Version)||IsNewer("1.3.0"))throw new Exception("Self-update version policy failed");
    string source=Path.Combine(root,"payload"),target=Path.Combine(root,"launcher");Directory.CreateDirectory(source);Directory.CreateDirectory(target);
    File.WriteAllText(Path.Combine(source,"PTVgame-Launcher.exe"),"new");File.WriteAllText(Path.Combine(source,"catalog.json"),"new catalog");
    File.WriteAllText(Path.Combine(target,"PTVgame-Launcher.exe"),"old");File.WriteAllText(Path.Combine(target,"catalog.json"),"old catalog");
@@ -61,5 +62,3 @@ namespace PTVgame {
   }
  }
 }
-
-

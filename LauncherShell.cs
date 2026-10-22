@@ -122,11 +122,29 @@ namespace PTVgame {
    var auto=new CheckBox { Content="อัปเดตเกมที่ติดตั้งเมื่อเปิด Launcher",IsChecked=settings.autoUpdate,Foreground=Foreground,Margin=new Thickness(0,25,0,20) };sections.Children.Add(auto);auto.Click+=(s,e)=>{settings.autoUpdate=auto.IsChecked==true;Save();};
    var launcherUpdate=Btn("ตรวจอัปเดต Launcher",accent);sections.Children.Add(launcherUpdate);launcherUpdate.Click+=async(s,e)=>await UpdateLauncher();
    var folder=Btn("เปิดโฟลเดอร์เกม",ColorBrush("#193B58"));folder.HorizontalAlignment=HorizontalAlignment.Left;sections.Children.Add(folder);folder.Click+=(s,e)=>{Directory.CreateDirectory(Storage.Root);Process.Start("explorer.exe",Storage.Root);};
-   sections.Children.Add(new TextBlock { Text="PTVgame • Launcher 1.6.0\nภาพปก Roblox จากหน้าเกมจริง\nดาวน์โหลดเกมผ่าน GitHub Releases",Foreground=muted,Margin=new Thickness(0,30,0,0),TextWrapping=TextWrapping.Wrap });
+   sections.Children.Add(new TextBlock { Text="PTVgame • Launcher 1.7.0\nภาพปก Roblox จากหน้าเกมจริง\nดาวน์โหลดเกมผ่าน GitHub Releases",Foreground=muted,Margin=new Thickness(0,30,0,0),TextWrapping=TextWrapping.Wrap });
   }
   async Task<bool> UpdateLauncher() { if(busy)return false;busy=true;cancellation=new CancellationTokenSource(TimeSpan.FromMinutes(5));try { bool restart=await LauncherUpdate.Check(new Progress<string>(t=>status.Text=t),cancellation.Token);if(restart){busy=false;Application.Current.Shutdown();return true;} }catch(Exception ex){status.Text="ตรวจอัปเดต Launcher ไม่สำเร็จ: "+ex.Message;}finally{busy=false;cancellation.Dispose();}return false; }
   void Save() { try { Storage.Save(settingsPath,settings); }catch(Exception ex){status.Text="บันทึกการตั้งค่าไม่สำเร็จ: "+ex.Message;} }
-  void OpenRoblox(Game g) { long id;if(!long.TryParse(g.placeId,out id)||id<=0)return;try{Process.Start("roblox://placeId="+id);status.Text="กำลังเปิด "+g.name+" ใน Roblox";}catch(Exception ex){status.Text="เปิด Roblox ไม่สำเร็จ: "+ex.Message;} }
+  async void OpenRoblox(Game g) {
+   if(busy)return;long id;if(!long.TryParse(g.placeId,out id)||id<=0){status.Text="Roblox placeId ไม่ถูกต้อง";return;}
+   busy=true;cancellation=new CancellationTokenSource();progress.Visibility=Visibility.Visible;cancel.Visibility=Visibility.Visible;Render();
+   try {
+    if(!string.IsNullOrWhiteSpace(g.companionManifestUrl)){
+     var companion=new Game {id=g.id+"-bridge",manifestUrl=g.companionManifestUrl};
+     status.Text="กำลังเตรียม TikTokBridge สำหรับ "+g.name+"…";
+     var manifest=await Updater.Check(companion,cancellation.Token);
+     if(Updater.Newer(manifest,Storage.Current(companion)))await Updater.Install(companion,manifest,new Progress<string>(t=>status.Text=t),cancellation.Token);
+     var installed=Storage.Current(companion);
+     if(installed==null||new Version(installed.version)!=new Version(manifest.version)||!string.Equals(installed.sha256,manifest.sha256,StringComparison.OrdinalIgnoreCase)||!string.Equals(installed.executable,manifest.executable,StringComparison.OrdinalIgnoreCase))throw new Exception("TikTokBridge ยังไม่พร้อม กรุณาลองใหม่");
+     cancellation.Token.ThrowIfCancellationRequested();Updater.Play(companion);
+    }
+    Process.Start("roblox://placeId="+id);
+    status.Text="เปิด "+g.name+(string.IsNullOrWhiteSpace(g.companionManifestUrl)?" ใน Roblox":" และ TikTokBridge แล้ว • จับคู่ในห้องส่วนตัวผ่านรูปเฟือง");
+   }catch(OperationCanceledException){status.Text="ยกเลิกการเปิดเกมแล้ว";}
+   catch(Exception ex){status.Text="เปิด "+g.name+" ไม่สำเร็จ: "+ex.Message;}
+   finally{busy=false;cancellation.Dispose();cancellation=null;progress.Visibility=Visibility.Collapsed;cancel.Visibility=Visibility.Collapsed;Render();}
+  }
   async Task Play(Game g) {
    if(busy)return;busy=true;cancellation=new CancellationTokenSource();progress.Visibility=Visibility.Visible;cancel.Visibility=Visibility.Visible;Render();
    try {
@@ -154,8 +172,3 @@ namespace PTVgame {
   }
  }
 }
-
-
-
-
-

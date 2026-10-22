@@ -16,7 +16,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace PTVgame {
- public class Game { public string id,name,description,manifestUrl,category; public string placeId,cover; }
+ public class Game { public string id,name,description,manifestUrl,category; public string placeId,cover,companionManifestUrl; }
  public class Manifest { public string version,url,sha256,executable; public long size; }
  public class Installed { public string version,folder,executable,sha256; }
  public class Settings { public string theme="Midnight"; public bool autoUpdate=true; public List<string> favorites=new List<string>(); }
@@ -193,6 +193,13 @@ namespace PTVgame {
     Assert(Updater.Newer(m,new Installed {version="1.2.0",executable="Game.exe",sha256=new string('b',64)}),"same version changed package");
     Assert(!Updater.Newer(m,new Installed {version="1.2.0",executable="Game.exe",sha256=m.sha256}),"identical package stays current");
     LauncherUpdate.Test(root);
+    var catalogPath=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"catalog.json");
+    var catalog=Storage.Json.Deserialize<List<Game>>(File.ReadAllText(catalogPath));
+    var runner=catalog.Single(g=>g.id=="ptvrunner");
+    Assert(runner.placeId=="71880688656931"&&runner.category=="Roblox","PTVRunner targets the correct map");
+    Updater.Https(runner.companionManifestUrl);
+    Assert(runner.companionManifestUrl.EndsWith("/ptvrunner-bridge.json"),"PTVRunner companion is updateable");
+    Assert(File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,runner.cover)),"PTVRunner cover packaged");
     string zip=Path.Combine(root,"bad.zip"); using(var a=ZipFile.Open(zip,ZipArchiveMode.Create)) { using(var w=new StreamWriter(a.CreateEntry("../escape.txt").Open())) w.Write("bad"); }
     bool rejected=false; try { Updater.Extract(zip,Path.Combine(root,"out"),CancellationToken.None); } catch { rejected=true; } Assert(rejected,"zip traversal");
     string good=Path.Combine(root,"good.zip"); using(var a=ZipFile.Open(good,ZipArchiveMode.Create)) { using(var w=new StreamWriter(a.CreateEntry("Game/Data.txt").Open())) w.Write("ok"); }
@@ -203,6 +210,3 @@ namespace PTVgame {
   }
  }
 }
-
-
-

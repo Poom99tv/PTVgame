@@ -1,0 +1,10 @@
+*.exe
+*.zip
+test-results.txt
+bridge/payload/
+bridge/node_modules/
+bridge/config.local.json
+bridge/*runtime*/
+bridge/network-*.json
+bridge/gift-identities.json
+dist/

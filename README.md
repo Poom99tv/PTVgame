@@ -1,5 +1,17 @@
 # PTVgame — Windows Launcher
 
+## PTVRunner — Launcher 1.7.0
+
+PTVRunner เพิ่มในหมวด Roblox: กดเล่นแล้ว Launcher จะดาวน์โหลด/ตรวจ SHA-256 ของ TikTokBridge-v7 ให้อัตโนมัติ จากนั้นเปิดทั้งโปรแกรมและแมพ Roblox `71880688656931` พร้อมกัน เกมอื่นและค่าของผู้ใช้ยังอยู่เหมือนเดิม
+
+![PTVRunner](assets/ptvrunner.jpg)
+
+เข้าเซิร์ฟเวอร์ส่วนตัวของตัวเอง เปิด LIVE ใน TikTokBridge แล้วคัดลอกรหัสจับคู่ไปที่รูปเฟืองในเกม → TikTokBridge ↗ → Pair การตั้งค่าของขวัญทำในเกม เจ้าของห้องแต่ละคนใช้ LIVE ของตนเอง
+
+ดาวน์โหลดรุ่นใหม่จาก [Launcher 1.7.0](https://github.com/Poom99tv/PTVgame/releases/tag/launcher-v1.7.0) หลัง GitHub Actions สร้างสำเร็จ รุ่นเก่าที่รองรับ self-update จะรับการอัปเดตผ่าน manifest เดิม
+
+ซอร์ส bridge อยู่ใน `bridge/` ไม่มี token หรือ config ของเครื่องผู้พัฒนา Workflow `Build PTVRunner and Launcher` ทดสอบ สร้าง EXE และอัปโหลด Release ก่อนเปลี่ยน manifest เพื่อลดปัญหาลิงก์ดาวน์โหลดไม่พร้อม
+
 โปรแกรมต้นแบบ WPF/C# สำหรับ Windows พร้อมซอร์สและไฟล์ EXE ใช้ .NET Framework 4.8 ที่ติดมากับ Windows 10/11 โดยทั่วไป ไม่ต้องติดตั้ง .NET SDK
 
 ## เริ่มใช้
@@ -59,4 +71,3 @@ Third Unity game: Paint World (project paint gun), ID paintworld, stable manifes
 
 
 PTVBoat 1.0.0: fourth Unity game, silent version gate, stable manifest release-manifests/ptvboat.json, executable PTVBoat/PTVBoat.exe. Launcher 1.6.0 shows four Unity cards in one row. Its cover was illustrated from the actual PTVBoat_Ocean game and ship model. Existing self-updating launchers receive the new catalog and cover through the launcher update.
-
