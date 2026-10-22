@@ -1,0 +1,31 @@
+name: Build legacy updater recovery
+on:
+  push:
+    branches: [main]
+    paths: ['recovery/**', '.github/workflows/recovery-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  recovery:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test
+        shell: pwsh
+        run: |
+          & "$env:WINDIR/Microsoft.NET/Framework64/v4.0.30319/csc.exe" /nologo /target:winexe /platform:x64 /codepage:65001 /out:PTVgame-Recover-Update.exe /reference:System.Management.dll /reference:System.Windows.Forms.dll (Join-Path $pwd 'recovery/Recovery.cs')
+          if($LASTEXITCODE-ne 0){throw 'Build failed'}
+          $p=Start-Process ./PTVgame-Recover-Update.exe -ArgumentList @('--self-test',('"'+(Join-Path $pwd 'recovery-tests.txt')+'"')) -WindowStyle Hidden -Wait -PassThru
+          Get-Content recovery-tests.txt
+          if($p.ExitCode-ne 0){throw 'Recovery tests failed'}
+      - name: Publish recovery
+        shell: pwsh
+        run: |
+          gh release view updater-recovery-v1 --repo $env:GITHUB_REPOSITORY 2>$null
+          if($LASTEXITCODE-ne 0){gh release create updater-recovery-v1 --repo $env:GITHUB_REPOSITORY --title 'Repair existing PTVgame updater' --notes 'One-time recovery for old launchers stuck on ReadProcessMemory/WriteProcessMemory. Leave the error dialog open, close the main launcher, then run PTVgame-Recover-Update.exe. Reuses the existing downloaded package and updates the original folder. No reinstallation.' --latest=false}
+          if($LASTEXITCODE-ne 0){throw 'Release failed'}
+          gh release upload updater-recovery-v1 PTVgame-Recover-Update.exe --repo $env:GITHUB_REPOSITORY --clobber
+          if($LASTEXITCODE-ne 0){throw 'Upload failed'}
