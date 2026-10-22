@@ -16,7 +16,7 @@ jobs:
       - name: Build and test
         shell: pwsh
         run: |
-          & "$env:WINDIR/Microsoft.NET/Framework64/v4.0.30319/csc.exe" /nologo /target:winexe /platform:x64 /codepage:65001 /out:PTVgame-Recover-Update.exe /reference:System.Management.dll /reference:System.Windows.Forms.dll (Join-Path $pwd 'recovery/Recovery.cs')
+          & "$env:WINDIR/Microsoft.NET/Framework64/v4.0.30319/csc.exe" /nologo /target:winexe /platform:x64 /codepage:65001 /out:PTVgame-Recover-Update.exe /reference:System.Management.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll (Join-Path $pwd 'recovery/Recovery.cs')
           if($LASTEXITCODE-ne 0){throw 'Build failed'}
           $p=Start-Process ./PTVgame-Recover-Update.exe -ArgumentList @('--self-test',('"'+(Join-Path $pwd 'recovery-tests.txt')+'"')) -WindowStyle Hidden -Wait -PassThru
           Get-Content recovery-tests.txt

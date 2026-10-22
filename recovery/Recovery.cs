@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Web.Script.Serialization;
+using System.Collections.Generic;
 
 static class Recovery {
  [DllImport("shell32.dll",SetLastError=true)]static extern IntPtr CommandLineToArgvW([MarshalAs(UnmanagedType.LPWStr)]string command,out int count);
@@ -18,6 +20,11 @@ static class Recovery {
   if(!Within(a[0],Path.GetTempPath())||Path.GetFileName(a[0])!="Updater.exe"||!Path.GetFileName(Path.GetDirectoryName(a[0])).StartsWith("PTVgame-update-",StringComparison.Ordinal))throw new Exception("ไม่ใช่ Updater ของ PTVgame");
   string cache=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"PTVgame","games","launcher");
   if(!Within(a[4],cache)||!Path.GetFileName(a[4]).StartsWith("build-",StringComparison.Ordinal))throw new Exception("ไม่ใช่แพ็กเกจที่ Launcher ดาวน์โหลดไว้");
+  var saved=new JavaScriptSerializer().Deserialize<Dictionary<string,object>>(File.ReadAllText(Path.Combine(cache,"installed.json")));
+  if(new Version(Convert.ToString(saved["version"]))<new Version("1.7.2"))throw new Exception("กรุณาเปิดตัวเก่าแล้วกดตรวจอัปเดตอีกครั้งเพื่อรับแพ็กเกจ 1.7.2 จากนั้นเปิดไฟล์ซ่อมเมื่อขึ้นข้อผิดพลาด");
+  string latest=Convert.ToString(saved["folder"]);
+  if(!Within(latest,cache)||!Path.GetFileName(latest).StartsWith("build-",StringComparison.Ordinal))throw new Exception("ตำแหน่งแคชไม่ถูกต้อง");
+  a[4]=latest;
   if(!File.Exists(a[0])||!File.Exists(Path.Combine(a[3],"PTVgame-Launcher.exe"))||!File.Exists(Path.Combine(a[4],"PTVgame-Launcher.exe"))||!File.Exists(Path.Combine(a[4],"catalog.json")))throw new Exception("ไฟล์อัปเดตไม่ครบ กรุณาเปิดตัวเก่าแล้วกดตรวจอัปเดตอีกครั้ง");
  }
  [STAThread]static int Main(string[] args){
@@ -40,12 +47,12 @@ static class Recovery {
    if(command==null)throw new Exception("กรุณาเปิด Launcher ตัวเก่าและกดอัปเดตก่อน เมื่อขึ้นหน้าต่างข้อผิดพลาด ให้เปิดไฟล์ซ่อมนี้โดยปล่อยหน้าต่างข้อผิดพลาดไว้");
    if(!ParentGone(int.Parse(command[2])))throw new Exception("กรุณาปิดหน้าต่าง Launcher ตัวหลักก่อน แล้วเปิดไฟล์ซ่อมอีกครั้ง ปล่อยหน้าต่าง Updater ที่แจ้งข้อผิดพลาดไว้");
    using(var old=Process.GetProcessById(updaterPid)){old.CloseMainWindow();if(!old.WaitForExit(10000))throw new Exception("กรุณากด OK ที่หน้าต่างข้อผิดพลาดของ Updater แล้วลองใหม่");}
-   // The original signed-in-user updater and downloaded payload are reused.
+   // The new verified updater already downloaded by the old client is reused.
    // No files are patched, no process memory is read, and no process is killed.
    // Parent is confirmed exited; an absent PID bypasses the old faulty lookup.
    if(!ParentGone(int.MaxValue))throw new Exception("โปรดลองใหม่");
    string arguments="--apply-launcher "+int.MaxValue+" \""+command[3]+"\" \""+command[4]+"\"";
-   Process.Start(new ProcessStartInfo(command[0],arguments){UseShellExecute=false,WorkingDirectory=Path.GetDirectoryName(command[0])});
+   Process.Start(new ProcessStartInfo(Path.Combine(command[4],"PTVgame-Launcher.exe"),arguments){UseShellExecute=false,WorkingDirectory=command[4]});
    return 0;
   }catch(Exception e){MessageBox.Show(e.Message,"PTVgame • กู้การอัปเดต",MessageBoxButtons.OK,MessageBoxIcon.Information);return 1;}
  }
