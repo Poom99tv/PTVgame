@@ -36,6 +36,15 @@
     "descriptionEn": "Naval battles across islands with TikTok LIVE integration"
   },
   {
+    "id": "ptvegg",
+    "name": "PTVegg",
+    "description": "Acorn Rush • กระรอกวิ่งเก็บลูกโอ๊กในทุ่ง ของขวัญ TikTok LIVE ทำให้ฝนลูกโอ๊กตก",
+    "category": "Unity",
+    "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvegg.json",
+    "cover": "assets/ptvegg.png",
+    "descriptionEn": "Acorn Rush • A squirrel collects acorns across the meadow while TikTok LIVE gifts make acorns rain"
+  },
+  {
     "id": "ptvrunner",
     "universeId": "10771728798",
     "newBadge": "assets/new-gold.png",

@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace PTVgame {
  public static class LauncherUpdate {
-  public const string Version="1.7.4";
+  public const string Version="1.8.0";
   public const string ManifestUrl="https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/launcher.json";
   public static bool IsNewer(string version) { return new System.Version(version)>new System.Version(Version); }
   public static async Task<bool> Check(IProgress<string> progress,CancellationToken token) {

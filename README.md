@@ -1,5 +1,15 @@
 # PTVgame — Windows Launcher
 
+## PTVegg — Launcher 1.8.0
+
+เกม Unity ลำดับที่ 5: **PTVegg (Acorn Rush)** จากโปรเจกต์ PTVegg กระรอกวิ่งเก็บลูกโอ๊กในทุ่ง มีระบบ XP/สกิล และเชื่อม TikTok LIVE ก่อนเล่น ของขวัญทำให้ลูกโอ๊กตกลงมาในทุ่ง ตั้งแต่ +500 จะมีคัตซีนฝนลูกโอ๊ก เลือกภาษาอังกฤษ/ไทยได้ในเกม (เริ่มต้นเป็นภาษาอังกฤษ)
+
+![PTVegg](assets/ptvegg.png)
+
+ID `ptvegg`, manifest `release-manifests/ptvegg.json`, executable `PTVegg/PTVegg.exe`, เกมเวอร์ชัน 1.0.0 ใช้ silent mandatory update gate แบบเดียวกับเกม Unity อื่น ZIP มีโฟลเดอร์ `TikTokBridge` (Node runtime) ข้าง EXE สคริปต์ gate/build อยู่ใน `unity-update/PTVegg/` ภาพปกเรนเดอร์จากฉากจริงในเกม ดู ARTWORK.md
+
+ลำดับการปล่อย: อัปโหลด `PTVegg.v1.0.0.zip` ไปที่ Release `ptvegg-v1.0.0` ก่อน แล้วจึง push `release-manifests/ptvegg.json` และ catalog/ภาพปก (Launcher 1.8.0 สร้างผ่าน GitHub Actions เมื่อ push)
+
 Launcher 1.7.3 adds the selected gold NEW ribbon as a separate transparent PNG on the PTVRunner card. Its cover refreshes from the published Roblox experience thumbnail (universe 10771728798), with packaged artwork as an offline fallback. The ribbon does not modify the Roblox cover itself; favorites move to the card's upper right to keep the ribbon clear.
 
 Launcher 1.7.2 fixes updater ERROR_PARTIAL_COPY (ReadProcessMemory/WriteProcessMemory) when the old launcher exits. The updater now waits on a process handle without inspecting MainModule, handles already-exited processes, and runs the newly downloaded updater. Users currently blocked in an older Updater should close that dialog, extract the 1.7.2 ZIP to a fresh folder, and run PTVgame-Launcher.exe once from there. Installed games/settings remain in LocalAppData.

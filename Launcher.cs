@@ -227,6 +227,8 @@ namespace PTVgame {
     Assert(File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,runner.cover)),"PTVRunner cover packaged");
     Assert(runner.universeId=="10771728798","PTVRunner uses the actual Roblox cover");
     Assert(runner.newBadge=="assets/new-gold.png"&&File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,runner.newBadge)),"Gold NEW artwork packaged");
+    var egg=catalog.Single(g=>g.id=="ptvegg");Updater.Https(egg.manifestUrl);
+    Assert(egg.category=="Unity"&&egg.manifestUrl.EndsWith("/ptvegg.json")&&File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,egg.cover)),"PTVegg listed with its packaged cover");
     string zip=Path.Combine(root,"bad.zip"); using(var a=ZipFile.Open(zip,ZipArchiveMode.Create)) { using(var w=new StreamWriter(a.CreateEntry("../escape.txt").Open())) w.Write("bad"); }
     bool rejected=false; try { Updater.Extract(zip,Path.Combine(root,"out"),CancellationToken.None); } catch { rejected=true; } Assert(rejected,"zip traversal");
     string good=Path.Combine(root,"good.zip"); using(var a=ZipFile.Open(good,ZipArchiveMode.Create)) { using(var w=new StreamWriter(a.CreateEntry("Game/Data.txt").Open())) w.Write("ok"); }
