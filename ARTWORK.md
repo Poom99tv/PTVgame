@@ -24,6 +24,6 @@ Prompt: 16:9 stylized 3D promotional cover grounded in the actual map; blocky ru
 # Gold NEW ribbon (2026-10-23)
 
 `assets/new-gold.png` is a transparent PNG drawn with built-in imagegen, selected option 2. Prompt: standalone diagonal gold corner ribbon, exact bold black NEW, white/gold bevel and restrained glow, folded ends, transparent outside; no game scene. Original retained in workspace outputs/PTVRunner/NEW-designs/new-gold-original.png. Launcher renders this image separately at the top left of the PTVRunner card.
-# PTVegg cover (2026-10-28)
+# Acorn Rush cover (2026-10-28)
 
-`assets/ptvegg.png` (1280×720) is a real render from the PTVegg Unity project, not generated art: a low camera beside the squirrel player in the acorn meadow (PTVegg_Map) while the in-game gift cutscene rains acorns from the sky. Only colour grading, a vignette, the game's own wooden title plate (fr_title_header) with the PTVegg title and an "ACORN RUSH • TikTok LIVE" ribbon were added. The title sits inside the centre 70% so it survives the card crop.
+`assets/ptvegg.png` (1280×720) is a real render from the PTVegg Unity project, not generated art: a low camera beside the squirrel player in the acorn meadow (PTVegg_Map) while the in-game gift cutscene rains acorns from the sky. Only colour grading, a vignette, the game's own wooden title plate (fr_title_header) with the in-game title ACORN RUSH and a "SQUIRREL ACORN HUNT • TikTok LIVE" ribbon were added. The title sits inside the centre 70% so it survives the card crop.

@@ -52,7 +52,7 @@ jobs:
         shell: pwsh
         run: |
           gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY 2>$null
-          if($LASTEXITCODE-ne 0){gh release create $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'PTVegg + Launcher 1.8.0' --notes 'Adds PTVegg (Acorn Rush) to the Unity games with its cover rendered from the actual game. PTVRunner still opens Roblox and TikTokBridge together.' --latest=false}
+          if($LASTEXITCODE-ne 0){gh release create $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'Acorn Rush + Launcher 1.8.0' --notes 'Adds Acorn Rush (PTVegg project) to the Unity games with its cover rendered from the actual game. PTVRunner still opens Roblox and TikTokBridge together.' --latest=false}
           if($LASTEXITCODE-ne 0){throw 'Release creation failed'}
           gh release upload $env:RELEASE_TAG dist/PTVgame-Windows-v1.8.0.zip dist/PTVRunner-Bridge-v7.0.2.zip dist/TikTokBridge-v7.exe --repo $env:GITHUB_REPOSITORY --clobber
           if($LASTEXITCODE-ne 0){throw 'Asset upload failed'}
@@ -69,4 +69,4 @@ jobs:
           }
           git add release-manifests/launcher.json release-manifests/ptvrunner-bridge.json
           git diff --cached --quiet
-          if($LASTEXITCODE-ne 0){git commit -m 'Publish Launcher 1.8.0 (PTVegg) download manifests';git push origin HEAD:main;if($LASTEXITCODE-ne 0){throw 'Manifest push failed'}}
+          if($LASTEXITCODE-ne 0){git commit -m 'Publish Launcher 1.8.0 (Acorn Rush) download manifests';git push origin HEAD:main;if($LASTEXITCODE-ne 0){throw 'Manifest push failed'}}

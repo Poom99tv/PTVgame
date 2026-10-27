@@ -37,12 +37,12 @@
   },
   {
     "id": "ptvegg",
-    "name": "PTVegg",
-    "description": "Acorn Rush • กระรอกวิ่งเก็บลูกโอ๊กในทุ่ง ของขวัญ TikTok LIVE ทำให้ฝนลูกโอ๊กตก",
+    "name": "Acorn Rush",
+    "description": "กระรอกวิ่งเก็บลูกโอ๊กในทุ่ง • ของขวัญ TikTok LIVE ทำให้ฝนลูกโอ๊กตก",
     "category": "Unity",
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvegg.json",
     "cover": "assets/ptvegg.png",
-    "descriptionEn": "Acorn Rush • A squirrel collects acorns across the meadow while TikTok LIVE gifts make acorns rain"
+    "descriptionEn": "A squirrel collects acorns across the meadow • TikTok LIVE gifts make acorns rain"
   },
   {
     "id": "ptvrunner",

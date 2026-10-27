@@ -10,7 +10,7 @@ using UnityEngine.InputSystem.UI;
 // This is a client-side update gate, not anti-tamper or server authentication.
 [DefaultExecutionOrder(-32000)]
 public sealed class PTVVersionGate : MonoBehaviour {
- public const string GameName="PTVegg";
+ public const string GameName="Acorn Rush";
  public const string ManifestUrl="https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvegg.json";
  public const string EntryScene="PTVegg_Map";
  public const string BootstrapScene="PTVVersionGate";

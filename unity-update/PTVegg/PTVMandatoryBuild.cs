@@ -17,7 +17,7 @@ public sealed class PTVMandatoryBuildValidator : IPreprocessBuildWithReport,IPro
 public static class PTVMandatoryBuild {
  static readonly string Root="C:/Users/Windows 11 Pro/PTVegg/Builds";
  public const string Version="1.0.0";
- static string Name{get{return "PTVegg";}}
+ static string Name{get{return "AcornRush";}}
  public static string Run(){Directory.CreateDirectory(Root);File.WriteAllText(Root+"/"+Name+"-build-status.txt","SCHEDULED");EditorApplication.delayCall+=Build;return "Build scheduled: "+Name;}
  static void Build(){try{
   File.WriteAllText(Root+"/"+Name+"-build-status.txt","BUILDING");EditorSceneManager.SaveOpenScenes();
@@ -25,10 +25,10 @@ public static class PTVMandatoryBuild {
   if(!File.Exists(path)){var bootstrap=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Additive);EditorSceneManager.SaveScene(bootstrap,path);EditorSceneManager.CloseScene(bootstrap,true);}
   string[] entries=new[]{"Assets/Scenes/PTVegg_Map.unity"};
   var scenes=new[]{path}.Concat(entries).ToArray();EditorBuildSettings.scenes=scenes.Select(s=>new EditorBuildSettingsScene(s,true)).ToArray();
-  PlayerSettings.bundleVersion=Version;PlayerSettings.productName="PTVegg";PlayerSettings.runInBackground=true;PlayerSettings.resizableWindow=true;PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.defaultScreenWidth=1280;PlayerSettings.defaultScreenHeight=720;
+  PlayerSettings.bundleVersion=Version;PlayerSettings.productName="Acorn Rush";PlayerSettings.runInBackground=true;PlayerSettings.resizableWindow=true;PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.defaultScreenWidth=1280;PlayerSettings.defaultScreenHeight=720;
   PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);
 
-  AssetDatabase.SaveAssets();string folder=Root+"/"+Name+"-"+Version+"/"+Name;Directory.CreateDirectory(folder);   // ZIP the version folder -> PTVegg/PTVegg.exe
+  AssetDatabase.SaveAssets();string folder=Root+"/"+Name+"-"+Version+"/"+Name;Directory.CreateDirectory(folder);   // ZIP the version folder -> AcornRush/AcornRush.exe
   var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=scenes,locationPathName=folder+"/"+Name+".exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.CompressWithLz4HC});
   File.WriteAllText(Root+"/"+Name+"-build-status.txt",report.summary.result+"\nErrors="+report.summary.totalErrors+"\nBytes="+report.summary.totalSize+"\nDuration="+report.summary.totalTime);
  }catch(Exception e){File.WriteAllText(Root+"/"+Name+"-build-status.txt","FAILED\n"+e);Debug.LogException(e);}}
