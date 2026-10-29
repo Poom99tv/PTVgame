@@ -1,7 +1,7 @@
 {
-  "version": "1.0.1",
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/ptvegg-v1.0.1/AcornRush.v1.0.1.zip",
-  "sha256": "1ed8b3b62829d55fcf3b513f1db0d6ed30eaf37dbbaf98c094e8db6111d12602",
-  "size": 142246148,
+  "version": "1.0.2",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/ptvegg-v1.0.2/AcornRush.v1.0.2.zip",
+  "sha256": "21f769ef7c2f0c404eff97d2d911e9c895b59c15b28ca303dd22d30ce78b835f",
+  "size": 142109056,
   "executable": "AcornRush/AcornRush.exe"
 }
