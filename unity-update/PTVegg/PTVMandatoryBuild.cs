@@ -16,7 +16,7 @@ public sealed class PTVMandatoryBuildValidator : IPreprocessBuildWithReport,IPro
 }
 public static class PTVMandatoryBuild {
  static readonly string Root="C:/Users/Windows 11 Pro/PTVegg/Builds";
- public const string Version="1.0.0";
+ public const string Version="1.0.1";
  static string Name{get{return "AcornRush";}}
  public static string Run(){Directory.CreateDirectory(Root);File.WriteAllText(Root+"/"+Name+"-build-status.txt","SCHEDULED");EditorApplication.delayCall+=Build;return "Build scheduled: "+Name;}
  static void Build(){try{
