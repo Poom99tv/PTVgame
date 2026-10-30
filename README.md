@@ -6,9 +6,9 @@
 
 ![Acorn Rush](assets/ptvegg.png)
 
-ID `ptvegg`, manifest `release-manifests/ptvegg.json`, executable `AcornRush/AcornRush.exe`, เกมเวอร์ชัน 1.0.2 ใช้ silent mandatory update gate แบบเดียวกับเกม Unity อื่น ZIP มีโฟลเดอร์ `TikTokBridge` (Node runtime) ข้าง EXE สคริปต์ gate/build อยู่ใน `unity-update/PTVegg/` ภาพปกเรนเดอร์จากฉากจริงในเกม ดู ARTWORK.md
+ID `ptvegg`, manifest `release-manifests/ptvegg.json`, executable `AcornRush/AcornRush.exe`, เกมเวอร์ชัน 1.0.3 ใช้ silent mandatory update gate แบบเดียวกับเกม Unity อื่น ZIP มีโฟลเดอร์ `TikTokBridge` (Node runtime) ข้าง EXE สคริปต์ gate/build อยู่ใน `unity-update/PTVegg/` ภาพปกเรนเดอร์จากฉากจริงในเกม ดู ARTWORK.md
 
-ลำดับการปล่อย: อัปโหลด `AcornRush.v1.0.2.zip` ไปที่ Release `ptvegg-v1.0.2` ก่อน แล้วจึง push `release-manifests/ptvegg.json` และ catalog/ภาพปก (Launcher 1.8.0 สร้างผ่าน GitHub Actions เมื่อ push)
+ลำดับการปล่อย: อัปโหลด `AcornRush.v1.0.3.zip` ไปที่ Release `ptvegg-v1.0.3` ก่อน แล้วจึง push `release-manifests/ptvegg.json` และ catalog/ภาพปก (Launcher 1.8.0 สร้างผ่าน GitHub Actions เมื่อ push)
 
 Launcher 1.7.3 adds the selected gold NEW ribbon as a separate transparent PNG on the PTVRunner card. Its cover refreshes from the published Roblox experience thumbnail (universe 10771728798), with packaged artwork as an offline fallback. The ribbon does not modify the Roblox cover itself; favorites move to the card's upper right to keep the ribbon clear.
 
