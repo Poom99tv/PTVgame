@@ -1,3 +1,17 @@
+# Zombie Rush + PTVgame Launcher 1.9.0
+
+Zombie Rush is now available alongside the existing games. The display name matches the in-game logo.
+
+- [Zombie Rush 1.0.0 Windows release](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.0)
+- [PTVgame Launcher 1.9.0](https://github.com/Poom99tv/PTVgame/releases/tag/launcher-v1.9.0)
+- Windows x64 package: extract the entire ZIP, then open ZombieRush/ZombieRush.exe.
+- Includes TikTokBridge, Node.js runtime and dependencies. No separate Node.js install is needed.
+- Comic Chaos UI, English/Thai settings, GardenKit scenery, streamer profiles, and brief skill-sender profiles.
+- In-game product name: **Zombie Rush**. Technical Unity project folder: PVZ.
+- [Illustrated cover](assets/zombierush.png), based on the actual house, garden, zombie outfit and logo. Promotional illustration; not a gameplay screenshot.
+
+The launcher verifies the download size and SHA-256 before installation. Existing games and manifests remain available.
+
 # PTVgame — Windows Launcher
 
 ## Acorn Rush — Launcher 1.8.0
@@ -87,3 +101,4 @@ Third Unity game: Paint World (project paint gun), ID paintworld, stable manifes
 
 
 PTVBoat 1.0.0: fourth Unity game, silent version gate, stable manifest release-manifests/ptvboat.json, executable PTVBoat/PTVBoat.exe. Launcher 1.6.0 shows four Unity cards in one row. Its cover was illustrated from the actual PTVBoat_Ocean game and ship model. Existing self-updating launchers receive the new catalog and cover through the launcher update.
+

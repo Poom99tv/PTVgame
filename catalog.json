@@ -45,6 +45,15 @@
     "descriptionEn": "A squirrel collects acorns across the meadow • TikTok LIVE gifts make acorns rain"
   },
   {
+    "id": "zombierush",
+    "name": "Zombie Rush",
+    "description": "พาซอมบี้ฝ่าสวนไปกินสมอง! ผู้ชม TikTok LIVE ส่งของขวัญเพื่อช่วยหรือแกล้งด้วยสกิลต่าง ๆ พร้อมเมนูไทยและอังกฤษ",
+    "category": "Unity",
+    "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/zombierush.json",
+    "cover": "assets/zombierush.png",
+    "descriptionEn": "Guide a zombie through the garden to eat brains! TikTok LIVE viewers send gifts to help or prank the player with skills. Includes English and Thai menus."
+  },
+  {
     "id": "ptvrunner",
     "universeId": "10771728798",
     "newBadge": "assets/new-gold.png",
@@ -93,3 +102,4 @@
     "descriptionEn": "Roblox experience • 86222058260862"
   }
 ]
+

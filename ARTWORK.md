@@ -27,3 +27,11 @@ Prompt: 16:9 stylized 3D promotional cover grounded in the actual map; blocky ru
 # Acorn Rush cover (2026-10-28)
 
 `assets/ptvegg.png` (1280×720) is a real render from the PTVegg Unity project, not generated art: a low camera beside the squirrel player in the acorn meadow (PTVegg_Map) while the in-game gift cutscene rains acorns from the sky. Only colour grading, a vignette, the game's own wooden title plate (fr_title_header) with the in-game title ACORN RUSH and a "SQUIRREL ACORN HUNT • TikTok LIVE" ribbon were added. The title sits inside the centre 70% so it survives the card crop.
+
+
+## Zombie Rush
+
+`assets/zombierush.png` is a new 16:9 illustrated cover generated with the built-in ImageGen tool. Reference inputs were the current PVZ game capture (cream house, red tiled roof, GardenKit garden and brown-jacket zombie) and the actual ComicUI/logo.png. The cover is promotional artwork, not a screenshot. No streamer account names or profile photos are included.
+
+Prompt: Create a polished landscape promotional cover for ZOMBIE RUSH. Match the actual cream house, orange-red tiled roof, tall narrow dark wooden door, blue windows, flowerpots, leafy hedges, low-poly trees and lawn. Match the green zombie in a brown blazer, white shirt, red striped tie, blue jeans and brown shoes. Preserve the in-game lime/coral Comic Chaos logo and exact ZOMBIE RUSH title. Show the zombie running across the lawn with a rolling walnut and green peashooter at the edges. Bright daytime, warm sun, blue sky and white clouds. Keep the title inside the central safe area. Remove all HUD, skill lists, profiles, numbers and extra text.
+
