@@ -1,16 +1,20 @@
-# Zombie Rush + PTVgame Launcher 1.9.0
+# Zombie Rush 1.0.2 + PTVgame Launcher 1.9.0
 
-Zombie Rush **1.0.1** fixes RIP gravestones: walking collisions are harmless; skill impacts progressively fracture the original stone, then it crumbles and respawns intact. Launcher 1.9.0 downloads the update through the existing game manifest.
+Zombie Rush **1.0.2** adds two new pranks and uses the latest in-game gift setup as the default. Launcher 1.9.0 downloads the update through the existing game manifest.
 
-Zombie Rush is now available alongside the existing games. The display name matches the in-game logo.
-
-- [Zombie Rush 1.0.1 Windows release](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.1)
+- **Jalapeño** (1 per gift): a red warning stripe marks the zombie's lane, the pepper puffs up and bursts into a lane-long line of fire. A burnt zombie crumbles into charcoal powder from the feet up, its head drops onto the ash heap, then it rewinds back to life at the start.
+- **Cherry Bomb** (2 per gift, listed before the Jalapeño): a red danger circle appears, the cherries swell and explode; a zombie inside the circle is blasted back 3 boxes.
+- New knock-back wind effect that always runs along the length of the lawn.
+- Default gifts for all 14 skills follow the streamer's latest setup; gift settings saved by older builds are replaced once.
+- [Zombie Rush 1.0.2 Windows release](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.2)
 - [PTVgame Launcher 1.9.0](https://github.com/Poom99tv/PTVgame/releases/tag/launcher-v1.9.0)
 - Windows x64 package: extract the entire ZIP, then open ZombieRush/ZombieRush.exe.
 - Includes TikTokBridge, Node.js runtime and dependencies. No separate Node.js install is needed.
-- Comic Chaos UI, English/Thai settings, GardenKit scenery, streamer profiles, and brief skill-sender profiles.
 - In-game product name: **Zombie Rush**. Technical Unity project folder: PVZ.
 - [Illustrated cover](assets/zombierush.png), based on the actual house, garden, zombie outfit and logo. Promotional illustration; not a gameplay screenshot.
+- Cherry Bomb model: "Plants vs Zombies Customs Cherry bomb (Update)" by danielsouzabarbosadasilva1 (Sketchfab), CC-BY-4.0.
+
+Previous: [Zombie Rush 1.0.1](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.1) fixed RIP gravestones (harmless walking collisions, progressive stone fractures).
 
 The launcher verifies the download size and SHA-256 before installation. Existing games and manifests remain available.
 
