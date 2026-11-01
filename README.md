@@ -1,8 +1,10 @@
 # Zombie Rush + PTVgame Launcher 1.9.0
 
+Zombie Rush **1.0.1** fixes RIP gravestones: walking collisions are harmless; skill impacts progressively fracture the original stone, then it crumbles and respawns intact. Launcher 1.9.0 downloads the update through the existing game manifest.
+
 Zombie Rush is now available alongside the existing games. The display name matches the in-game logo.
 
-- [Zombie Rush 1.0.0 Windows release](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.0)
+- [Zombie Rush 1.0.1 Windows release](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.1)
 - [PTVgame Launcher 1.9.0](https://github.com/Poom99tv/PTVgame/releases/tag/launcher-v1.9.0)
 - Windows x64 package: extract the entire ZIP, then open ZombieRush/ZombieRush.exe.
 - Includes TikTokBridge, Node.js runtime and dependencies. No separate Node.js install is needed.
