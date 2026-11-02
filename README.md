@@ -1,27 +1,25 @@
-# Zombie Rush 1.0.3 + PTVgame Launcher 1.9.0
+# Zombie Rush 1.0.4 + PTVgame Launcher 1.9.0
 
-Zombie Rush **1.0.3** fixes lawn-only prank spawning and keeps the full quantity of helper gifts in reserve. Launcher 1.9.0 downloads the update through the existing game manifest.
+Zombie Rush **1.0.4** adds Defend House mode and includes the latest gameplay fixes. Launcher 1.9.0 downloads this update through the existing game manifest.
 
-- Prank objects spawn at least two boxes inside the lawn even when the player stands on the road. Near the house, rolling stones still come out through the opening door.
-- Inflatable rings, coffin shields and timed helpers use one reserved gift at a time; unused reserves carry into the next round. Large gift batches retain all uses.
-- Prank spawns use the supplied pop sound. Potato Mine knockback is two boxes before shield resistance, without an upward bounce.
-- Windows build completed with zero errors; all 35 bridge tests and the bundled-runtime smoke test passed.
-
-- **Jalapeño** (1 per gift): a red warning stripe marks the zombie's lane, the pepper puffs up and bursts into a lane-long line of fire. A burnt zombie crumbles into charcoal powder from the feet up, its head drops onto the ash heap, then it rewinds back to life at the start.
-- **Cherry Bomb** (2 per gift, listed before the Jalapeño): a red danger circle appears, the cherries swell and explode; a zombie inside the circle is blasted back 3 boxes.
-- New knock-back wind effect that always runs along the length of the lawn.
-- Default gifts for all 14 skills follow the streamer's latest setup; gift settings saved by older builds are replaced once.
-- [Zombie Rush 1.0.3 Windows release](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.3)
+- Play Rush or defend the house as a walking Peashooter. Set the defense timer from 10 to 3600 seconds. Gift settings, skill order, icon frames and test-key hints follow the selected mode.
+- The opposite side of the road now has a neighborhood with houses, front gardens, sidewalks and trees.
+- The counter displays living zombies on the field. Plant helpers intercept nearby threats, spawn freely in close groups with slight foliage overlap, and protect against zombies already behind the player.
+- Rolling Nut summons three rolling nuts. Night Cap shoots poison spores and appears before Potato Mine; the mine's face is visible.
+- Ground zombies break RIP gravestones before passing. Pole Vault uses its original vault animation once and loses only its pole. Footballer feet stay above the lawn.
+- Balloon zombies fly above gravestones. Standing shots miss; jump and shoot to pop the balloon in one hit. All eight zombie types have death sounds.
+- Retains lawn-only prank spawning, reserved helper quantities, pop spawn sound and previous shield/knockback fixes.
+- Windows build completed with zero errors. All 35 bridge tests, the bundled-runtime smoke test and targeted gameplay checks passed.
+- [Zombie Rush 1.0.4 Windows release](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.4)
 - [PTVgame Launcher 1.9.0](https://github.com/Poom99tv/PTVgame/releases/tag/launcher-v1.9.0)
-- Windows x64 package: extract the entire ZIP, then open ZombieRush/ZombieRush.exe.
-- Includes TikTokBridge, Node.js runtime and dependencies. No separate Node.js install is needed.
+- Extract the entire ZIP, then run **ZombieRush/ZombieRush.exe**. TikTokBridge, Node.js runtime and dependencies are included.
 - In-game product name: **Zombie Rush**. Technical Unity project folder: PVZ.
-- [Illustrated cover](assets/zombierush.png), based on the actual house, garden, zombie outfit and logo. Promotional illustration; not a gameplay screenshot.
+- [Illustrated cover](assets/zombierush.png), based on the actual game. Promotional illustration; not a gameplay screenshot.
 - Cherry Bomb model: "Plants vs Zombies Customs Cherry bomb (Update)" by danielsouzabarbosadasilva1 (Sketchfab), CC-BY-4.0.
 
-Previous: [Zombie Rush 1.0.2](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.2) added Jalapeno, Cherry Bomb, burn effects and updated gift mappings. [Zombie Rush 1.0.1](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.1) fixed RIP gravestones (harmless walking collisions, progressive stone fractures).
+Previous: [Zombie Rush 1.0.3](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.3) fixed lawn spawning and helper reserves; [1.0.2](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.2) added Jalapeno and Cherry Bomb; [1.0.1](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.1) improved RIP fractures.
 
-The launcher verifies the download size and SHA-256 before installation. Existing games and manifests remain available.
+The launcher verifies download size and SHA-256 before installation.
 
 # PTVgame — Windows Launcher
 
