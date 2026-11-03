@@ -1,7 +1,7 @@
 {
-  "version": "1.0.5",
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/zombierush-v1.0.5/ZombieRush.v1.0.5.zip",
-  "sha256": "f7a38ef1d1440baf8e2265e716afaebe6c635c87f0b6b8f63cb1fc1b7a242175",
-  "size": 208660641,
+  "version": "1.0.6",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/zombierush-v1.0.6/ZombieRush.v1.0.6.zip",
+  "sha256": "b8aaadf7a60918fde341cf2bc75192fc8168cffc1a5598b7333485212e4ffd5b",
+  "size": 208660380,
   "executable": "ZombieRush/ZombieRush.exe"
 }

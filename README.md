@@ -1,7 +1,8 @@
-# Zombie Rush 1.0.5 + PTVgame Launcher 1.9.0
+# Zombie Rush 1.0.6 + PTVgame Launcher 1.9.0
 
-Zombie Rush **1.0.5** adds the Defend House win ultimates and a movable HUD. Launcher 1.9.0 downloads this update through the existing game manifest.
+Zombie Rush **1.0.6** applies the approved Fresh Daylight lighting to Rush and Defend House. Launcher 1.9.0 downloads this update through the existing game manifest.
 
+- Approved **Fresh Daylight** lighting brings a clearer sky, richer garden colors and better directional shadows. The settings match the selected in-game preview and reduce the washed-out appearance.
 - Drag both skill bars, timer, house health, living-zombie counter and win counter. Positions are saved per game mode and orientation.
 - Compact house-icon menu button fits the portrait HUD. Defend wins reset to 0 on launch; configure a 1–9999 win target separately from the defense timer.
 - **+1 WIN** brings 23 plant reinforcements, volleys and a golden house shield against a 34-zombie army.
@@ -11,14 +12,14 @@ Zombie Rush **1.0.5** adds the Defend House win ultimates and a movable HUD. Lau
 - Default ultimate gifts: **Galaxy (+1)** and **Lion (-1)**; change them in Settings. Test in Defend mode with **9 (+1)** and **F9 (-1)**, after closing Settings.
 - All 16 existing gift choices are retained. Defend has 18 slots; Rush retains 14. Thai/English and 16:9/9:16 layouts are supported.
 - Windows build completed with zero errors. All 35 bridge tests and the bundled-runtime smoke test passed.
-- [Zombie Rush 1.0.5 Windows release](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.5)
+- [Zombie Rush 1.0.6 Windows release](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.6)
 - [PTVgame Launcher 1.9.0](https://github.com/Poom99tv/PTVgame/releases/tag/launcher-v1.9.0)
 - Extract the entire ZIP, then run **ZombieRush/ZombieRush.exe**. TikTokBridge, Node.js and dependencies are bundled.
 - In-game product name: **Zombie Rush**. Technical Unity project folder: PVZ.
 - [Illustrated cover](assets/zombierush.png), based on the game. Promotional illustration; not a gameplay screenshot.
 - Cherry Bomb model: "Plants vs Zombies Customs Cherry bomb (Update)" by danielsouzabarbosadasilva1 (Sketchfab), CC-BY-4.0.
 
-Previous: [1.0.4](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.4) introduced Defend House and gameplay fixes; [1.0.3](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.3) fixed lawn spawning and helper reserves; [1.0.2](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.2) added Jalapeno and Cherry Bomb.
+Previous: [1.0.5](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.5) added win ultimates and a movable HUD; [1.0.4](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.4) introduced Defend House and gameplay fixes; [1.0.3](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.3) fixed lawn spawning and helper reserves; [1.0.2](https://github.com/Poom99tv/PTVgame/releases/tag/zombierush-v1.0.2) added Jalapeno and Cherry Bomb.
 
 The launcher verifies download size and SHA-256 before installation.
 
