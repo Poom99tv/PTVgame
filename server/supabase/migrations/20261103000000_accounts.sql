@@ -436,6 +436,13 @@ create policy "own orders"     on public.orders   for select to authenticated us
 create policy "admin orders"   on public.orders   for select to authenticated using (public.is_admin());
 -- settings / audit_log: no policies -> only reachable through the admin functions.
 
+-- explicit grants, so this works even when "Automatically expose new tables" is off
+grant usage on schema public to anon, authenticated, service_role;
+grant select on public.plans to anon, authenticated;
+grant select on public.profiles, public.orders to authenticated;
+grant all on public.profiles, public.plans, public.settings, public.orders, public.audit_log to service_role;
+grant execute on all functions in schema public to anon, authenticated, service_role;
+
 revoke insert, update, delete on public.profiles, public.plans, public.settings, public.orders, public.audit_log from anon, authenticated;
 revoke select on public.settings, public.audit_log from anon, authenticated;
 revoke select on public.profiles, public.orders from anon;
