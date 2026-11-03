@@ -8,3 +8,6 @@ verify_jwt = true
 # PayPal calls this directly, so it has no Supabase JWT; the handler verifies PayPal's signature instead.
 [functions.paypal-webhook]
 verify_jwt = false
+
+[functions.dl]
+verify_jwt = false

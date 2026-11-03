@@ -13,6 +13,9 @@ handle(async (req) => {
   const { data: order, error } = await userClient(req).rpc("create_order", {
     p_plan: String(body.plan ?? ""), p_method: method,
     p_target_ptv_id: body.target_ptv_id ? Number(body.target_ptv_id) : null,
+    p_kind: body.kind === "codes" ? "codes" : "vip",
+    p_quantity: Number.isInteger(body.quantity) ? body.quantity : 1,
+    p_discount_code: typeof body.discount_code === "string" && body.discount_code.trim() ? body.discount_code.trim() : null,
   });
   if (error || !order) throw new HttpError(400, error?.message ?? "could not create order");
 
@@ -22,7 +25,7 @@ handle(async (req) => {
       reference_id: order.id,
       custom_id: order.id,
       invoice_id: `PTV-${order.order_no}`,
-      description: `PTVgame VIP ${order.plan_code} (${order.days} days)`,
+      description: order.kind === "codes" ? `PTVgame VIP codes ${order.plan_code} x${order.quantity}` : `PTVgame VIP ${order.plan_code} (${order.days} days)`,
       amount: { currency_code: order.currency, value: Number(order.amount).toFixed(2) },
     }],
     payment_source: {

@@ -30,6 +30,7 @@ namespace PTVgame {
 
  public class Account {
   public string id,displayName,avatarUrl,provider,role="user",email; public long ptvId; public DateTime? vipUntil; public bool isVip,banned; public DateTime checkedAt;
+  public string agentCode,agentName; public long agentPtvId; public decimal walletThb,usdThbRate=34.5m; public bool discountUsed; public int discountPct=10; public DateTime? agentUntil;
   public bool IsAdmin { get { return role=="admin"; } }
   public bool IsAgent { get { return role=="agent"||role=="admin"; } }
   public string PtvIdText { get { return ptvId.ToString("00000000"); } }
@@ -49,6 +50,12 @@ namespace PTVgame {
   public static long L(Dictionary<string,object> d,string k) { var s=S(d,k); long v; return long.TryParse(s,out v)?v:0; }
   public static bool B(Dictionary<string,object> d,string k) { object v; return d!=null&&d.TryGetValue(k,out v)&&v is bool&&(bool)v; }
   public static DateTime? T(Dictionary<string,object> d,string k) { var s=S(d,k); DateTimeOffset v; return !string.IsNullOrEmpty(s)&&DateTimeOffset.TryParse(s,System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.AssumeUniversal,out v)?(DateTime?)v.UtcDateTime:null; }
+  public static List<Dictionary<string,object>> Arr(Dictionary<string,object> d,string k) {
+   var list=new List<Dictionary<string,object>>(); object v; if(d==null||!d.TryGetValue(k,out v)||v==null) return list;
+   var items=v as System.Collections.IEnumerable; if(items==null||v is string) return list;
+   foreach(var o in items) { var x=o as Dictionary<string,object>; if(x!=null) list.Add(x); }
+   return list;
+  }
   public static Dictionary<string,object> D(Dictionary<string,object> d,string k) { object v; return d!=null&&d.TryGetValue(k,out v)?v as Dictionary<string,object>:null; }
  }
 
@@ -105,6 +112,18 @@ namespace PTVgame {
    {"PromptPay ID is not configured correctly","ยังไม่ได้ตั้งค่าพร้อมเพย์ หรือรูปแบบไม่ถูกต้อง"},
    {"session expired","เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่"},
    {"Password should be at least","รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร"},
+   {"discount code not found","ไม่พบโค้ดส่วนลดนี้"},
+   {"you cannot use your own code","ใช้โค้ดของตัวเองไม่ได้"},
+   {"agents already get agent prices","ตัวแทนได้ราคาตัวแทนอยู่แล้ว ใช้โค้ดส่วนลดไม่ได้"},
+   {"discount already used on this ID","ไอดีนี้ใช้ส่วนลดครั้งแรกไปแล้ว"},
+   {"already linked to another agent","ไอดีนี้ผูกกับตัวแทนคนอื่นแล้ว"},
+   {"finish or cancel your other discounted order first","มีคำสั่งซื้อที่ใช้ส่วนลดค้างอยู่ กรุณาชำระหรือยกเลิกก่อน"},
+   {"VIP code not found","ไม่พบโค้ด VIP นี้"},
+   {"VIP code already used","โค้ด VIP นี้ถูกใช้ไปแล้ว"},
+   {"not enough wallet balance","ยอดในกระเป๋าเงินไม่พอ"},
+   {"below the minimum withdrawal","ยอดถอนต่ำกว่าขั้นต่ำ"},
+   {"already have a pending withdrawal","มีคำขอถอนเงินรออยู่แล้ว"},
+   {"quantity must be 1-100","จำนวนโค้ดต้องอยู่ระหว่าง 1-100"},
   };
   static string Friendly(string message) { foreach(var pair in Messages) if(message.IndexOf(pair.Key,StringComparison.OrdinalIgnoreCase)>=0) return pair.Value; return message; }
 
@@ -186,7 +205,10 @@ namespace PTVgame {
   public static async Task<Account> Load() {
    var d=await RpcObj("my_account",null);
    var a=new Account { id=J.S(d,"id"),ptvId=J.L(d,"ptv_id"),displayName=J.S(d,"display_name"),avatarUrl=J.S(d,"avatar_url"),provider=J.S(d,"provider"),role=J.S(d,"role")??"user",
-    vipUntil=J.T(d,"vip_until"),isVip=J.B(d,"is_vip"),banned=J.B(d,"banned"),email=J.S(d,"email"),checkedAt=DateTime.UtcNow };
+    vipUntil=J.T(d,"vip_until"),isVip=J.B(d,"is_vip"),banned=J.B(d,"banned"),email=J.S(d,"email"),checkedAt=DateTime.UtcNow,
+    agentCode=J.S(d,"agent_code"),agentName=J.S(d,"agent_name"),agentPtvId=J.L(d,"agent_ptv_id"),walletThb=J.M(d,"wallet_thb"),discountUsed=J.B(d,"discount_used"),discountPct=(int)J.L(d,"discount_pct"),agentUntil=J.T(d,"agent_until") };
+   decimal rate=J.M(d,"usd_thb_rate"); if(rate>0) a.usdThbRate=rate;
+   if(a.discountPct<=0) a.discountPct=10;
    if(a.banned) { SignOutLocal(); throw new AccountException("บัญชีนี้ถูกระงับ กรุณาติดต่อแอดมิน",403); }
    Current=a; Offline=false; SecureFile.Save(CachePath,a); Notify(); return a;
   }
@@ -239,7 +261,13 @@ namespace PTVgame {
    return list.Select(d=>new Plan { code=J.S(d,"code"),name=J.S(d,"name"),days=(int)J.L(d,"days"),priceUsd=J.M(d,"price_usd"),listPriceUsd=J.M(d,"list_price_usd"),
     agentPriceUsd=J.M(d,"agent_price_usd"),priceThb=J.M(d,"price_thb"),agentPriceThb=J.M(d,"agent_price_thb"),active=J.B(d,"active") }).ToList();
   }
-  public static Task<Dictionary<string,object>> CreatePromptPay(string plan,long? targetPtvId) { return RpcObj("create_order",A("p_plan",plan,"p_method","promptpay","p_target_ptv_id",targetPtvId)); }
+  public static Task<Dictionary<string,object>> CreatePromptPay(string plan,long? targetPtvId,string kind="vip",int quantity=1,string discountCode=null) { return RpcObj("create_order",A("p_plan",plan,"p_method","promptpay","p_target_ptv_id",targetPtvId,"p_kind",kind,"p_quantity",quantity,"p_discount_code",discountCode)); }
+  public static Task<Dictionary<string,object>> CheckDiscount(string code) { return RpcObj("check_discount_code",A("p_code",code)); }
+  public static Task<Dictionary<string,object>> RedeemCode(string code) { return RpcObj("redeem_code",A("p_code",code)); }
+  public static Task<Dictionary<string,object>> WalletBuy(string plan,string kind,long? targetPtvId,int quantity) { return RpcObj("wallet_buy",A("p_plan",plan,"p_kind",kind,"p_target_ptv_id",targetPtvId,"p_quantity",quantity)); }
+  public static Task<Dictionary<string,object>> MyAgent() { return RpcObj("my_agent",null); }
+  public static Task RequestWithdrawal(decimal amount,string method,string account) { return Rpc("request_withdrawal",A("p_amount",amount,"p_method",method,"p_account",account)); }
+  public static string AgentLink(string code) { return Cfg.Base+"/functions/v1/dl?ref="+Uri.EscapeDataString(code??""); }
   public static async Task AttachSlip(string orderId,byte[] image,string contentType) {
    string ext=contentType=="image/png"?".png":".jpg"; string path=Session.userId+"/"+orderId+"-"+DateTime.UtcNow.Ticks+ext;
    await Send(HttpMethod.Post,Cfg.Base+"/storage/v1/object/slips/"+path,null,true,image,contentType);
@@ -250,11 +278,11 @@ namespace PTVgame {
   public static Task<Dictionary<string,object>> LookupPlayer(long ptvId) { return RpcObj("lookup_player",A("p_ptv_id",ptvId)); }
 
   /// <summary>PayPal or card: opens PayPal in the browser and waits for the loopback return.</summary>
-  public static async Task<string> PayWithPayPal(string plan,string method,long? targetPtvId,IProgress<string> progress,CancellationToken token) {
+  public static async Task<string> PayWithPayPal(string plan,string method,long? targetPtvId,IProgress<string> progress,CancellationToken token,string kind="vip",int quantity=1,string discountCode=null) {
    using(var listener=new Loopback(Cfg.callbackPort)) {
     string ret=Cfg.CallbackBase+"/paypal/return",cancel=Cfg.CallbackBase+"/paypal/cancel";
     progress.Report("กำลังสร้างรายการชำระเงิน…");
-    var created=J.Obj(await Send(HttpMethod.Post,Cfg.Base+"/functions/v1/paypal-create",Storage.Json.Serialize(A("plan",plan,"method",method,"target_ptv_id",targetPtvId,"return_url",ret,"cancel_url",cancel)),true));
+    var created=J.Obj(await Send(HttpMethod.Post,Cfg.Base+"/functions/v1/paypal-create",Storage.Json.Serialize(A("plan",plan,"method",method,"target_ptv_id",targetPtvId,"kind",kind,"quantity",quantity,"discount_code",discountCode,"return_url",ret,"cancel_url",cancel)),true));
     string orderId=J.S(created,"order_id"),approve=J.S(created,"approve_url");
     if(string.IsNullOrEmpty(approve)) throw new AccountException("PayPal ไม่ได้ส่งลิงก์ชำระเงินกลับมา",502);
     OpenBrowser(approve);
@@ -284,6 +312,10 @@ namespace PTVgame {
   public static Task<Dictionary<string,object>> AdminSettings() { return RpcObj("admin_get_settings",null); }
   public static Task AdminSetSetting(string key,string value) { return Rpc("admin_set_setting",A("p_key",key,"p_value",value??"")); }
   public static Task<List<Dictionary<string,object>>> AdminAudit() { return RpcList("admin_audit",A("p_limit",150)); }
+  public static Task<List<Dictionary<string,object>>> AdminWithdrawals(string status) { return RpcList("admin_list_withdrawals",A("p_status",status??"")); }
+  public static Task AdminProcessWithdrawal(string id,bool paid,string note) { return Rpc("admin_process_withdrawal",A("p_id",id,"p_paid",paid,"p_note",note??"")); }
+  public static Task AdminAdjustWallet(string userId,decimal amount,string note) { return Rpc("admin_adjust_wallet",A("p_user",userId,"p_amount",amount,"p_note",note??"")); }
+  public static Task AdminSetReferrer(string userId,long? agentPtvId) { return Rpc("admin_set_referrer",A("p_user",userId,"p_agent_ptv_id",agentPtvId)); }
   public static async Task<byte[]> AdminSlip(string path) {
    await EnsureFresh();
    using(var req=new HttpRequestMessage(HttpMethod.Get,Cfg.Base+"/storage/v1/object/authenticated/slips/"+path)) {
