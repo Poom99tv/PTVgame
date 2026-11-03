@@ -345,6 +345,8 @@ public static class AppLanguage {
 {"PayPal และบัตร: ตั้งค่า PAYPAL_CLIENT_ID / PAYPAL_SECRET / PAYPAL_ENV ใน Supabase Edge Function secrets (ดู server/README.md)","PayPal and cards: set PAYPAL_CLIENT_ID / PAYPAL_SECRET / PAYPAL_ENV in Supabase Edge Function secrets (see server/README.md)"},
 {"ยังไม่มีบันทึก","No activity yet"},
 {"ระบบอัตโนมัติ","Automatic"},
+{"ยังไม่ได้เปิดล็อกอินด้วย Google ในเซิร์ฟเวอร์","Google sign-in is not enabled on the server yet"},
+{"ยังไม่ได้เปิดล็อกอินด้วย Facebook ในเซิร์ฟเวอร์","Facebook sign-in is not enabled on the server yet"},
 {"อัปเดตไม่สำเร็จ: ","Update failed: "},
 {"♛  ปลดล็อกด้วย VIP","♛  Unlock with VIP"},
 {"บันทึกเหตุผล","Save reason"},

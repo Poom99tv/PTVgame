@@ -108,11 +108,12 @@ namespace PTVgame {
   void Build() {
    form.Children.Clear();
    var title=Ui.Bold(Ui.T(signUp?"สร้างบัญชี PTVgame":"ยินดีต้อนรับกลับมา",26)); title.Margin=new Thickness(0,12,0,4); form.Children.Add(title);
-   form.Children.Add(Ui.T(signUp?"สมัครครั้งเดียว ใช้ได้ทุกเกมใน PTVgame":"เข้าสู่ระบบเพื่อเล่นเกมและจัดการ VIP",13,Ui.Muted));
-   var google=Ui.Btn("ดำเนินการต่อด้วย Google",Brushes.White,Ui.B("#1F1F1F")); google.Margin=new Thickness(0,22,0,0); google.Click+=async(s,e)=>await OAuth("google"); form.Children.Add(google);
+   var sub=Ui.T(signUp?"สมัครครั้งเดียว ใช้ได้ทุกเกมใน PTVgame":"เข้าสู่ระบบเพื่อเล่นเกมและจัดการ VIP",13,Ui.Muted); sub.Margin=new Thickness(0,0,0,18); form.Children.Add(sub);
+   var google=Ui.Btn("ดำเนินการต่อด้วย Google",Brushes.White,Ui.B("#1F1F1F")); google.Margin=new Thickness(0,4,0,0); google.Click+=async(s,e)=>await OAuth("google"); form.Children.Add(google);
    var facebook=Ui.Btn("ดำเนินการต่อด้วย Facebook",Ui.B("#1877F2")); facebook.Margin=new Thickness(0,10,0,0); facebook.Click+=async(s,e)=>await OAuth("facebook"); form.Children.Add(facebook);
+   google.Visibility=Visibility.Collapsed; facebook.Visibility=Visibility.Collapsed;
    var or=new Grid { Margin=new Thickness(0,20,0,14) }; or.Children.Add(new Border { Height=1,Background=Ui.B("#24506F"),VerticalAlignment=VerticalAlignment.Center });
-   or.Children.Add(new Border { Background=Ui.B("#021B30"),HorizontalAlignment=HorizontalAlignment.Center,Padding=new Thickness(10,0,10,0),Child=Ui.T("หรือใช้อีเมล",12,Ui.Muted) }); form.Children.Add(or);
+   or.Children.Add(new Border { Background=Ui.B("#021B30"),HorizontalAlignment=HorizontalAlignment.Center,Padding=new Thickness(10,0,10,0),Child=Ui.T("หรือใช้อีเมล",12,Ui.Muted) }); form.Children.Add(or); or.Visibility=Visibility.Collapsed; ShowProviders(google,facebook,or);
    TextBox name=null; if(signUp) { form.Children.Add(Ui.T("ชื่อที่แสดง",12,Ui.Muted)); name=Ui.Input(); name.MaxLength=40; form.Children.Add(name); }
    form.Children.Add(Ui.T("อีเมล",12,Ui.Muted)); var email=Ui.Input(); form.Children.Add(email);
    form.Children.Add(Ui.T("รหัสผ่าน",12,Ui.Muted)); var pass=Ui.Password(); form.Children.Add(pass);
@@ -135,6 +136,9 @@ namespace PTVgame {
    if(!signUp) { var forgot=Link("ลืมรหัสผ่าน?"); forgot.HorizontalAlignment=HorizontalAlignment.Right; forgot.Click+=async(s,e)=>{ if(!email.Text.Contains("@")) { Fail("กรอกอีเมลก่อน แล้วกดลืมรหัสผ่าน"); return; } await Run(async()=>{ await AccountService.ResetPassword(email.Text); Ok("ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลแล้ว"); }); }; links.Children.Add(forgot); }
    form.Children.Add(links);
    status=Ui.Raw("",13,Ui.Muted); status.Margin=new Thickness(0,16,0,0); form.Children.Add(status);
+  }
+  async void ShowProviders(Button google,Button facebook,UIElement divider) {
+   try { var on=await AccountService.EnabledProviders(); google.Visibility=on.Contains("google")?Visibility.Visible:Visibility.Collapsed; facebook.Visibility=on.Contains("facebook")?Visibility.Visible:Visibility.Collapsed; divider.Visibility=on.Contains("google")||on.Contains("facebook")?Visibility.Visible:Visibility.Collapsed; } catch {}
   }
   Button Link(string text) { var b=Ui.Btn(text,Brushes.Transparent,Ui.Muted); b.Padding=new Thickness(0,4,0,4); b.Margin=new Thickness(0); b.HorizontalAlignment=HorizontalAlignment.Left; return b; }
   void Fail(string m) { status.Text=AppLanguage.T(m); status.Foreground=Ui.Red; }

@@ -146,7 +146,14 @@ namespace PTVgame {
   public static Task ResetPassword(string email) { return Send(HttpMethod.Post,Cfg.Base+"/auth/v1/recover",Storage.Json.Serialize(A("email",email.Trim())),false); }
 
   /// <summary>Google / Facebook sign-in in the user's browser (OAuth PKCE + loopback redirect).</summary>
+  /// <summary>Which social logins are switched on in Supabase (Authentication > Providers).</summary>
+  public static async Task<HashSet<string>> EnabledProviders() {
+   var on=new HashSet<string>(); var d=J.D(J.Obj(await Send(HttpMethod.Get,Cfg.Base+"/auth/v1/settings",null,false)),"external");
+   if(d!=null) foreach(var pair in d) if(pair.Value is bool&&(bool)pair.Value) on.Add(pair.Key);
+   return on;
+  }
   public static async Task SignInWith(string provider,CancellationToken token) {
+   if(!(await EnabledProviders()).Contains(provider)) throw new AccountException(provider=="google"?"ยังไม่ได้เปิดล็อกอินด้วย Google ในเซิร์ฟเวอร์":"ยังไม่ได้เปิดล็อกอินด้วย Facebook ในเซิร์ฟเวอร์",400);
    string verifier=Base64Url(RandomBytes(48)),challenge;
    using(var sha=SHA256.Create()) challenge=Base64Url(sha.ComputeHash(Encoding.ASCII.GetBytes(verifier)));
    string redirect=Cfg.CallbackBase+"/auth/callback";
