@@ -10,3 +10,5 @@ bridge/gift-identities.json
 dist/
 GameToEarn/
 GameToEarn-v*.zip
+gametoearn/engine/node_modules/
+!assets/gametoearn-engine.zip

@@ -146,16 +146,13 @@ namespace PTVgame {
    if(busy||!Gate(g))return;long id;if(!long.TryParse(g.placeId,out id)||id<=0){status.Text=AppLanguage.T("Roblox placeId ไม่ถูกต้อง");return;}
    busy=true;cancellation=new CancellationTokenSource();progress.Visibility=Visibility.Visible;cancel.Visibility=Visibility.Visible;Render();
    try {
-    // Game To Earn replaces TikTokBridge: TikTok LIVE events become key presses in the Roblox window.
+    // Game To Earn (built into the Launcher) replaces TikTokBridge: TikTok LIVE events become key presses in the Roblox window.
     string extra="";
-    if(settings.gameToEarnWithRoblox){
-     try { status.Text=AppLanguage.T("กำลังเปิด Game To Earn…"); await OpenGameToEarn(true); extra=" และ Game To Earn แล้ว • ใส่ชื่อ TikTok แล้วกดเชื่อมต่อ"; }
-     catch(OperationCanceledException){throw;}
-     catch(Exception ex){ extra=" ใน Roblox • เปิด Game To Earn ไม่สำเร็จ: "+ex.Message; }
-    }
+    try { await GteOnRobloxOpen(); if(settings.gameToEarnWithRoblox&&GteData.Str(gteState,"username","")!="") extra=" • Game To Earn เชื่อม @"+GteData.Str(gteState,"username","")+" ให้อัตโนมัติ"; }
+    catch(Exception ex){ extra=" • Game To Earn: "+ex.Message; }
     cancellation.Token.ThrowIfCancellationRequested();
     Process.Start("roblox://placeId="+id);
-    status.Text=AppLanguage.T("เปิด "+g.name+(extra==""?" ใน Roblox":extra));
+    status.Text=AppLanguage.T("เปิด "+g.name+" ใน Roblox"+extra);
    }catch(OperationCanceledException){status.Text=AppLanguage.T("ยกเลิกการเปิดเกมแล้ว");}
    catch(Exception ex){status.Text=AppLanguage.T("เปิด "+g.name+" ไม่สำเร็จ: "+ex.Message);}
    finally{busy=false;cancellation.Dispose();cancellation=null;progress.Visibility=Visibility.Collapsed;cancel.Visibility=Visibility.Collapsed;Render();}

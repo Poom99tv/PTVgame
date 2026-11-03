@@ -1,0 +1,12 @@
+{
+  "name": "ptv-game-to-earn-engine",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": { "start": "node engine.mjs", "test": "node --test" },
+  "dependencies": {
+    "msedge-tts": "2.1.1",
+    "sharp": "0.35.5",
+    "tiktok-live-connector": "2.5.0"
+  }
+}

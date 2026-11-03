@@ -1,18 +1,13 @@
-# PTV – Game To Earn (เครื่องมือในตัว Launcher)
+# Game To Earn (ในตัว Launcher)
 
-เชื่อม TikTok LIVE ภายนอก → กดคีย์ในหน้าต่าง Roblox อัตโนมัติ (ใช้แทน TikTokBridge)
+หน้า **Game To Earn** ใน PTVgame Launcher: เชื่อม TikTok LIVE ภายนอก → กดคีย์ในเกม Roblox อัตโนมัติ (แทน TikTokBridge) — ใช้ฟรี
 
-- ไม่มีระบบ License / Google Sheets แล้ว — สิทธิ์ใช้งานตามบัญชี PTVgame (VIP) ใน Launcher
-- ขนาดหน้าต่าง 1160×760 หัวข้อและธีมเดียวกับ Launcher (Midnight / Ember / Neon / Frost) ภาษา ไทย/อังกฤษ ตาม Launcher
-- ค่าที่บันทึก (Preset, ชื่อ TikTok, เสียง, โหล) อยู่ที่ %LOCALAPPDATA%\PTVgame\GameToEarn
+- เมนูย่อย: เชื่อมต่อ LIVE • Preset และคำสั่ง • หน้าจอ OBS • บันทึกเหตุการณ์
+- ระบบ TikTok ทำงานเบื้องหลังด้วย engine (Node.js) จาก `assets/gametoearn-engine.zip` — Launcher แตกไฟล์ให้เองที่ `%LOCALAPPDATA%\PTVgame\GameToEarn\engine`
+- ของขวัญรู้จักจาก **รูป** ก่อน (ลายนิ้วมือภาพแบบเดียวกับ TikTokBridge) ถ้าชื่อที่ TikTok ส่งมาไม่ตรงก็ยังทำงาน แล้วค่อยเทียบชื่อ
+- Node.js: ใช้ตัวที่มีในเครื่อง (PATH หรือของ TikTokBridge) ถ้าไม่มี Launcher ดาวน์โหลดจาก nodejs.org และตรวจ SHA256 ให้ครั้งเดียว
+- ค่าที่บันทึก: `%LOCALAPPDATA%\PTVgame\GameToEarn\presets.json`, `state.json`
+- รูปของขวัญ: `assets/gifts/*.png` (ย่อจากโฟลเดอร์ gifts ของโปรเจกต์เดิม)
+- OBS: คัดลอกลิงก์จากหน้า "หน้าจอ OBS" → OBS เพิ่ม Browser Source
 
-## Build (Windows, ต้องมี Python 3.10+)
-
-    powershell -ExecutionPolicy Bypass -File gametoearn\build.ps1 -Version 1.0.0
-
-ได้ไฟล์ GameToEarn\PTVGameToEarn.exe ข้าง PTVgame-Launcher.exe (Launcher ใช้ตัวนี้ก่อน)
-และ GameToEarn-v1.0.0.zip + release-manifests\gametoearn.json สำหรับปล่อยให้ผู้เล่นคนอื่นอัปเดตผ่าน GitHub Releases
-
-ถ้ามีโฟลเดอร์รูปของขวัญ gifts\ และ app.ico ให้วางไว้ในโฟลเดอร์ gametoearn ก่อน build
-
-รันจากซอร์สเพื่อทดสอบ: python gametoearn\ptv_game_to_earn.py [--theme Neon] [--lang th]
+แก้ engine แล้ว build ใหม่: `powershell -File gametoearn\build-engine.ps1` (เพิ่มเลขใน `engine/version.txt`)
