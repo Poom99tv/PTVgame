@@ -3985,6 +3985,13 @@ class MainWindow(QMainWindow):
 
         self._restore_state()
 
+        # settings edited in the Launcher page are picked up while this window is open
+        self._file_mtimes = self._current_mtimes()
+        self._watch_timer = QTimer(self)
+        self._watch_timer.setInterval(1500)
+        self._watch_timer.timeout.connect(self._check_external_changes)
+        self._watch_timer.start()
+
     # ── 🆕 รับ gift จาก TikTok → ส่งลงโหล ───────────────────────
     def _on_jar_gift(self, gift_name: str, count: int):
         """เรียกจาก main thread ผ่าน Qt signal — ปลอดภัย 100%"""
@@ -4393,12 +4400,46 @@ class MainWindow(QMainWindow):
         self._sync_win_overlay_from_preset(self._active_preset_idx)
         self.add_log(T("main_title") + "  •  " + THEME_NAME, P["muted"])
 
+    @staticmethod
+    def _mtime(path):
+        try: return os.path.getmtime(path)
+        except Exception: return 0
+
+    def _current_mtimes(self):
+        return (self._mtime(PRESETS_FILE), self._mtime(STATE_FILE))
+
+    def _check_external_changes(self):
+        now = self._current_mtimes()
+        old = getattr(self, "_file_mtimes", now)
+        if now == old: return
+        self._file_mtimes = now
+        if now[0] != old[0]:
+            self._presets = load_presets()
+            self._rebuild_preset_combo()
+            self._active_preset_idx = min(self._active_preset_idx, len(self._presets) - 1)
+        if now[1] != old[1]:
+            st = _read_json(STATE_FILE, {}) or {}
+            if not self.tt.is_running() and st.get("username") is not None:
+                self.user_in.setText(str(st.get("username", "")))
+            vi = self.voice_box.findData(st.get("voice", self.voice_box.currentData()))
+            if vi >= 0 and vi != self.voice_box.currentIndex():
+                self.voice_box.setCurrentIndex(vi)
+            try: self._active_preset_idx = max(0, min(int(st.get("preset", self._active_preset_idx)), len(self._presets) - 1))
+            except Exception: pass
+        self.preset_box.blockSignals(True)
+        self.preset_box.setCurrentIndex(self._active_preset_idx)
+        self.preset_box.blockSignals(False)
+        self.apply_preset(self._active_preset_idx)
+        self._sync_win_overlay_from_preset(self._active_preset_idx)
+        self.add_log("⟳ Launcher settings reloaded", P["accent"])
+
     def _save_state(self):
         _write_json(STATE_FILE, {
             "username": self.user_in.text().strip().replace("@", ""),
             "voice":    self.voice_box.currentData(),
             "preset":   self._active_preset_idx,
         })
+        self._file_mtimes = self._current_mtimes()
 
     # ── 🆕 jar helpers ───────────────────────────────────────────
     def _on_jar_scale(self, val):
@@ -4523,6 +4564,7 @@ class MainWindow(QMainWindow):
         self.preset_box.setCurrentIndex(new_idx)
         self.apply_preset(new_idx)
         save_presets(self._presets)
+        self._file_mtimes = self._current_mtimes()
         self.add_log(T("log_presets_saved", n=len(self._presets)), "#ffd700")
         # sync win settings จาก preset ที่ active
         self._sync_win_overlay_from_preset(new_idx)
