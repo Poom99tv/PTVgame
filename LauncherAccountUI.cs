@@ -132,17 +132,51 @@ namespace PTVgame {
     await Run(async()=>{
      if(!signUp) { await AccountService.SignIn(email.Text,pass.Password); w.DialogResult=true; return; }
      if(await AccountService.SignUp(email.Text,pass.Password,name.Text)) { w.DialogResult=true; return; }
-     signUp=false; Build(); Ok("สมัครสำเร็จ • กรุณายืนยันอีเมลจากลิงก์ที่ส่งไป แล้วเข้าสู่ระบบ");
+     WaitEmail(email.Text.Trim(),false);
     });
    };
    var links=new DockPanel { Margin=new Thickness(0,12,0,0) };
    var swap=Link(signUp?"มีบัญชีแล้ว? เข้าสู่ระบบ":"ยังไม่มีบัญชี? สมัครสมาชิก"); swap.Click+=(s,e)=>{ signUp=!signUp; Build(); }; DockPanel.SetDock(swap,Dock.Left); links.Children.Add(swap);
-   if(!signUp) { var forgot=Link("ลืมรหัสผ่าน?"); forgot.HorizontalAlignment=HorizontalAlignment.Right; forgot.Click+=async(s,e)=>{ if(!email.Text.Contains("@")) { Fail("กรอกอีเมลก่อน แล้วกดลืมรหัสผ่าน"); return; } await Run(async()=>{ await AccountService.ResetPassword(email.Text); Ok("ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลแล้ว"); }); }; links.Children.Add(forgot); }
+   if(!signUp) { var forgot=Link("ลืมรหัสผ่าน?"); forgot.HorizontalAlignment=HorizontalAlignment.Right; forgot.Click+=async(s,e)=>{ if(!email.Text.Contains("@")) { Fail("กรอกอีเมลก่อน แล้วกดลืมรหัสผ่าน"); return; } await Run(async()=>{ await AccountService.ResetPassword(email.Text); WaitEmail(email.Text.Trim(),true); }); }; links.Children.Add(forgot); }
    form.Children.Add(links);
    status=Ui.Raw("",13,Ui.Muted); status.Margin=new Thickness(0,16,0,0); form.Children.Add(status);
   }
   async void ShowProviders(Button google,Button facebook,UIElement divider) {
    try { var on=await AccountService.EnabledProviders(); google.Visibility=on.Contains("google")?Visibility.Visible:Visibility.Collapsed; facebook.Visibility=on.Contains("facebook")?Visibility.Visible:Visibility.Collapsed; divider.Visibility=on.Contains("google")||on.Contains("facebook")?Visibility.Visible:Visibility.Collapsed; } catch {}
+  }
+  /// <summary>"Check your email" screen; the link in the email signs the player in here automatically.</summary>
+  async void WaitEmail(string email,bool reset) {
+   if(oauth!=null) oauth.Cancel(); oauth=new CancellationTokenSource(); var token=oauth.Token;
+   form.Children.Clear();
+   var title=Ui.Bold(Ui.T(reset?"ตั้งรหัสผ่านใหม่":"ยืนยันอีเมลของคุณ",26)); title.Margin=new Thickness(0,12,0,8); form.Children.Add(title);
+   form.Children.Add(Ui.T("เราส่งลิงก์ไปที่",13,Ui.Muted)); form.Children.Add(Ui.Bold(Ui.Raw(email,16)));
+   var how=Ui.T(reset?"เปิดอีเมลบนคอมเครื่องนี้แล้วกดลิงก์ • Launcher จะให้ตั้งรหัสผ่านใหม่ทันที":"เปิดอีเมลบนคอมเครื่องนี้แล้วกดลิงก์ • Launcher จะเข้าสู่ระบบให้อัตโนมัติ",13,Ui.Muted); how.Margin=new Thickness(0,14,0,0); form.Children.Add(how);
+   var note=Ui.T("ไม่เจออีเมล? ดูในโฟลเดอร์ Spam • ถ้ากดลิงก์จากมือถือ ให้กลับมาเข้าสู่ระบบด้วยรหัสผ่าน",12,Ui.Muted); note.Margin=new Thickness(0,10,0,0); form.Children.Add(note);
+   form.Children.Add(new ProgressBar { IsIndeterminate=true,Height=3,Margin=new Thickness(0,18,0,6) });
+   if(!reset) { var resend=Link("ส่งอีเมลอีกครั้ง"); form.Children.Add(resend); resend.Click+=async(s,e)=>{ resend.IsEnabled=false; try { await AccountService.ResendSignup(email); Ok("ส่งอีเมลอีกครั้งแล้ว"); } catch(Exception ex) { Fail(ex.Message); } }; }
+   var back=Link("กลับไปหน้าเข้าสู่ระบบ"); form.Children.Add(back); back.Click+=(s,e)=>{ oauth.Cancel(); };
+   status=Ui.Raw("",13,Ui.Muted); status.Margin=new Thickness(0,12,0,0); form.Children.Add(status);
+   bool signedIn=false; string error=null;
+   try { signedIn=await AccountService.WaitForEmailLink(token,reset?"ยืนยันแล้ว กลับไปตั้งรหัสผ่านใหม่ใน PTVgame Launcher":"ยืนยันอีเมลสำเร็จ กลับไปที่ PTVgame Launcher ได้เลย"); }
+   catch(OperationCanceledException) { signUp=false; Build(); return; }
+   catch(Exception ex) { error=ex.Message; }
+   if(error!=null) { signUp=false; Build(); Fail(error); return; }
+   if(signedIn&&!reset) { w.DialogResult=true; return; }
+   if(signedIn&&reset) { NewPassword(); return; }
+   signUp=false; Build(); Ok(reset?"ลิงก์ใช้ไม่ได้บนเครื่องนี้ กรุณากดลืมรหัสผ่านอีกครั้ง":"ยืนยันอีเมลแล้ว • เข้าสู่ระบบด้วยรหัสผ่านได้เลย");
+  }
+  void NewPassword() {
+   form.Children.Clear();
+   var title=Ui.Bold(Ui.T("ตั้งรหัสผ่านใหม่",26)); title.Margin=new Thickness(0,12,0,16); form.Children.Add(title);
+   form.Children.Add(Ui.T("รหัสผ่านใหม่",12,Ui.Muted)); var p1=Ui.Password(); form.Children.Add(p1);
+   form.Children.Add(Ui.T("ยืนยันรหัสผ่าน",12,Ui.Muted)); var p2=Ui.Password(); form.Children.Add(p2);
+   var save=Ui.Btn("บันทึกรหัสผ่านและเข้าสู่ระบบ",Ui.B("#268EFF")); save.IsDefault=true; save.Margin=new Thickness(0,6,0,0); form.Children.Add(save);
+   status=Ui.Raw("",13,Ui.Muted); status.Margin=new Thickness(0,12,0,0); form.Children.Add(status);
+   save.Click+=async(s,e)=>{
+    if(p1.Password.Length<6) { Fail("รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร"); return; }
+    if(p1.Password!=p2.Password) { Fail("รหัสผ่านไม่ตรงกัน"); return; }
+    await Run(async()=>{ await AccountService.SetPassword(p1.Password); w.DialogResult=true; });
+   };
   }
   Button Link(string text) { var b=Ui.Btn(text,Brushes.Transparent,Ui.Muted); b.Padding=new Thickness(0,4,0,4); b.Margin=new Thickness(0); b.HorizontalAlignment=HorizontalAlignment.Left; return b; }
   void Fail(string m) { status.Text=AppLanguage.T(m); status.Foreground=Ui.Red; }

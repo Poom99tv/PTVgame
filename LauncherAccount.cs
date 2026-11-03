@@ -157,12 +157,37 @@ namespace PTVgame {
    await Load();
   }
   /// <returns>true when signed in immediately, false when the user must confirm by email first.</returns>
+  // Email links (confirm sign-up, reset password) come back to this PC's launcher via the loopback
+  // callback with a PKCE code, so no web page is needed and the player is signed in automatically.
+  static string pendingVerifier;
+  static string EmailRedirect { get { return "?redirect_to="+Uri.EscapeDataString(Cfg.CallbackBase+"/auth/callback"); } }
+  static string NewChallenge() {
+   pendingVerifier=Base64Url(RandomBytes(48));
+   using(var sha=SHA256.Create()) return Base64Url(sha.ComputeHash(Encoding.ASCII.GetBytes(pendingVerifier)));
+  }
   public static async Task<bool> SignUp(string email,string password,string name) {
-   var json=await Send(HttpMethod.Post,Cfg.Base+"/auth/v1/signup",Storage.Json.Serialize(A("email",email.Trim(),"password",password,"data",A("full_name",name.Trim()))),false);
+   string challenge=NewChallenge();
+   var json=await Send(HttpMethod.Post,Cfg.Base+"/auth/v1/signup"+EmailRedirect,Storage.Json.Serialize(A("email",email.Trim(),"password",password,"data",A("full_name",name.Trim()),"code_challenge",challenge,"code_challenge_method","s256")),false);
    if(string.IsNullOrEmpty(J.S(J.Obj(json),"access_token"))) return false;
    Accept(json); await Load(); return true;
   }
-  public static Task ResetPassword(string email) { return Send(HttpMethod.Post,Cfg.Base+"/auth/v1/recover",Storage.Json.Serialize(A("email",email.Trim())),false); }
+  public static Task ResendSignup(string email) { return Send(HttpMethod.Post,Cfg.Base+"/auth/v1/resend"+EmailRedirect,Storage.Json.Serialize(A("type","signup","email",email.Trim())),false); }
+  public static Task ResetPassword(string email) {
+   string challenge=NewChallenge();
+   return Send(HttpMethod.Post,Cfg.Base+"/auth/v1/recover"+EmailRedirect,Storage.Json.Serialize(A("email",email.Trim(),"code_challenge",challenge,"code_challenge_method","s256")),false);
+  }
+  /// <summary>Waits for the player to click the email link on this PC.</summary>
+  /// <returns>true when signed in; false when the email is confirmed but the player should sign in with the password.</returns>
+  public static async Task<bool> WaitForEmailLink(CancellationToken token,string message) {
+   using(var listener=new Loopback(Cfg.callbackPort)) {
+    var query=await listener.Wait("/auth/callback",TimeSpan.FromMinutes(30),token,message);
+    string error; if(query.TryGetValue("error_description",out error)||query.TryGetValue("error",out error)) throw new AccountException(error.IndexOf("expired",StringComparison.OrdinalIgnoreCase)>=0?"ลิงก์หมดอายุแล้ว กรุณาขอใหม่":error,400);
+    string code; if(!query.TryGetValue("code",out code)||pendingVerifier==null) return false;
+    Accept(await Send(HttpMethod.Post,Cfg.Base+"/auth/v1/token?grant_type=pkce",Storage.Json.Serialize(A("auth_code",code,"code_verifier",pendingVerifier)),false));
+    pendingVerifier=null; await Load(); return true;
+   }
+  }
+  public static Task SetPassword(string password) { return Send(HttpMethod.Put,Cfg.Base+"/auth/v1/user",Storage.Json.Serialize(A("password",password)),true); }
 
   /// <summary>Google / Facebook sign-in in the user's browser (OAuth PKCE + loopback redirect).</summary>
   /// <summary>Which social logins are switched on in Supabase (Authentication > Providers).</summary>
