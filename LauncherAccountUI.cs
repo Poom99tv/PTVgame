@@ -421,7 +421,7 @@ namespace PTVgame {
    c.Children.Add(Text((Ui.Thai?"หรือ "+Ui.Money(usd,"USD")+" ผ่าน PayPal / บัตร":"หรือ "+Ui.Money(thb,"THB")+" ผ่าน QR พร้อมเพย์")+(agent?" • ราคาตัวแทน":"")+(disc?" • ลด "+storeDiscountPct+"% ครั้งแรก":""),12,disc?Ui.Green:muted));
    if(yearly&&monthly!=null&&!disc) { decimal m=(agent?monthly.agentPriceUsd:monthly.priceUsd)*12; if(m>usd) c.Children.Add(Text("ถูกกว่าจ่ายรายเดือน 12 เดือน "+Math.Round((m-usd)/m*100)+"%",12,Ui.Green)); }
    var feats=new StackPanel { Margin=new Thickness(0,16,0,12) }; c.Children.Add(feats);
-   var list=new List<string>{"เข้าเล่นได้ทุกเกมใน PTVgame","เกม Roblox + TikTokBridge ครบทุกแมพ","เกมใหม่เล่นได้ทันทีที่เปิดตัว","อัปเดตเกมอัตโนมัติ","ซื้อเพิ่มแล้ววันสะสมต่อจากของเดิม"};
+   var list=new List<string>{"เข้าเล่นได้ทุกเกมใน PTVgame","เกม Roblox + Game To Earn ครบทุกแมพ","เกมใหม่เล่นได้ทันทีที่เปิดตัว","อัปเดตเกมอัตโนมัติ","ซื้อเพิ่มแล้ววันสะสมต่อจากของเดิม"};
    list.Insert(0,yearly?"VIP 365 วัน":"VIP 30 วัน");
    foreach(var f in list) { var r=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,5,0,0) }; r.Children.Add(Line("✓",14,Ui.Green)); var t=Text(f,13); t.Margin=new Thickness(10,0,0,0); r.Children.Add(t); feats.Children.Add(r); }
    if(wallet) {

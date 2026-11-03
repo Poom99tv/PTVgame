@@ -48,7 +48,7 @@ namespace PTVgame {
    var body=new Grid(); body.ColumnDefinitions.Add(new ColumnDefinition { Width=new GridLength(182) }); body.ColumnDefinitions.Add(new ColumnDefinition()); Grid.SetRow(body,1); root.Children.Add(body);
    var side=new Grid { Background=ColorBrush(frost?"#E5EFFB":"#00101F") }; body.Children.Add(side);
    var menus=new StackPanel { Margin=new Thickness(10,22,10,0) }; side.Children.Add(menus); nav.Clear();
-   var labels=new List<string>{"หน้าแรก","ไลบรารี","รายการโปรด"}; var icons=new List<string>{"⌂","▣","♥"}; AccountNav(labels,icons); labels.Add("การตั้งค่า"); icons.Add("⚙"); for(int n=0;n<labels.Count;n++) { string key=labels[n]; var b=Btn(icons[n]+"   "+AppLanguage.T(key)); b.HorizontalContentAlignment=HorizontalAlignment.Left; b.Padding=new Thickness(17,13,8,13); b.Margin=new Thickness(0,0,0,7); b.Click+=(s,e)=> { page=key; selected=null; Render(); }; menus.Children.Add(b); nav[key]=b; }
+   var labels=new List<string>{"หน้าแรก","ไลบรารี","รายการโปรด"}; var icons=new List<string>{"⌂","▣","♥"}; labels.Add(PageGte); icons.Add("♪"); AccountNav(labels,icons); labels.Add("การตั้งค่า"); icons.Add("⚙"); for(int n=0;n<labels.Count;n++) { string key=labels[n]; var b=Btn(icons[n]+"   "+AppLanguage.T(key)); b.HorizontalContentAlignment=HorizontalAlignment.Left; b.Padding=new Thickness(17,13,8,13); b.Margin=new Thickness(0,0,0,7); b.Click+=(s,e)=> { page=key; selected=null; Render(); }; menus.Children.Add(b); nav[key]=b; }
    if(AccountsOn) side.Children.Add(AccountFooter()); else { var profile=new StackPanel { Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Bottom,Margin=new Thickness(17,0,0,29) }; var avatar=new Border { Width=42,Height=42,CornerRadius=new CornerRadius(21),Background=ColorBrush("#214766"),BorderBrush=muted,BorderThickness=new Thickness(1),Child=Text("●",25,ColorBrush("#B6D1EE")) }; ((TextBlock)avatar.Child).HorizontalAlignment=HorizontalAlignment.Center; profile.Children.Add(avatar); var profileText=new StackPanel { Margin=new Thickness(9,0,0,0) }; profileText.Children.Add(Text("ผู้เล่น",12)); profileText.Children.Add(Text("●  พร้อมใช้งาน",11,ColorBrush("#48DDAC"))); profile.Children.Add(profileText); side.Children.Add(profile); }
    main=new Border { CornerRadius=new CornerRadius(15,0,0,0),BorderBrush=ColorBrush("#153C5B"),BorderThickness=new Thickness(1,1,0,0),Background=new LinearGradientBrush(frost?System.Windows.Media.Color.FromRgb(221,241,255):System.Windows.Media.Color.FromRgb(3,34,58),frost?System.Windows.Media.Color.FromRgb(247,250,255):System.Windows.Media.Color.FromRgb(0,17,31),70) }; Grid.SetColumn(main,1); body.Children.Add(main);
    var contentGrid=new Grid { Margin=new Thickness(25,18,24,14) }; contentGrid.RowDefinitions.Add(new RowDefinition()); contentGrid.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto }); main.Child=contentGrid;
@@ -79,6 +79,7 @@ namespace PTVgame {
   void Render() {
    if(sections==null)return; renderId++; sections.Children.Clear(); foreach(var pair in nav) { pair.Value.Background=pair.Key==page?ColorBrush("#093A70"):Brushes.Transparent; pair.Value.Foreground=pair.Key==page?Brushes.White:muted; }
    if(page=="การตั้งค่า") { SettingsPage(); return; }
+   if(page==PageGte) { GameToEarnPage(); return; }
    if(AccountPage()) return; if(!nav.ContainsKey(page)) page="หน้าแรก";
    if(selected!=null) { Detail(games.First(g=>g.id==selected)); return; }
    var list=games.Where(g=>(g.name??"").IndexOf(filter,StringComparison.OrdinalIgnoreCase)>=0);
@@ -145,17 +146,16 @@ namespace PTVgame {
    if(busy||!Gate(g))return;long id;if(!long.TryParse(g.placeId,out id)||id<=0){status.Text=AppLanguage.T("Roblox placeId ไม่ถูกต้อง");return;}
    busy=true;cancellation=new CancellationTokenSource();progress.Visibility=Visibility.Visible;cancel.Visibility=Visibility.Visible;Render();
    try {
-    if(!string.IsNullOrWhiteSpace(g.companionManifestUrl)){
-     var companion=new Game {id=g.id+"-bridge",manifestUrl=g.companionManifestUrl};
-     status.Text=AppLanguage.T("กำลังเตรียม TikTokBridge สำหรับ "+g.name+"…");
-     var manifest=await Updater.Check(companion,cancellation.Token);
-     if(Updater.Newer(manifest,Storage.Current(companion)))await Updater.Install(companion,manifest,new Progress<string>(t=>status.Text=AppLanguage.T(t)),cancellation.Token);
-     var installed=Storage.Current(companion);
-     if(installed==null||new Version(installed.version)!=new Version(manifest.version)||!string.Equals(installed.sha256,manifest.sha256,StringComparison.OrdinalIgnoreCase)||!string.Equals(installed.executable,manifest.executable,StringComparison.OrdinalIgnoreCase))throw new Exception("TikTokBridge ยังไม่พร้อม กรุณาลองใหม่");
-     cancellation.Token.ThrowIfCancellationRequested();Updater.Play(companion);
+    // Game To Earn replaces TikTokBridge: TikTok LIVE events become key presses in the Roblox window.
+    string extra="";
+    if(settings.gameToEarnWithRoblox){
+     try { status.Text=AppLanguage.T("กำลังเปิด Game To Earn…"); await OpenGameToEarn(true); extra=" และ Game To Earn แล้ว • ใส่ชื่อ TikTok แล้วกดเชื่อมต่อ"; }
+     catch(OperationCanceledException){throw;}
+     catch(Exception ex){ extra=" ใน Roblox • เปิด Game To Earn ไม่สำเร็จ: "+ex.Message; }
     }
+    cancellation.Token.ThrowIfCancellationRequested();
     Process.Start("roblox://placeId="+id);
-    status.Text=AppLanguage.T("เปิด "+g.name+(string.IsNullOrWhiteSpace(g.companionManifestUrl)?" ใน Roblox":" และ TikTokBridge แล้ว • จับคู่ในห้องส่วนตัวผ่านรูปเฟือง"));
+    status.Text=AppLanguage.T("เปิด "+g.name+(extra==""?" ใน Roblox":extra));
    }catch(OperationCanceledException){status.Text=AppLanguage.T("ยกเลิกการเปิดเกมแล้ว");}
    catch(Exception ex){status.Text=AppLanguage.T("เปิด "+g.name+" ไม่สำเร็จ: "+ex.Message);}
    finally{busy=false;cancellation.Dispose();cancellation=null;progress.Visibility=Visibility.Collapsed;cancel.Visibility=Visibility.Collapsed;Render();}

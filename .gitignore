@@ -8,3 +8,5 @@ bridge/*runtime*/
 bridge/network-*.json
 bridge/gift-identities.json
 dist/
+GameToEarn/
+GameToEarn-v*.zip

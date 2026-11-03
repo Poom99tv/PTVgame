@@ -1,0 +1,7 @@
+PyQt5>=5.15
+TikTokLive>=6.0
+pydirectinput>=1.0.4
+edge-tts>=6.1
+pygame>=2.5
+pyttsx3>=2.90
+pyinstaller>=6.0

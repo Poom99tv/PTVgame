@@ -10,6 +10,7 @@ $arguments += Join-Path $PSScriptRoot 'LauncherUpdate.cs'
 $arguments += Join-Path $PSScriptRoot 'LauncherLanguage.cs'
 $arguments += Join-Path $PSScriptRoot 'LauncherAccount.cs'
 $arguments += Join-Path $PSScriptRoot 'LauncherAccountUI.cs'
+$arguments += Join-Path $PSScriptRoot 'LauncherGameToEarn.cs'
 & (Join-Path $framework 'csc.exe') $arguments
 if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 Write-Host "Build complete: $OutputName"

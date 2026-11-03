@@ -19,7 +19,7 @@ namespace PTVgame {
  public class Game { public string id,name,description,descriptionEn,manifestUrl,category; public string placeId,cover,companionManifestUrl,universeId,newBadge; public string access; }
  public class Manifest { public string version,url,sha256,executable; public long size; }
  public class Installed { public string version,folder,executable,sha256; }
- public class Settings { public string language="en"; public string theme="Midnight"; public bool autoUpdate=true; public List<string> favorites=new List<string>(); }
+ public class Settings { public string language="en"; public string theme="Midnight"; public bool autoUpdate=true; public bool gameToEarnWithRoblox=true; public List<string> favorites=new List<string>(); }
  public class RobloxThumbnail { public string state,imageUrl; }
  public class RobloxThumbnailGroup { public RobloxThumbnail[] thumbnails; }
  public class RobloxThumbnailResponse { public RobloxThumbnailGroup[] data; }
