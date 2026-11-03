@@ -1,0 +1,7 @@
+{
+  "supabaseUrl": "https://YOUR-PROJECT-REF.supabase.co",
+  "anonKey": "YOUR-SUPABASE-ANON-OR-PUBLISHABLE-KEY",
+  "defaultAccess": "vip",
+  "callbackPort": 53682,
+  "offlineHours": 72
+}

@@ -13,7 +13,7 @@ using System.Windows.Shapes;
 using System.Windows.Input;
 
 namespace PTVgame {
- public class LauncherShell : Window {
+ public partial class LauncherShell : Window {
   readonly string settingsPath=System.IO.Path.Combine(Storage.Root,"settings.json");
   Settings settings; List<Game> games; StackPanel sections; Grid root; Border main,header; TextBox search; TextBlock status; ProgressBar progress; Button cancel; Dictionary<string,Button> nav=new Dictionary<string,Button>();
   string page="หน้าแรก",filter=""; bool busy; CancellationTokenSource cancellation; Brush accent,muted; string selected=null;
@@ -24,7 +24,7 @@ namespace PTVgame {
    Width=1160; Height=760; MinWidth=920; MinHeight=660; Title="PTVgame"; WindowStyle=WindowStyle.None; ResizeMode=ResizeMode.CanResizeWithGrip; WindowStartupLocation=WindowStartupLocation.CenterScreen;
    FontFamily=new FontFamily("Segoe UI"); FontSize=14; Foreground=Brushes.White;
    Resources.Add(typeof(Button),System.Windows.Markup.XamlReader.Parse("<Style xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' TargetType='Button'><Setter Property='Template'><Setter.Value><ControlTemplate TargetType='Button'><Border Background='{TemplateBinding Background}' BorderBrush='{TemplateBinding BorderBrush}' BorderThickness='{TemplateBinding BorderThickness}' CornerRadius='8' Padding='{TemplateBinding Padding}'><ContentPresenter HorizontalAlignment='{TemplateBinding HorizontalContentAlignment}' VerticalAlignment='Center'/></Border><ControlTemplate.Triggers><Trigger Property='IsEnabled' Value='False'><Setter Property='Opacity' Value='0.42'/></Trigger><Trigger Property='IsMouseOver' Value='True'><Setter Property='Opacity' Value='0.78'/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style>"));
-   Build(); Loaded+=async(s,e)=> { if(await UpdateLauncher())return; if(settings.autoUpdate) foreach(var g in games.Where(g=>g.category!="Roblox"&&Storage.Current(g)!=null&&!string.IsNullOrWhiteSpace(g.manifestUrl))) await Install(g,false); };
+   Build(); Loaded+=async(s,e)=> { RefreshAccount(); if(await UpdateLauncher())return; if(settings.autoUpdate) foreach(var g in games.Where(g=>g.category!="Roblox"&&Storage.Current(g)!=null&&!string.IsNullOrWhiteSpace(g.manifestUrl))) await Install(g,false); };
    Closing+=(s,e)=> { if(busy) { e.Cancel=true; cancellation.Cancel(); status.Text=AppLanguage.T("กำลังยกเลิก กรุณารอแล้วปิดอีกครั้ง"); } };
   }
   TextBlock Text(string value,double size,Brush color=null) { return new TextBlock { Text=AppLanguage.T(value),FontSize=size,Foreground=color??Foreground,VerticalAlignment=VerticalAlignment.Center }; }
@@ -48,8 +48,8 @@ namespace PTVgame {
    var body=new Grid(); body.ColumnDefinitions.Add(new ColumnDefinition { Width=new GridLength(182) }); body.ColumnDefinitions.Add(new ColumnDefinition()); Grid.SetRow(body,1); root.Children.Add(body);
    var side=new Grid { Background=ColorBrush(frost?"#E5EFFB":"#00101F") }; body.Children.Add(side);
    var menus=new StackPanel { Margin=new Thickness(10,22,10,0) }; side.Children.Add(menus); nav.Clear();
-   string[] labels={"หน้าแรก","ไลบรารี","รายการโปรด","การตั้งค่า"},icons={"⌂","▣","♥","⚙"}; for(int n=0;n<labels.Length;n++) { string key=labels[n]; var b=Btn(icons[n]+"   "+AppLanguage.T(key)); b.HorizontalContentAlignment=HorizontalAlignment.Left; b.Padding=new Thickness(17,13,8,13); b.Margin=new Thickness(0,0,0,7); b.Click+=(s,e)=> { page=key; selected=null; Render(); }; menus.Children.Add(b); nav[key]=b; }
-   var profile=new StackPanel { Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Bottom,Margin=new Thickness(17,0,0,29) }; var avatar=new Border { Width=42,Height=42,CornerRadius=new CornerRadius(21),Background=ColorBrush("#214766"),BorderBrush=muted,BorderThickness=new Thickness(1),Child=Text("●",25,ColorBrush("#B6D1EE")) }; ((TextBlock)avatar.Child).HorizontalAlignment=HorizontalAlignment.Center; profile.Children.Add(avatar); var profileText=new StackPanel { Margin=new Thickness(9,0,0,0) }; profileText.Children.Add(Text("ผู้เล่น",12)); profileText.Children.Add(Text("●  พร้อมใช้งาน",11,ColorBrush("#48DDAC"))); profile.Children.Add(profileText); side.Children.Add(profile);
+   var labels=new List<string>{"หน้าแรก","ไลบรารี","รายการโปรด"}; var icons=new List<string>{"⌂","▣","♥"}; AccountNav(labels,icons); labels.Add("การตั้งค่า"); icons.Add("⚙"); for(int n=0;n<labels.Count;n++) { string key=labels[n]; var b=Btn(icons[n]+"   "+AppLanguage.T(key)); b.HorizontalContentAlignment=HorizontalAlignment.Left; b.Padding=new Thickness(17,13,8,13); b.Margin=new Thickness(0,0,0,7); b.Click+=(s,e)=> { page=key; selected=null; Render(); }; menus.Children.Add(b); nav[key]=b; }
+   if(AccountsOn) side.Children.Add(AccountFooter()); else { var profile=new StackPanel { Orientation=Orientation.Horizontal,VerticalAlignment=VerticalAlignment.Bottom,Margin=new Thickness(17,0,0,29) }; var avatar=new Border { Width=42,Height=42,CornerRadius=new CornerRadius(21),Background=ColorBrush("#214766"),BorderBrush=muted,BorderThickness=new Thickness(1),Child=Text("●",25,ColorBrush("#B6D1EE")) }; ((TextBlock)avatar.Child).HorizontalAlignment=HorizontalAlignment.Center; profile.Children.Add(avatar); var profileText=new StackPanel { Margin=new Thickness(9,0,0,0) }; profileText.Children.Add(Text("ผู้เล่น",12)); profileText.Children.Add(Text("●  พร้อมใช้งาน",11,ColorBrush("#48DDAC"))); profile.Children.Add(profileText); side.Children.Add(profile); }
    main=new Border { CornerRadius=new CornerRadius(15,0,0,0),BorderBrush=ColorBrush("#153C5B"),BorderThickness=new Thickness(1,1,0,0),Background=new LinearGradientBrush(frost?System.Windows.Media.Color.FromRgb(221,241,255):System.Windows.Media.Color.FromRgb(3,34,58),frost?System.Windows.Media.Color.FromRgb(247,250,255):System.Windows.Media.Color.FromRgb(0,17,31),70) }; Grid.SetColumn(main,1); body.Children.Add(main);
    var contentGrid=new Grid { Margin=new Thickness(25,18,24,14) }; contentGrid.RowDefinitions.Add(new RowDefinition()); contentGrid.RowDefinitions.Add(new RowDefinition { Height=GridLength.Auto }); main.Child=contentGrid;
    var mountain=Mountain(); mountain.IsHitTestVisible=false; mountain.VerticalAlignment=VerticalAlignment.Stretch; contentGrid.Children.Add(mountain);
@@ -77,8 +77,9 @@ namespace PTVgame {
    canvas.Children.Add(new System.Windows.Shapes.Path { Data=Geometry.Parse("M50,560 L100,410 127,465 166,280 195,370 225,220 240,270 240,560 Z"),Fill=ColorBrush("#001323") }); view.Child=canvas; return view;
   }
   void Render() {
-   if(sections==null)return; sections.Children.Clear(); foreach(var pair in nav) { pair.Value.Background=pair.Key==page?ColorBrush("#093A70"):Brushes.Transparent; pair.Value.Foreground=pair.Key==page?Brushes.White:muted; }
+   if(sections==null)return; renderId++; sections.Children.Clear(); foreach(var pair in nav) { pair.Value.Background=pair.Key==page?ColorBrush("#093A70"):Brushes.Transparent; pair.Value.Foreground=pair.Key==page?Brushes.White:muted; }
    if(page=="การตั้งค่า") { SettingsPage(); return; }
+   if(AccountPage()) return; if(!nav.ContainsKey(page)) page="หน้าแรก";
    if(selected!=null) { Detail(games.First(g=>g.id==selected)); return; }
    var list=games.Where(g=>(g.name??"").IndexOf(filter,StringComparison.OrdinalIgnoreCase)>=0);
    if(page=="ไลบรารี")list=list.Where(g=>g.category=="Roblox"||Storage.Current(g)!=null);
@@ -112,7 +113,8 @@ namespace PTVgame {
    }
    var fav=Btn(settings.favorites.Contains(g.id)?"♥":"♡",ColorBrush("#9900172B"));fav.Width=29;fav.Height=29;fav.Padding=new Thickness(0);fav.HorizontalAlignment=string.IsNullOrWhiteSpace(g.newBadge)?HorizontalAlignment.Left:HorizontalAlignment.Right;fav.VerticalAlignment=VerticalAlignment.Top;fav.Margin=new Thickness(8);fav.Click+=(s,e)=>ToggleFavorite(g);art.Children.Add(fav);
    panel.Children.Add(art);var name=Text(g.name,16);name.FontWeight=FontWeights.SemiBold;name.HorizontalAlignment=HorizontalAlignment.Center;name.Margin=new Thickness(0,7,0,2);panel.Children.Add(name);
-   if(g.category!="Roblox") { var installed=Storage.Current(g); var action=Btn(installed==null?"↓  ติดตั้งเกม":"▶  เล่นเกม",installed==null?ColorBrush("#104875"):accent);action.IsEnabled=!busy;action.HorizontalContentAlignment=HorizontalAlignment.Center;action.FontSize=12;action.Margin=new Thickness(0,6,0,0);action.Click+=async(s,e)=>{if(Storage.Current(g)==null)await Install(g,false);else await Play(g);};panel.Children.Add(action); }
+   if(Locked(g)) { var vipBadge=Ui.Pill("♛ VIP",Ui.Gold,Ui.B("#2A1C00")); vipBadge.HorizontalAlignment=HorizontalAlignment.Left; vipBadge.VerticalAlignment=VerticalAlignment.Bottom; vipBadge.Margin=new Thickness(10,0,0,12); vipBadge.IsHitTestVisible=false; art.Children.Add(vipBadge); }
+   if(g.category!="Roblox") { var installed=Storage.Current(g); bool locked=Locked(g); var action=Btn(locked?"♛  ปลดล็อกด้วย VIP":installed==null?"↓  ติดตั้งเกม":"▶  เล่นเกม",locked?Ui.Gold:installed==null?ColorBrush("#104875"):accent); if(locked) action.Foreground=Ui.B("#2A1C00");action.IsEnabled=!busy;action.HorizontalContentAlignment=HorizontalAlignment.Center;action.FontSize=12;action.Margin=new Thickness(0,6,0,0);action.Click+=async(s,e)=>{if(!Gate(g))return;if(Storage.Current(g)==null)await Install(g,false);else await Play(g);};panel.Children.Add(action); }
    return panel;
   }
   void ToggleFavorite(Game g) { if(!settings.favorites.Remove(g.id))settings.favorites.Add(g.id);Save();Render(); }
@@ -121,7 +123,8 @@ namespace PTVgame {
    var image=new Border { Height=280,CornerRadius=new CornerRadius(12),ClipToBounds=true,Margin=new Thickness(0,15,0,18),Child=Picture(g) };sections.Children.Add(image);var title=Text(g.name,32);title.FontWeight=FontWeights.Bold;sections.Children.Add(title);
    var desc=Text(AppLanguage.Language=="en"&&!string.IsNullOrEmpty(g.descriptionEn)?g.descriptionEn:g.description,15,muted);desc.Margin=new Thickness(0,12,0,15);desc.TextWrapping=TextWrapping.Wrap;sections.Children.Add(desc);
    var installed=Storage.Current(g);sections.Children.Add(Text(g.category=="Roblox"?"ROBLOX EXPERIENCE":installed==null?"ยังไม่ได้ติดตั้ง":"ติดตั้งแล้ว • v"+installed.version,12,muted));
-   var row=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,15,0,0) };sections.Children.Add(row);var play=Btn(g.category=="Roblox"?"▶  เปิด Roblox":installed==null?"↓  ติดตั้งเกม":"▶  เล่นเกม",accent);play.IsEnabled=!busy;row.Children.Add(play);play.Click+=async(s,e)=>{if(g.category=="Roblox")OpenRoblox(g);else if(Storage.Current(g)==null)await Install(g,false);else await Play(g);};
+   var row=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,15,0,0) };sections.Children.Add(row);var play=Btn(g.category=="Roblox"?"▶  เปิด Roblox":installed==null?"↓  ติดตั้งเกม":"▶  เล่นเกม",accent);play.IsEnabled=!busy;row.Children.Add(play);play.Click+=async(s,e)=>{if(!Gate(g))return;if(g.category=="Roblox")OpenRoblox(g);else if(Storage.Current(g)==null)await Install(g,false);else await Play(g);};
+   if(Locked(g)) { play.Content=AppLanguage.T("♛  ปลดล็อกด้วย VIP"); play.Background=Ui.Gold; play.Foreground=Ui.B("#2A1C00"); }
    if(g.category!="Roblox") { var update=Btn("ตรวจสอบอัปเดต",ColorBrush("#193B58"));update.Margin=new Thickness(10,0,0,0);update.IsEnabled=!busy;row.Children.Add(update);update.Click+=async(s,e)=>await Install(g,true); }
    var favorite=Btn(settings.favorites.Contains(g.id)?"♥  นำออกจากรายการโปรด":"♡  เพิ่มรายการโปรด");row.Children.Add(favorite);favorite.Click+=(s,e)=>ToggleFavorite(g);
   }
@@ -139,7 +142,7 @@ namespace PTVgame {
   async Task<bool> UpdateLauncher() { if(busy)return false;busy=true;cancellation=new CancellationTokenSource(TimeSpan.FromMinutes(5));try { bool restart=await LauncherUpdate.Check(new Progress<string>(t=>status.Text=AppLanguage.T(t)),cancellation.Token);if(restart){busy=false;Application.Current.Shutdown();return true;} }catch(Exception ex){status.Text=AppLanguage.T("ตรวจอัปเดต Launcher ไม่สำเร็จ: "+ex.Message);}finally{busy=false;cancellation.Dispose();}return false; }
   void Save() { try { Storage.Save(settingsPath,settings); }catch(Exception ex){status.Text=AppLanguage.T("บันทึกการตั้งค่าไม่สำเร็จ: "+ex.Message);} }
   async void OpenRoblox(Game g) {
-   if(busy)return;long id;if(!long.TryParse(g.placeId,out id)||id<=0){status.Text=AppLanguage.T("Roblox placeId ไม่ถูกต้อง");return;}
+   if(busy||!Gate(g))return;long id;if(!long.TryParse(g.placeId,out id)||id<=0){status.Text=AppLanguage.T("Roblox placeId ไม่ถูกต้อง");return;}
    busy=true;cancellation=new CancellationTokenSource();progress.Visibility=Visibility.Visible;cancel.Visibility=Visibility.Visible;Render();
    try {
     if(!string.IsNullOrWhiteSpace(g.companionManifestUrl)){
@@ -158,7 +161,7 @@ namespace PTVgame {
    finally{busy=false;cancellation.Dispose();cancellation=null;progress.Visibility=Visibility.Collapsed;cancel.Visibility=Visibility.Collapsed;Render();}
   }
   async Task Play(Game g) {
-   if(busy)return;busy=true;cancellation=new CancellationTokenSource();progress.Visibility=Visibility.Visible;cancel.Visibility=Visibility.Visible;Render();
+   if(busy||!Gate(g))return;busy=true;cancellation=new CancellationTokenSource();progress.Visibility=Visibility.Visible;cancel.Visibility=Visibility.Visible;Render();
    try {
     status.Text=AppLanguage.T("กำลังตรวจเวอร์ชันก่อนเล่น "+g.name+"…");
     var manifest=await Updater.Check(g,cancellation.Token);

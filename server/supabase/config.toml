@@ -1,0 +1,10 @@
+# Used by `supabase functions deploy`. Project settings (auth providers, redirect URLs) are set in the dashboard.
+[functions.paypal-create]
+verify_jwt = true
+
+[functions.paypal-capture]
+verify_jwt = true
+
+# PayPal calls this directly, so it has no Supabase JWT; the handler verifies PayPal's signature instead.
+[functions.paypal-webhook]
+verify_jwt = false

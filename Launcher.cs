@@ -16,7 +16,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace PTVgame {
- public class Game { public string id,name,description,descriptionEn,manifestUrl,category; public string placeId,cover,companionManifestUrl,universeId,newBadge; }
+ public class Game { public string id,name,description,descriptionEn,manifestUrl,category; public string placeId,cover,companionManifestUrl,universeId,newBadge; public string access; }
  public class Manifest { public string version,url,sha256,executable; public long size; }
  public class Installed { public string version,folder,executable,sha256; }
  public class Settings { public string language="en"; public string theme="Midnight"; public bool autoUpdate=true; public List<string> favorites=new List<string>(); }
@@ -196,7 +196,7 @@ namespace PTVgame {
    } catch(OperationCanceledException) { status.Text="ยกเลิกแล้ว • เวอร์ชันเดิมยังใช้งานได้"; } catch(Exception ex) { status.Text="อัปเดตไม่สำเร็จ: "+ex.Message; } finally { busy=false; cts.Dispose(); cts=null; Render(); }
   }
   async Task AutoUpdate() { foreach(var g in games.Where(g=>g.category!="Roblox"&&!string.IsNullOrWhiteSpace(g.manifestUrl)&&Storage.Current(g)!=null)) await Update(g,false); }
-  [STAThread] public static void Main(string[] args) { if(args.Contains("--update-exit-test")){Thread.Sleep(300);return;} AppLanguage.Language=AppLanguage.Normalize(Storage.Read(Path.Combine(Storage.Root,"settings.json"),new Settings()).language); if(LauncherUpdate.Handle(args))return; if(args.Contains("--self-test")) { try { Tests.Run(); } catch(Exception ex) { File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-results.txt"),ex.ToString()); Environment.ExitCode=1; } return; } var app=new Application(); app.DispatcherUnhandledException+=(s,e)=> { MessageBox.Show(e.Exception.Message,"PTVgame"); e.Handled=true; }; app.Run(new LauncherShell()); }
+  [STAThread] public static void Main(string[] args) { if(args.Contains("--update-exit-test")){Thread.Sleep(300);return;} AppLanguage.Language=AppLanguage.Normalize(Storage.Read(Path.Combine(Storage.Root,"settings.json"),new Settings()).language); if(LauncherUpdate.Handle(args))return; if(args.Contains("--self-test")) { try { Tests.Run(); } catch(Exception ex) { File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-results.txt"),ex.ToString()); Environment.ExitCode=1; } return; } var app=new Application(); app.DispatcherUnhandledException+=(s,e)=> { MessageBox.Show(e.Exception.Message,"PTVgame"); e.Handled=true; }; AccountGate.Run(app); }
  }
  public static class Tests {
   static void Assert(bool b,string name) { if(!b) throw new Exception("FAIL: "+name); }
@@ -211,6 +211,8 @@ namespace PTVgame {
     Assert(Updater.Newer(m,new Installed {version="1.2.0",executable="Game.exe",sha256=new string('b',64)}),"same version changed package");
     Assert(!Updater.Newer(m,new Installed {version="1.2.0",executable="Game.exe",sha256=m.sha256}),"identical package stays current");
     LauncherUpdate.Test(root);
+
+AccountTests.Run();
     Assert(new Settings().language=="en","English is the default language");
     Assert(Storage.Json.Deserialize<Settings>("{\"theme\":\"Ember\"}").language=="en","existing settings default to English");
     var languagePath=Path.Combine(root,"language.json");Storage.Save(languagePath,new Settings {language="th"});
