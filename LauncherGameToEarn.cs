@@ -353,6 +353,7 @@ namespace PTVgame {
   string Who(Dictionary<string,object> e) { var n=GteData.Str(e,"name",""); return n!=""?n:GteData.Str(e,"viewer","?"); }
   void GteHandle(Dictionary<string,object> e) {
    var kind=GteData.Str(e,"kind",""); var p=GtePreset; int delay=GteData.Int(p,"key_delay_ms",130);
+   if(GteData.Bool(e,"demo",false)) { if(kind=="like") gteLikes+=GteData.Int(e,"amount",0); if(kind=="gift") { gteGifts+=GteData.Int(e,"amount",0); gteDiamonds+=GteData.Int(e,"diamonds",0); gteJarDrops+=GteData.Int(e,"amount",0); } GteRefreshPreview(); return; }
    if(kind=="status") {
     var old=gteStatus; gteStatus=GteData.Str(e,"status",gteStatus); gteDetail=GteData.Str(e,"detail","");
     GteAddLog(GteStatusText()+(gteDetail!=""?" • "+gteDetail:""),gteStatus=="Connected"?"#48DDAC":gteStatus=="Error"?"#FF6B6B":"#88AAC9","live");
@@ -614,48 +615,96 @@ namespace PTVgame {
    win.ShowDialog(); return result;
   }
 
+  static readonly string[][] GteWidgets={ new[]{"likers","❤  ยอดกด Like","#25F4EE","#002A2A"},new[]{"gifters","🎁  ยอดส่งของขวัญ","#FFD700","#2A2000"},new[]{"win","🏆  นับ Win","#2A2200","#FFD700"},new[]{"jar","🫙  แก้วโหล","#1A0B2E","#CC88FF"},new[]{"stats","📊  สรุปยอด","#193B58","#FFFFFF"} };
+  static Brush Checker() {
+   var g=new DrawingGroup(); g.Children.Add(new GeometryDrawing(Ui.B("#2A3440"),null,new RectangleGeometry(new Rect(0,0,20,20))));
+   g.Children.Add(new GeometryDrawing(Ui.B("#202833"),null,new RectangleGeometry(new Rect(0,0,10,10)))); g.Children.Add(new GeometryDrawing(Ui.B("#202833"),null,new RectangleGeometry(new Rect(10,10,10,10))));
+   return new DrawingBrush(g) { TileMode=TileMode.Tile,Viewport=new Rect(0,0,20,20),ViewportUnits=BrushMappingMode.Absolute };
+  }
+  async void GteDemo() {
+   try {
+    await GteStartEngine();
+    var people=new[]{ new[]{"mali","Mali 🌸"},new[]{"somchai","Somchai"},new[]{"nok","Nok"},new[]{"ploy","Ploy ✨"},new[]{"ton","Ton"} };
+    var gifts=new[]{"Rose","Heart Me","Doughnut","GG","Corgi"}; var rnd=new Random();
+    for(int i=0;i<people.Length;i++) {
+     await GteEngine.Post("test",new Dictionary<string,object>{{"kind","like"},{"viewer",people[i][0]},{"name",people[i][1]},{"amount",(5-i)*120+rnd.Next(40)},{"demo",true}});
+     await GteEngine.Post("test",new Dictionary<string,object>{{"kind","gift"},{"viewer",people[i][0]},{"name",people[i][1]},{"giftName",gifts[i]},{"amount",(5-i)*3},{"demo",true}});
+    }
+    status.Text=AppLanguage.T("ใส่ข้อมูลตัวอย่างแล้ว (ไม่กดคีย์ในเกม)");
+   } catch(Exception ex) { status.Text=AppLanguage.T("ทดสอบไม่สำเร็จ: ")+ex.Message; }
+  }
+  async void GteResetOverlay(string what) {
+   if(what!="jar") { gteLikes=0; gteGifts=0; gteDiamonds=0; } else gteJarDrops=0; GteRefreshPreview();
+   try { await GteEngine.Post("overlay/reset",new Dictionary<string,object>{{"what",what}}); } catch {}
+  }
+
   void GteObsPage(StackPanel content) {
-   var widgets=new StackPanel(); widgets.Children.Add(GTitle("วิดเจ็ต OBS"));
-   var hint=Line(AppLanguage.T("กดปุ่มเพื่อคัดลอกลิงก์ แล้วใน OBS เพิ่ม Source → Browser วางลิงก์ (กว้าง 400 สูง 600)"),12,muted); hint.TextWrapping=TextWrapping.Wrap; hint.Margin=new Thickness(0,0,0,10); widgets.Children.Add(hint);
-   string bg=GteData.Str(gteState,"obs_bg","");
-   Func<string,string,Brush,Brush,Brush,UIElement> W=(label,kind,back,fore,border)=>{
-    var b=Btn(label,back); b.Foreground=fore; b.BorderBrush=border; b.BorderThickness=new Thickness(border==null?0:1.5); b.FontWeight=FontWeights.Bold; b.Padding=new Thickness(10,12,10,12); b.Margin=new Thickness(0,0,8,8); b.HorizontalContentAlignment=HorizontalAlignment.Center; b.MinWidth=150;
-    b.Click+=(s,e)=>{ if(!GteEngine.Running) { status.Text=AppLanguage.T("ระบบ Game To Earn ยังไม่พร้อม"); return; } try { Clipboard.SetText(GteEngine.OverlayUrl(kind,bg)); gteState["chk_obs"]=true; GteSave(true); status.Text=AppLanguage.T("คัดลอกลิงก์ OBS แล้ว: ")+label; } catch {} };
-    b.MouseRightButtonUp+=(s,e)=>{ if(GteEngine.Running) try { Process.Start(GteEngine.OverlayUrl(kind,bg==""?"#173040":bg)); } catch {} };
-    b.ToolTip=AppLanguage.T("คลิก = คัดลอกลิงก์ • คลิกขวา = เปิดดูในเบราว์เซอร์"); return b; };
-   var grid=new UniformGrid { Columns=2 };
-   grid.Children.Add(W(AppLanguage.T("❤  ยอดกด Like"),"likers",Ui.B("#25F4EE"),Ui.B("#002A2A"),null));
-   grid.Children.Add(W(AppLanguage.T("🎁  ยอดส่งของขวัญ"),"gifters",Ui.B("#FFD700"),Ui.B("#2A2000"),null));
-   grid.Children.Add(W(AppLanguage.T("🏆  นับ Win"),"win",Ui.B("#1A1500"),Ui.B("#FFD700"),Ui.B("#8A7300")));
-   grid.Children.Add(W(AppLanguage.T("🫙  แก้วโหล"),"jar",Ui.B("#1A0B2E"),Ui.B("#CC88FF"),Ui.B("#6A2BB0")));
-   widgets.Children.Add(grid);
-   widgets.Children.Add(W(AppLanguage.T("📊  สรุปยอด (Like / Gift / Win)"),"stats",Ui.B("#193B58"),Brushes.White,null));
-   var bgBox=new ComboBox { Width=180 }; bgBox.Items.Add(AppLanguage.T("พื้นหลังโปร่งใส")); bgBox.Items.Add(AppLanguage.T("พื้นหลังเขียว (Chroma)")); bgBox.SelectedIndex=bg==""?0:1;
+   string bg=GteData.Str(gteState,"obs_bg",""); string sel=GteData.Str(gteState,"obs_preview","likers");
+   if(!GteWidgets.Any(x=>x[0]==sel)) sel="likers";
+   // widgets
+   var widgets=new StackPanel(); widgets.Children.Add(GTitle("วิดเจ็ต"));
+   foreach(var wd in GteWidgets) {
+    string kind=wd[0],label=AppLanguage.T(wd[1]); bool on=kind==sel;
+    var g=new Grid { Margin=new Thickness(0,0,0,8) }; g.ColumnDefinitions.Add(new ColumnDefinition()); g.ColumnDefinitions.Add(new ColumnDefinition { Width=GridLength.Auto }); g.ColumnDefinitions.Add(new ColumnDefinition { Width=GridLength.Auto });
+    var pick=Btn(label,Ui.B(wd[2])); pick.Foreground=Ui.B(wd[3]); pick.FontWeight=FontWeights.Bold; pick.Padding=new Thickness(12,10,12,10); pick.HorizontalContentAlignment=HorizontalAlignment.Left;
+    pick.BorderBrush=on?Brushes.White:Ui.B(wd[3]); pick.BorderThickness=new Thickness(on?2.5:1); pick.ToolTip=AppLanguage.T("ดูตัวอย่าง");
+    pick.Click+=(s,e)=>{ gteState["obs_preview"]=kind; GteSave(true); Render(); }; g.Children.Add(pick);
+    var link=GBtn("🔗 ลิงก์",Ui.B("#193B58"),()=>{ if(!GteEngine.Running) { status.Text=AppLanguage.T("ระบบ Game To Earn ยังไม่พร้อม"); return; } try { Clipboard.SetText(GteEngine.OverlayUrl(kind,bg)); gteState["chk_obs"]=true; GteSave(true); status.Text=AppLanguage.T("คัดลอกลิงก์แล้ว: ")+label+AppLanguage.T(" • วางใน OBS (Browser) หรือ TikTok LIVE Studio (Link)"); } catch {} });
+    link.Margin=new Thickness(8,0,0,0); link.ToolTip=AppLanguage.T("คัดลอกลิงก์สำหรับ OBS Browser Source / TikTok LIVE Studio Link"); Grid.SetColumn(link,1); g.Children.Add(link);
+    var win=GBtn("🪟 หน้าต่าง",Ui.B("#14375A"),()=>{ GteOverlayWindow.Show(kind,label.Trim(),bg==""?"#00FF00":bg); gteState["chk_obs"]=true; GteSave(true); status.Text=AppLanguage.T("เปิดหน้าต่างแล้ว • ใน TikTok LIVE Studio เพิ่ม Window Capture → เลือก PTV Overlay"); });
+    win.Margin=new Thickness(6,0,0,0); win.ToolTip=AppLanguage.T("เปิดเป็นหน้าต่างให้ TikTok LIVE Studio / OBS จับภาพ (Window Capture) • คลิกขวาที่หน้าต่างเพื่อเปลี่ยนพื้นหลัง/ปิด"); Grid.SetColumn(win,2); g.Children.Add(win);
+    widgets.Children.Add(g);
+   }
+   var bgBox=new ComboBox { Width=200 }; bgBox.Items.Add(AppLanguage.T("พื้นหลังโปร่งใส")); bgBox.Items.Add(AppLanguage.T("พื้นหลังเขียว (Chroma)")); bgBox.SelectedIndex=bg==""?0:1;
    bgBox.SelectionChanged+=(s,e)=>{ gteState["obs_bg"]=bgBox.SelectedIndex==1?"#00ff00":""; GteSave(true); Render(); };
-   widgets.Children.Add(GRow(Line(AppLanguage.T("พื้นหลัง"),12,muted),new Border { Width=8 },bgBox));
+   widgets.Children.Add(GRow(Line(AppLanguage.T("พื้นหลังลิงก์"),12,muted),new Border { Width=8 },bgBox));
+   var tip=Line(AppLanguage.T("หน้าต่างใช้พื้นเขียวเสมอ (คลิกขวาเปลี่ยนได้) • ใช้ Chroma Key ลบสีเขียวในโปรแกรมไลฟ์"),11,muted); tip.TextWrapping=TextWrapping.Wrap; tip.Margin=new Thickness(0,6,0,0); widgets.Children.Add(tip);
 
-   var pv=new StackPanel(); pv.Children.Add(GTitle("ตัวอย่างจอ (Overlay)"));
-   gtePreview=new TextBlock { Text=GtePreviewText(),FontSize=17,FontWeight=FontWeights.Bold,Foreground=Brushes.White,LineHeight=30 };
-   pv.Children.Add(new Border { Background=Ui.B("#05101A"),CornerRadius=new CornerRadius(10),BorderBrush=Ui.B("#1E4566"),BorderThickness=new Thickness(1),Padding=new Thickness(16,12,16,12),Child=gtePreview });
+   // live preview of the selected widget
+   var pv=new StackPanel(); var wdSel=GteWidgets.First(x=>x[0]==sel);
+   pv.Children.Add(GTitle(AppLanguage.T("ตัวอย่างผลลัพธ์: ")+AppLanguage.T(wdSel[1]).Trim()));
+   double h=sel=="win"?160:sel=="stats"?120:sel=="jar"?400:380;
+   var view=new GteOverlayView(sel);
+   pv.Children.Add(new Border { Height=h,CornerRadius=new CornerRadius(10),ClipToBounds=true,BorderBrush=Ui.B("#1E4566"),BorderThickness=new Thickness(1),Background=bg==""?Checker():Ui.B(bg),Child=view });
+   var note=Line(GteEngine.Running?AppLanguage.T("แสดงผลจริงจาก LIVE • อัปเดตทุก 0.5 วินาที"):AppLanguage.T("ระบบยังไม่พร้อม • รอสักครู่"),11,muted); note.Margin=new Thickness(0,6,0,0); pv.Children.Add(note);
+   pv.Children.Add(GRow(GBtn("✨ ใส่ข้อมูลตัวอย่าง",accent,GteDemo),GBtn("🗑 ล้างยอด",Ui.B("#4A0000"),()=>{ GteResetOverlay("likers"); GteResetOverlay("gifters"); GteResetOverlay("jar"); })));
+   content.Children.Add(GCols(GCard(widgets),GCard(pv),360));
+
+   // win + jar settings
    var w=GteData.Sub(gteState,"win");
+   var wc=new StackPanel(); wc.Children.Add(GTitle("นับ Win"));
+   gtePreview=new TextBlock { Text=GtePreviewText(),FontSize=14,FontWeight=FontWeights.Bold,Foreground=Foreground,LineHeight=24,Margin=new Thickness(0,0,0,8) }; wc.Children.Add(gtePreview);
+   wc.Children.Add(GRow(GBtn("−",Ui.B("#193B58"),()=>GteWin(-1)),GBtn("+",Ui.B("#193B58"),()=>GteWin(1)),GBtn("รีเซ็ต",Ui.B("#4A0000"),()=>{ w["count"]=0; GteSave(true); GtePushOverlay(); GteRefreshPreview(); })));
    var max=GInput(GteData.Int(w,"max",10).ToString(),56,v=>{ int n; if(int.TryParse(v,out n)&&n>=0) { w["max"]=n; GteSave(true); GtePushOverlay(); GteRefreshPreview(); } });
-   pv.Children.Add(GRow(GBtn("−",Ui.B("#193B58"),()=>GteWin(-1)),GBtn("+",Ui.B("#193B58"),()=>GteWin(1)),GBtn("รีเซ็ต",Ui.B("#4A0000"),()=>{ w["count"]=0; GteSave(true); GtePushOverlay(); GteRefreshPreview(); })));
-   pv.Children.Add(GRow(Line(AppLanguage.T("Win สูงสุด"),12,muted),new Border { Width=8 },max));
-   pv.Children.Add(GRow(GBtn("ล้างยอด Like/Gift",Ui.B("#193B58"),async()=>{ gteLikes=0; gteGifts=0; gteDiamonds=0; GteRefreshPreview(); try { await GteEngine.Post("overlay/reset",new Dictionary<string,object>{{"what","likers"}}); await GteEngine.Post("overlay/reset",new Dictionary<string,object>{{"what","gifters"}}); } catch {} })));
-   content.Children.Add(GCols(GCard(widgets),GCard(pv),280));
-
-   var jar=new StackPanel(); jar.Children.Add(GTitle("โหลดของขวัญ"));
+   var size=GInput(GteData.Int(w,"size",64).ToString(),56,v=>{ int n; if(int.TryParse(v,out n)&&n>=12&&n<=200) { w["size"]=n; GteSave(true); GtePushOverlay(); } });
+   wc.Children.Add(GRow(Line(AppLanguage.T("สูงสุด"),12,muted),new Border { Width=6 },max,Line(AppLanguage.T("ขนาด"),12,muted),new Border { Width=6 },size));
+   var colors=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,6,0,0) }; colors.Children.Add(Line(AppLanguage.T("สี"),12,muted));
+   foreach(var c in new[]{"#FFFFFF","#FFD700","#FF4F9A","#25F4EE","#48DDAC","#FF6B3D"}) {
+    var col=c; bool cur=GteData.Str(w,"color","#ffffff").Equals(c,StringComparison.OrdinalIgnoreCase);
+    var sw=new Button { Width=26,Height=26,Margin=new Thickness(8,0,0,0),Background=Ui.B(c),BorderBrush=cur?accent:Brushes.Transparent,BorderThickness=new Thickness(3),Cursor=Cursors.Hand };
+    sw.Click+=(s,e)=>{ w["color"]=col; GteSave(true); GtePushOverlay(); Render(); }; colors.Children.Add(sw);
+   }
+   wc.Children.Add(colors);
+   var jar=new StackPanel(); jar.Children.Add(GTitle("แก้วโหลของขวัญ"));
    var pct=Line(GteData.Int(gteState,"jar_scale",100)+"%",15,Ui.Gold); pct.FontWeight=FontWeights.Bold; pct.Width=56;
-   var slider=new Slider { Minimum=40,Maximum=200,Value=GteData.Int(gteState,"jar_scale",100),Width=360,VerticalAlignment=VerticalAlignment.Center,Margin=new Thickness(10,0,12,0) };
+   var slider=new Slider { Minimum=40,Maximum=200,Value=GteData.Int(gteState,"jar_scale",100),Width=200,VerticalAlignment=VerticalAlignment.Center,Margin=new Thickness(10,0,12,0) };
    slider.ValueChanged+=(s,e)=>{ gteState["jar_scale"]=(int)slider.Value; pct.Text=(int)slider.Value+"%"; };
    slider.PreviewMouseUp+=(s,e)=>{ GteSave(true); GtePushOverlay(); };
-   jar.Children.Add(GRow(Line("▭  Scale",13,muted),slider,pct));
+   jar.Children.Add(GRow(Line("Scale",13,muted),slider,pct));
    gteJarCount=Line(gteJarDrops+" gifts",13,muted);
    jar.Children.Add(GRow(
-    GBtn("⚗  Test Drop",Ui.B("#14375A"),async()=>{ try { await GteStartEngine(); var r=gteRows.FirstOrDefault(); await GteEngine.Post("overlay/drop",new Dictionary<string,object>{{"giftName",r!=null?r.name:"Rose"},{"count",5}}); gteJarDrops+=5; GteRefreshPreview(); } catch(Exception ex){ status.Text=ex.Message; } }),
-    GBtn("🗑  Clear",Ui.B("#5A1010"),async()=>{ try { await GteEngine.Post("overlay/reset",new Dictionary<string,object>{{"what","jar"}}); gteJarDrops=0; GteRefreshPreview(); } catch {} }),
-    new Border { Width=20 },gteJarCount));
-   content.Children.Add(GCard(jar));
+    GBtn("⚗ Test Drop",Ui.B("#14375A"),async()=>{ try { await GteStartEngine(); var r=gteRows.FirstOrDefault(); await GteEngine.Post("overlay/drop",new Dictionary<string,object>{{"giftName",r!=null?r.name:"Rose"},{"count",5}}); gteJarDrops+=5; GteRefreshPreview(); } catch(Exception ex){ status.Text=ex.Message; } }),
+    GBtn("🗑 Clear",Ui.B("#5A1010"),()=>GteResetOverlay("jar")),gteJarCount));
+   content.Children.Add(GCols(GCard(wc),GCard(jar),360));
+
+   // how to use with TikTok LIVE Studio / OBS
+   var how=new StackPanel(); how.Children.Add(GTitle("ใช้กับ TikTok LIVE Studio / OBS"));
+   foreach(var t in new[]{
+    "TikTok LIVE Studio (แนะนำ): กด 🪟 หน้าต่าง → ใน LIVE Studio เพิ่มแหล่ง \"Window Capture / จับหน้าต่าง\" → เลือก PTV Overlay → ใช้ Chroma Key สีเขียว",
+    "TikTok LIVE Studio แบบลิงก์: กด 🔗 ลิงก์ → เพิ่มแหล่ง \"Link\" วางลิงก์ (ถ้าภาพเล็กหรือไม่ขึ้น ให้ใช้แบบหน้าต่างแทน)",
+    "OBS: กด 🔗 ลิงก์ → Sources → Browser → วางลิงก์ กว้าง 400 สูง 600 (พื้นหลังโปร่งใสใช้ได้เลย)",
+    "ต้องเปิด Launcher ค้างไว้ระหว่างไลฟ์ ลิงก์และหน้าต่างจะอัปเดตเองตาม LIVE"}) { var l=Line("• "+AppLanguage.T(t),13,muted); l.TextWrapping=TextWrapping.Wrap; l.Margin=new Thickness(0,3,0,3); how.Children.Add(l); }
+   content.Children.Add(GCard(how));
   }
 
   UIElement GteLogLine(GteLog l) {

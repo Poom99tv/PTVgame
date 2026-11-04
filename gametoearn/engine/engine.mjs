@@ -173,16 +173,16 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST' && p === '/disconnect') { stopped = true; generation++; clearTimeout(reconnectTimer); reconnectTimer = null; try { connection?.removeAllListeners(); connection?.disconnect(); } catch {} connection = null; status = 'Disconnected'; detail = ''; push({ kind: 'status', status }); return reply(res, 200, { ok: true }); }
     if (req.method === 'POST' && p === '/test') {
-      const b = await body(req); const viewer = String(b.viewer || 'tester'); const n = Math.max(1, Math.min(1000, Number(b.amount) || 1));
+      const b = await body(req); const viewer = String(b.viewer || 'tester').slice(0, 40); const nick = String(b.name || 'Test').slice(0, 40); const demo = !!b.demo; const n = Math.max(1, Math.min(100000, Number(b.amount) || 1));
       if (b.kind === 'gift') {
         const g = matcher.byKey.get(b.giftKey) || matcher.byName(b.giftName || 'Rose');
         const per = g?.price || 1;
-        push({ kind: 'gift', viewer, name: 'Test', avatar: '', amount: n, giftKey: g?.key || '', giftName: g?.name || String(b.giftName || 'Gift'), rawName: String(b.giftName || ''), file: g?.file || '', method: 'test', diamonds: per * n });
-        board(overlay.gifters, viewer, 'Test', '', per * n); overlay.totals.diamonds += per * n; overlay.totals.gifts += n;
+        push({ kind: 'gift', viewer, name: nick, avatar: '', amount: n, giftKey: g?.key || '', giftName: g?.name || String(b.giftName || 'Gift'), rawName: String(b.giftName || ''), file: g?.file || '', method: 'test', diamonds: per * n, demo });
+        board(overlay.gifters, viewer, nick, '', per * n); overlay.totals.diamonds += per * n; overlay.totals.gifts += n;
         if (g?.file) overlay.drops.push({ id: ++overlay.dropSeq, file: g.file, count: Math.min(n, 50) });
-      } else if (b.kind === 'like') { board(overlay.likers, viewer, 'Test', '', n); overlay.totals.likes += n; push({ kind: 'like', viewer, name: 'Test', avatar: '', amount: n }); }
-      else if (b.kind === 'follow') push({ kind: 'follow', viewer, name: 'Test', avatar: '' });
-      else if (b.kind === 'chat') push({ kind: 'chat', viewer, name: 'Test', avatar: '', comment: String(b.comment || 'สวัสดี').slice(0, 300) });
+      } else if (b.kind === 'like') { board(overlay.likers, viewer, nick, '', n); overlay.totals.likes += n; push({ kind: 'like', viewer, name: nick, avatar: '', amount: n, demo }); }
+      else if (b.kind === 'follow') push({ kind: 'follow', viewer, name: nick, avatar: '', demo });
+      else if (b.kind === 'chat') push({ kind: 'chat', viewer, name: nick, avatar: '', comment: String(b.comment || 'สวัสดี').slice(0, 300), demo });
       else return reply(res, 400, { error: 'kind' });
       return reply(res, 200, { ok: true });
     }
