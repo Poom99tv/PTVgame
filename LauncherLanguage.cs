@@ -512,6 +512,7 @@ public static class AppLanguage {
 {"ค้นหาไอดี","Find ID"},
 {"ค้นหาผู้ใช้","Search users"},
 {"สร้าง ","Created "},
+{"☁ ใช้การตั้งค่าล่าสุดจากเว็บแล้ว","☁ Applied the latest settings from the website"},
 {"แสดงบนเว็บ PTVgame ว่ากำลังไลฟ์ (รูปโปรไฟล์ + ลิงก์ไปหน้าไลฟ์)","Show me as LIVE on the PTVgame website (profile picture + link to my LIVE)"},
 {"ฟรี","Free"},
 {"แพ็กเกจปัจจุบัน","Current plan"},

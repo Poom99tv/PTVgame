@@ -305,6 +305,7 @@ namespace PTVgame {
    var v=GteData.Str(gteState,"voice","th-TH-PremwadeeNeural"); if(v=="thai_soft") v="th-TH-PremwadeeNeural"; if(v=="thai") v="th-TH-NiwatNeural"; gteState["voice"]=v; GteVoice.Voice=v;
    GteSelect(Math.Max(0,Math.Min(GteData.Int(gteState,"preset",0),gtePresets.Count-1)));
    try { GteData.Save(gtePresets,gteState); } catch {}
+   GteCloudStart();
   }
   Dictionary<string,object> GtePreset { get { return gtePresets[Math.Max(0,Math.Min(gteIdx,gtePresets.Count-1))]; } }
   void GteSelect(int idx) {
@@ -324,8 +325,46 @@ namespace PTVgame {
    gtePresets[gteIdx]["gift_map"]=map;
   }
   void GteSave(bool quiet) {
-   try { GteFlush(); gteState["preset"]=gteIdx; GteData.Save(gtePresets,gteState); gteDirty=false; if(!quiet) status.Text=AppLanguage.T("บันทึกการตั้งค่า Game To Earn แล้ว"); }
+   try { GteFlush(); gteState["preset"]=gteIdx; GteData.Save(gtePresets,gteState); gteDirty=false; GteCloudPushSoon(); if(!quiet) status.Text=AppLanguage.T("บันทึกการตั้งค่า Game To Earn แล้ว"); }
    catch(Exception ex) { status.Text=AppLanguage.T("บันทึกไม่สำเร็จ: "+ex.Message); }
+  }
+
+  // ── cloud copy of the settings (edit on the website, follows the account) ──
+  DispatcherTimer gteCloudTimer,gteCloudPush; bool gteCloudBusy;
+  static readonly string[] GteLocalKeys={"token","port","synced_at"};
+  void GteCloudStart() {
+   if(gteCloudTimer!=null) return;
+   gteCloudTimer=new DispatcherTimer { Interval=TimeSpan.FromSeconds(20) }; gteCloudTimer.Tick+=(s,e)=>GteCloudPull(); gteCloudTimer.Start();
+   gteCloudPush=new DispatcherTimer { Interval=TimeSpan.FromSeconds(2) }; gteCloudPush.Tick+=(s,e)=>{ gteCloudPush.Stop(); GteCloudPushNow(); };
+   GteCloudPull();
+  }
+  void GteCloudPushSoon() { if(gteCloudPush!=null&&AccountsOn) { gteCloudPush.Stop(); gteCloudPush.Start(); } }
+  static DateTime GteTime(string s) { DateTime t; return DateTime.TryParse(s,System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.AdjustToUniversal|System.Globalization.DateTimeStyles.AssumeUniversal,out t)?t:DateTime.MinValue; }
+  async void GteCloudPushNow() {
+   if(!AccountsOn||gteCloudBusy) return; gteCloudBusy=true;
+   try {
+    var r=await AccountService.RpcObj("gte_save",new Dictionary<string,object>{{"p_presets",gtePresets},{"p_state",gteState},{"p_source","launcher"}});
+    if(r!=null) { gteState["synced_at"]=GteData.Str(r,"updated_at",""); GteData.Save(gtePresets,gteState); }
+   } catch {} finally { gteCloudBusy=false; }
+  }
+  async void GteCloudPull() {
+   if(!AccountsOn||gteCloudBusy||gteDirty) return; gteCloudBusy=true; bool push=false;
+   try {
+    var r=await AccountService.RpcObj("gte_get",null);
+    if(r==null) { push=true; return; }
+    var cloudAt=GteData.Str(r,"updated_at","");
+    if(GteTime(cloudAt)<=GteTime(GteData.Str(gteState,"synced_at",""))) return;
+    object pr,st; var presets=r.TryGetValue("presets",out pr)?Storage.Json.Deserialize<List<Dictionary<string,object>>>(Storage.Json.Serialize(pr)):null;
+    var state=r.TryGetValue("state",out st)?st as Dictionary<string,object>:null;
+    if(presets==null||presets.Count==0||gteDirty) return;
+    if(state!=null) foreach(var pair in state) if(Array.IndexOf(GteLocalKeys,pair.Key)<0) gteState[pair.Key]=pair.Value;
+    gtePresets=presets; gteState["synced_at"]=cloudAt; gteRows=null; gteIdx=-1;
+    GteSelect(Math.Max(0,Math.Min(GteData.Int(gteState,"preset",0),gtePresets.Count-1)));
+    GteVoice.Voice=GteData.Str(gteState,"voice","off");
+    GteData.Save(gtePresets,gteState); GtePushOverlay();
+    GteAddLog("☁ ใช้การตั้งค่าล่าสุดจากเว็บแล้ว","#88AAC9","cmd");
+    if(page==PageGte&&gteSub!=SubLive) Render();
+   } catch {} finally { gteCloudBusy=false; if(push) GteCloudPushNow(); }
   }
 
   // ── engine + polling ──

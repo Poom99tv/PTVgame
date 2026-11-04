@@ -15,6 +15,7 @@ import { OVERLAY_HTML } from './overlay.mjs';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.GTE_PORT || 8767);
+const WEB_ORIGINS = new Set(['https://poom99tv.github.io', ...String(process.env.GTE_WEB_ORIGINS || '').split(',').filter(Boolean)]);
 const TOKEN = String(process.env.GTE_TOKEN || '');
 const GIFTS = process.env.GTE_GIFTS || path.join(dir, 'gifts');
 const DATA = process.env.GTE_DATA || dir;
@@ -153,7 +154,7 @@ function overlayState(after) {
     jarClear: overlay.jarClear, drops: overlay.drops.filter(d => d.id > after) };
 }
 const reply = (res, code, data, type = 'application/json') => {
-  res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': 'null' });
+  res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' });
   res.end(type === 'application/json' ? JSON.stringify(data) : data);
 };
 async function body(req, limit = 65536) { let t = ''; for await (const c of req) { t += c; if (t.length > limit) throw Object.assign(Error('too large'), { status: 413 }); } return t ? JSON.parse(t) : {}; }
@@ -166,6 +167,15 @@ const authorized = (req, url) => {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1');
   if (![`127.0.0.1:${PORT}`, `localhost:${PORT}`].includes(req.headers.host)) return reply(res, 403, { error: 'host' });
+  // the PTVgame website may control this engine from the same computer (token still required)
+  const origin = String(req.headers.origin || '');
+  if (WEB_ORIGINS.has(origin)) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin'); }
+  if (req.method === 'OPTIONS') {
+    if (!WEB_ORIGINS.has(origin)) return reply(res, 403, { error: 'origin' });
+    res.writeHead(204, { 'Access-Control-Allow-Methods': 'GET, POST', 'Access-Control-Allow-Headers': 'authorization, content-type',
+      'Access-Control-Allow-Private-Network': 'true', 'Access-Control-Max-Age': '600' }); return res.end();
+  }
+  if (origin && !WEB_ORIGINS.has(origin) && origin !== `http://127.0.0.1:${PORT}` && req.method !== 'GET') return reply(res, 403, { error: 'origin' });
   if (!authorized(req, url)) return reply(res, 401, { error: 'unauthorized' });
   try {
     const p = url.pathname;
