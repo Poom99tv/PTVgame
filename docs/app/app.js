@@ -27,7 +27,7 @@ function avatar(el, a) { if (!el) return; const url = a?.avatar_url; el.style.ba
 // ───────────────────────── routing
 async function route() {
   if (recovery) return viewReset();
-  if (!session) { $("#nav").hidden = true; $("#me").hidden = true; return viewLogin("signin"); }
+  if (!session) { $("#nav").hidden = true; $("#me").hidden = true; return viewLogin(location.hash === "#forgot" ? "forgot" : "signin"); }
   if (!acct) { try { acct = await rpc("my_account"); } catch (e) { view.innerHTML = `<div class="card pad"><h2>โหลดบัญชีไม่สำเร็จ</h2><p class="muted">${esc(e.message)}</p><button class="btn" onclick="location.reload()">ลองใหม่</button></div>`; return; } }
   $("#nav").hidden = false; $("#me").hidden = false; avatar($("#meAv"), acct);
   if (acct.admin) acct.role = "admin";
