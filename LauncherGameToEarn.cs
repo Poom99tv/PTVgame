@@ -358,6 +358,7 @@ namespace PTVgame {
     var old=gteStatus; gteStatus=GteData.Str(e,"status",gteStatus); gteDetail=GteData.Str(e,"detail","");
     GteAddLog(GteStatusText()+(gteDetail!=""?" • "+gteDetail:""),gteStatus=="Connected"?"#48DDAC":gteStatus=="Error"?"#FF6B6B":"#88AAC9","live");
     if(gteStatus=="Connected"&&old!="Connected") { gteLikeCounter=0; gteFollowed.Clear(); }
+    GteLiveWeb(gteStatus=="Connected");
     GteRefreshStatus(); return;
    }
    if(kind=="gift") {
@@ -390,6 +391,28 @@ namespace PTVgame {
    }
    if(kind=="chat") { var text=GteData.Str(e,"comment",""); GteAddLog("💬 "+Who(e)+": "+text,"#D9E8F7","live"); GteVoice.Say(text,false); }
   }
+  // website "กำลังไลฟ์ตอนนี้": heartbeat every minute while connected (Supabase live_heartbeat)
+  DispatcherTimer gteBeat; bool gteListed;
+  void GteLiveWeb(bool live) {
+   if(gteBeat==null) { gteBeat=new DispatcherTimer { Interval=TimeSpan.FromSeconds(60) }; gteBeat.Tick+=(s,e)=>GteBeat(); }
+   if(live&&AccountsOn&&GteData.Bool(gteState,"show_on_web",true)) { GteBeat(); gteBeat.Start(); }
+   else { gteBeat.Stop(); if(gteListed) GteUnlist(); }
+  }
+  async void GteBeat() {
+   if(!AccountsOn||gteStatus!="Connected"||!GteData.Bool(gteState,"show_on_web",true)) return;
+   try {
+    var st=await GteEngine.Get("state"); var host=GteData.Sub(st,"host"); var a=AccountService.Current;
+    var map=games.FirstOrDefault(g=>g.id==GteData.Str(gteState,"roblox",""));
+    await AccountService.Rpc("live_heartbeat",new Dictionary<string,object>{
+     {"p_username",GteData.Str(st,"username",GteData.Str(gteState,"username",""))},
+     {"p_display",GteData.Str(host,"name","")!=""?GteData.Str(host,"name",""):a.displayName},
+     {"p_avatar",GteData.Str(host,"avatar","")!=""?GteData.Str(host,"avatar",""):(a.avatarUrl??"")},
+     {"p_game",map!=null?map.name:"Game To Earn"},{"p_title",GteData.Str(host,"title","")},{"p_viewers",GteData.Int(host,"viewers",0)}});
+    gteListed=true;
+   } catch {}
+  }
+  async void GteUnlist() { gteListed=false; try { await AccountService.Rpc("live_stop",null); } catch {} }
+
   void GteWin(int delta) {
    var w=GteData.Sub(gteState,"win"); int max=GteData.Int(w,"max",10),count=GteData.Int(w,"count",0)+delta;
    if(count<0) count=0; if(max>0&&count>max) count=max; w["count"]=count;
@@ -516,7 +539,8 @@ namespace PTVgame {
    var c2=GCheck("เลือก Preset ที่ต้องการใช้งาน",GteData.Bool(gteState,"chk_preset",false),v=>{ gteState["chk_preset"]=v; GteSave(true); }); check.Children.Add(c2);
    var c3=GCheck("ตั้งค่าระยะหน่วงและเสียงอ่าน (ถ้าต้องการ)",GteData.Bool(gteState,"chk_voice",false),v=>{ gteState["chk_voice"]=v; GteSave(true); }); check.Children.Add(c3);
    var c4=GCheck("เปิดหน้า OBS และทดสอบก่อนเริ่ม LIVE",GteData.Bool(gteState,"chk_obs",false),v=>{ gteState["chk_obs"]=v; GteSave(true); }); check.Children.Add(c4);
-   var auto=GCheck("เปิดแมพ Roblox แล้วเชื่อมต่อ TikTok ให้อัตโนมัติ",settings.gameToEarnWithRoblox,v=>{ settings.gameToEarnWithRoblox=v; Save(); }); auto.Margin=new Thickness(0,10,0,0); check.Children.Add(auto);
+   var web=GCheck("แสดงบนเว็บ PTVgame ว่ากำลังไลฟ์ (รูปโปรไฟล์ + ลิงก์ไปหน้าไลฟ์)",GteData.Bool(gteState,"show_on_web",true),v=>{ gteState["show_on_web"]=v; GteSave(true); GteLiveWeb(gteStatus=="Connected"); }); web.Margin=new Thickness(0,10,0,0); check.Children.Add(web);
+   var auto=GCheck("เปิดแมพ Roblox แล้วเชื่อมต่อ TikTok ให้อัตโนมัติ",settings.gameToEarnWithRoblox,v=>{ settings.gameToEarnWithRoblox=v; Save(); }); auto.Margin=new Thickness(0,2,0,0); check.Children.Add(auto);
    content.Children.Add(GCard(check));
 
    var test=new StackPanel(); test.Children.Add(GTitle("ทดสอบโดยไม่ต้องไลฟ์"));

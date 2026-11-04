@@ -23,6 +23,7 @@ fs.mkdirSync(DATA, { recursive: true });
 
 const matcher = new GiftMatcher(path.join(dir, 'gift-catalog.json'), path.join(DATA, 'gift-identities.json'));
 let status = 'Disconnected', detail = '', username = '', roomId = '';
+let host = { name: '', avatar: '', title: '', viewers: 0 };
 let connection = null, generation = 0, reconnectTimer = null, stopped = true;
 let seq = 0;
 const events = [];
@@ -112,8 +113,14 @@ async function connect() {
     if (ControlEvent?.DISCONNECTED) c.on(ControlEvent.DISCONNECTED, () => { if (attempt !== generation) return; status = 'Disconnected'; push({ kind: 'status', status }); schedule(); });
     if (ControlEvent?.ERROR) c.on(ControlEvent.ERROR, err => { if (attempt === generation) detail = String(err?.message || err?.info || err).slice(0, 300); });
     if (WebcastEvent.STREAM_END) c.on(WebcastEvent.STREAM_END, () => { if (attempt !== generation) return; status = 'Ended'; push({ kind: 'status', status, detail: 'LIVE ended' }); schedule(); });
+    if (WebcastEvent.ROOM_USER) c.on(WebcastEvent.ROOM_USER, d => { if (attempt !== generation) return; const v = Number(d.viewerCount ?? d.total ?? d.totalUser ?? 0); if (Number.isFinite(v) && v >= 0) host.viewers = Math.floor(v); });
     const state = await c.connect();
     if (attempt !== generation) return;
+    try {
+      const info = state?.roomInfo?.data || state?.roomInfo || c.roomInfo?.data || {}; const owner = info.owner || {};
+      host = { name: String(owner.nickname || owner.display_id || username).slice(0, 60), avatar: firstUrl(owner.avatar_thumb) || firstUrl(owner.avatar_medium) || firstUrl(owner.avatarThumb) || '',
+        title: String(info.title || '').slice(0, 120), viewers: Number(info.user_count || info.stats?.total_user || 0) || 0 };
+    } catch { host = { name: username, avatar: '', title: '', viewers: 0 }; }
     roomId = String(state?.roomId || ''); status = 'Connected'; detail = ''; push({ kind: 'status', status, roomId });
   } catch (err) {
     if (attempt !== generation) return;
@@ -163,13 +170,13 @@ const server = http.createServer(async (req, res) => {
   try {
     const p = url.pathname;
     if (req.method === 'GET' && p === '/health') return reply(res, 200, { ok: true, version: 1, status, gifts: matcher.catalog.length });
-    if (req.method === 'GET' && p === '/state') return reply(res, 200, { status, detail, username, roomId, seq, totals: overlay.totals });
+    if (req.method === 'GET' && p === '/state') return reply(res, 200, { status, detail, username, roomId, seq, totals: overlay.totals, host });
     if (req.method === 'GET' && p === '/events') { const after = Number(url.searchParams.get('after') || 0); return reply(res, 200, { status, detail, seq, events: events.filter(e => e.seq > after).slice(0, 300) }); }
     if (req.method === 'GET' && p === '/gifts') return reply(res, 200, matcher.catalog.map(g => ({ key: g.key, name: g.name, file: g.file, price: g.price || 0 })));
     if (req.method === 'POST' && p === '/connect') {
       const b = await body(req); const u = String(b.username || '').trim().replace(/^@/, '');
       if (!/^[A-Za-z0-9_.]{2,24}$/.test(u)) return reply(res, 400, { error: 'invalid username' });
-      username = u; stopped = false; streaks.clear(); connect(); return reply(res, 200, { ok: true });
+      username = u; stopped = false; streaks.clear(); host = { name: u, avatar: '', title: '', viewers: 0 }; connect(); return reply(res, 200, { ok: true });
     }
     if (req.method === 'POST' && p === '/disconnect') { stopped = true; generation++; clearTimeout(reconnectTimer); reconnectTimer = null; try { connection?.removeAllListeners(); connection?.disconnect(); } catch {} connection = null; status = 'Disconnected'; detail = ''; push({ kind: 'status', status }); return reply(res, 200, { ok: true }); }
     if (req.method === 'POST' && p === '/test') {

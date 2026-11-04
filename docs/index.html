@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PTVgame — เกมสำหรับไลฟ์ TikTok</title>
+<meta name="description" content="PTVgame Launcher: เกม PC และแมพ Roblox ที่ผู้ชม TikTok LIVE เล่นไปกับสตรีมเมอร์ได้ ส่งของขวัญ กดถูกใจ แล้วเกมตอบสนองทันที ใช้ฟรี">
+<meta property="og:title" content="PTVgame — เกมสำหรับไลฟ์ TikTok">
+<meta property="og:description" content="ผู้ชมส่งของขวัญ เกมตอบสนองทันที • ดูว่าใครกำลังไลฟ์ด้วย PTVgame ตอนนี้">
+<meta property="og:image" content="img/ptvrunner.webp">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23268EFF'/%3E%3Cpath d='M18 22h28a8 8 0 0 1 8 8v4a8 8 0 0 1-8 8H18a8 8 0 0 1-8-8v-4a8 8 0 0 1 8-8z' fill='%23fff'/%3E%3Ccircle cx='42' cy='32' r='3.5' fill='%23FE2C55'/%3E%3Cpath d='M20 29h3v-3h3v3h3v3h-3v3h-3v-3h-3z' fill='%2306131F'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#06131F; --deep:#0A1C2E; --panel:#0E2539; --line:#1C3B57; --mist:#8FADC8; --ink:#EEF5FC;
+  --blue:#268EFF; --blue-hi:#5BABFF; --live:#FE2C55; --gold:#FFC94A; --green:#3DDC97;
+  --display:"Prompt",system-ui,sans-serif; --body:"IBM Plex Sans Thai","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--night);color:var(--ink);font:400 16px/1.7 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+img{display:block;max-width:100%}
+:focus-visible{outline:3px solid var(--blue-hi);outline-offset:3px;border-radius:6px}
+.wrap{width:min(1160px,100% - 32px);margin-inline:auto}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:rgba(6,19,31,.82);backdrop-filter:blur(12px);border-bottom:1px solid rgba(28,59,87,.7)}
+.top .wrap{display:flex;align-items:center;gap:28px;height:68px}
+.brand{font:800 26px/1 var(--display);letter-spacing:-.5px;text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand b{color:var(--blue)}
+.brand svg{width:34px;height:34px}
+.nav{display:flex;gap:22px;margin-left:auto}
+.nav a{text-decoration:none;color:var(--mist);font-weight:500}
+.nav a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:10px;border:0;border-radius:12px;padding:12px 20px;font:600 16px/1 var(--body);text-decoration:none;cursor:pointer;transition:transform .15s,background .15s}
+.btn:active{transform:translateY(1px)}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{background:var(--blue-hi)}
+.btn-ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn-ghost:hover{box-shadow:inset 0 0 0 1.5px var(--mist)}
+.top .btn{padding:10px 16px;font-size:15px}
+
+/* hero */
+.hero{position:relative;padding:72px 0 0;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:-30% -10% auto;height:620px;background:radial-gradient(ellipse at 30% 40%,rgba(38,142,255,.22),transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(254,44,85,.12),transparent 55%);pointer-events:none}
+.hero-text{position:relative;max-width:760px}
+.hero h1{font:800 clamp(38px,6.4vw,76px)/1.06 var(--display);letter-spacing:-1.5px;margin:0 0 20px}
+.hero p{font-size:clamp(17px,2vw,20px);color:var(--mist);max-width:600px;margin:0 0 30px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.livechip{display:inline-flex;align-items:center;gap:8px;margin-bottom:22px;padding:6px 14px 6px 10px;border-radius:999px;background:rgba(254,44,85,.12);color:#FF8DA4;font-weight:600;font-size:14px;text-decoration:none}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(254,44,85,.6);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(254,44,85,.6)}70%{box-shadow:0 0 0 10px rgba(254,44,85,0)}100%{box-shadow:0 0 0 0 rgba(254,44,85,0)}}
+
+/* the showcase: two endless rows of game covers moving in opposite directions */
+.reel{position:relative;margin-top:64px;padding:26px 0 70px;transform:rotate(-4deg) scale(1.08);transform-origin:center}
+.reel-row{display:flex;gap:18px;width:max-content;animation:roll 60s linear infinite}
+.reel-row+.reel-row{margin-top:18px;animation-direction:reverse;animation-duration:72s}
+.reel:hover .reel-row{animation-play-state:paused}
+@keyframes roll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tile{position:relative;width:clamp(230px,26vw,340px);aspect-ratio:16/9;border-radius:16px;overflow:hidden;flex:none;background:var(--panel);box-shadow:0 18px 40px rgba(0,0,0,.45);text-decoration:none}
+.tile img{width:100%;height:100%;object-fit:cover}
+.tile span{position:absolute;left:12px;bottom:10px;font:700 18px/1.2 var(--display);text-shadow:0 2px 10px rgba(0,0,0,.8)}
+.tile i{position:absolute;right:10px;top:10px;font-style:normal;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(6,19,31,.72);color:var(--mist)}
+.tile i.rbx{color:#9FD7FF}
+.reel:before,.reel:after{content:"";position:absolute;top:0;bottom:0;width:12%;z-index:2;pointer-events:none}
+.reel:before{left:0;background:linear-gradient(90deg,var(--night),transparent)}
+.reel:after{right:0;background:linear-gradient(-90deg,var(--night),transparent)}
+
+/* sections */
+section{padding:84px 0}
+h2{font:700 clamp(28px,3.6vw,42px)/1.15 var(--display);letter-spacing:-.6px;margin:0 0 10px}
+.lead{color:var(--mist);margin:0 0 34px;max-width:640px}
+
+/* live now */
+#live{background:linear-gradient(180deg,var(--night),var(--deep))}
+.live-head{display:flex;align-items:end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.count{display:flex;align-items:center;gap:10px;font:600 15px var(--body);color:#FF8DA4}
+.streamers{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+@media (max-width:520px){.streamers{grid-template-columns:1fr 1fr;gap:12px}.streamer{padding:18px 10px 16px}.ring{width:84px;height:84px}.streamer .meta{gap:6px;font-size:12px}}
+.streamer{display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 16px 20px;border-radius:20px;background:var(--panel);text-decoration:none;border:1px solid var(--line);transition:border-color .15s,transform .15s}
+.streamer:hover{border-color:var(--live);transform:translateY(-2px)}
+.ring{position:relative;width:104px;height:104px;border-radius:50%;padding:4px;background:conic-gradient(var(--live),#FF6B3D,var(--live));margin-bottom:14px}
+.ring img,.ring .ini{width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid var(--panel);background:#1F4566}
+.ring .ini{display:flex;align-items:center;justify-content:center;font:700 38px var(--display)}
+.badge{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);background:var(--live);color:#fff;font:800 12px/1 var(--display);letter-spacing:.5px;padding:5px 9px;border-radius:6px;border:2px solid var(--panel)}
+.streamer b{font:700 17px/1.3 var(--display);margin-top:4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.streamer small{color:var(--mist);font-size:14px}
+.streamer .meta{margin-top:10px;font-size:13px;color:var(--mist);display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.streamer .vip{color:var(--gold)}
+.watch{margin-top:14px;font-weight:600;font-size:14px;color:#fff;background:var(--live);padding:8px 16px;border-radius:10px}
+.empty{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;padding:28px;border-radius:20px;border:1.5px dashed var(--line);max-width:760px}
+.empty .ring{width:84px;height:84px;background:var(--line);margin:0}
+.empty .ring .ini{font-size:30px;color:var(--mist)}
+.empty h3{font:700 20px var(--display);margin:0 0 4px}
+.empty p{margin:0;color:var(--mist)}
+
+/* games */
+.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:22px}
+.game img{aspect-ratio:16/9;object-fit:cover;border-radius:14px;background:var(--panel)}
+.game h3{font:700 20px/1.3 var(--display);margin:12px 0 2px;display:flex;align-items:center;gap:10px}
+.game h3 em{font:600 12px var(--body);font-style:normal;color:var(--mist);border:1px solid var(--line);padding:1px 8px;border-radius:999px}
+.game p{margin:0;color:var(--mist);font-size:15px}
+
+/* steps */
+#how{background:var(--deep)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;counter-reset:s}
+.step{position:relative;padding-top:58px}
+.step:before{counter-increment:s;content:counter(s);position:absolute;top:0;left:0;width:44px;height:44px;border-radius:12px;background:var(--blue);display:flex;align-items:center;justify-content:center;font:800 20px var(--display)}
+.step h3{font:700 21px/1.3 var(--display);margin:0 0 6px}
+.step p{margin:0;color:var(--mist)}
+
+/* pricing */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+.plan{padding:26px;border-radius:20px;background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column}
+.plan.free{border-color:#2E8B57}
+.plan.best{border-color:var(--gold)}
+.plan h3{font:700 18px var(--display);margin:0;display:flex;justify-content:space-between;align-items:center}
+.plan h3 small{font:600 12px var(--body);color:#2A1C00;background:var(--gold);padding:3px 10px;border-radius:999px}
+.price{font:800 46px/1 var(--display);margin:18px 0 4px;letter-spacing:-1px}
+.price s{font:500 20px var(--display);color:var(--mist);margin-right:8px}
+.price span{font:500 16px var(--body);color:var(--mist);letter-spacing:0}
+.plan ul{list-style:none;padding:0;margin:18px 0 24px;flex:1}
+.plan li{padding:5px 0 5px 26px;position:relative;color:#D8E6F3}
+.plan li:before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+.plan li.no{color:var(--mist)} .plan li.no:before{content:"–";color:var(--mist)}
+.plan .btn{justify-content:center}
+.note{color:var(--mist);font-size:14px;margin-top:18px}
+
+footer{padding:40px 0 56px;border-top:1px solid var(--line);color:var(--mist);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+
+@media (max-width:860px){
+  .nav{display:none}
+  .steps,.plans{grid-template-columns:1fr}
+  .hero{padding-top:44px}
+  .reel{margin-top:44px;transform:rotate(-4deg) scale(1.15)}
+  section{padding:64px 0}
+  .empty{grid-template-columns:1fr;text-align:center;justify-items:center}
+}
+@media (prefers-reduced-motion:reduce){
+  .reel-row{animation:none}
+  .reel{overflow-x:auto}
+  .dot{animation:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#" aria-label="PTVgame หน้าแรก">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#268EFF"/><path d="M18 22h28a8 8 0 0 1 8 8v4a8 8 0 0 1-8 8H18a8 8 0 0 1-8-8v-4a8 8 0 0 1 8-8z" fill="#fff"/><circle cx="42" cy="32" r="3.5" fill="#FE2C55"/><path d="M20 29h3v-3h3v3h3v3h-3v3h-3v-3h-3z" fill="#06131F"/></svg>
+      <span>PTV<b>game</b></span>
+    </a>
+    <nav class="nav" aria-label="เมนู">
+      <a href="#live">กำลังไลฟ์</a><a href="#games">เกม</a><a href="#how">วิธีเริ่ม</a><a href="#price">ราคา</a>
+    </nav>
+    <a class="btn btn-blue dl" href="https://github.com/Poom99tv/PTVgame/releases/download/launcher-v1.9.0/PTVgame-Windows-v1.9.0.zip">ดาวน์โหลด</a>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="wrap hero-text">
+      <a class="livechip" href="#live" id="heroLive" hidden><span class="dot"></span><span id="heroLiveText"></span></a>
+      <h1>เกมที่ผู้ชมเล่นไปกับคุณ บน TikTok LIVE</h1>
+      <p>ผู้ชมส่งของขวัญ กดถูกใจ หรือกดติดตาม แล้วเกมตอบสนองทันที ทั้งเกม PC และแมพ Roblox รวมอยู่ใน Launcher เดียว เริ่มใช้ฟรี</p>
+      <div class="cta">
+        <a class="btn btn-blue dl" href="https://github.com/Poom99tv/PTVgame/releases/download/launcher-v1.9.0/PTVgame-Windows-v1.9.0.zip">ดาวน์โหลด Launcher ฟรี</a>
+        <a class="btn btn-ghost" href="#live">ดูใครกำลังไลฟ์</a>
+      </div>
+    </div>
+    <div class="reel" aria-label="เกมใน PTVgame">
+      <div class="reel-row" id="row1"></div>
+      <div class="reel-row" id="row2"></div>
+    </div>
+  </div>
+
+  <section id="live">
+    <div class="wrap">
+      <div class="live-head">
+        <div>
+          <h2>กำลังไลฟ์ตอนนี้</h2>
+          <p class="lead">สตรีมเมอร์ที่เปิดเกมผ่าน PTVgame อยู่ตอนนี้ กดที่รูปเพื่อเข้าไปดูไลฟ์บน TikTok</p>
+        </div>
+        <div class="count" id="liveCount" aria-live="polite"></div>
+      </div>
+      <div id="streamers" class="streamers" aria-busy="true"></div>
+    </div>
+  </section>
+
+  <section id="games">
+    <div class="wrap">
+      <h2>เกมใน Launcher</h2>
+      <p class="lead">ติดตั้งและอัปเดตให้อัตโนมัติ แมพ Roblox ใช้ Game To Earn เชื่อม TikTok LIVE เป็นปุ่มกดในเกม</p>
+      <div class="games" id="gameList"></div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <h2>เริ่มไลฟ์ใน 3 ขั้น</h2>
+      <p class="lead">ไม่ต้องตั้งค่าเซิร์ฟเวอร์ ไม่ต้องลงโปรแกรมเสริม</p>
+      <div class="steps">
+        <div class="step"><h3>ดาวน์โหลดและสมัคร</h3><p>แตกไฟล์ Launcher แล้วสมัครด้วยอีเมล ได้ไอดี PTV 8 หลักไว้ใช้ทุกเครื่อง</p></div>
+        <div class="step"><h3>เลือกเกม ใส่ชื่อ TikTok</h3><p>เปิดเกม PC หรือแมพ Roblox แล้วกดเชื่อมต่อ LIVE ในหน้า Game To Earn</p></div>
+        <div class="step"><h3>ผู้ชมเล่นด้วยของขวัญ</h3><p>ตั้งว่าของขวัญแต่ละชิ้นกดปุ่มอะไร พร้อมจอ OBS ยอด Like ยอดของขวัญ และแก้วโหล</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="price">
+    <div class="wrap">
+      <h2>ราคา</h2>
+      <p class="lead">Game To Earn ใช้ฟรีตลอด อัปเกรด VIP เมื่ออยากเล่นทุกเกม</p>
+      <div class="plans" id="plans"></div>
+      <p class="note">ชำระด้วย QR พร้อมเพย์ PayPal หรือบัตร ได้ในหน้าร้านค้าของ Launcher • VIP ซื้อเพิ่มแล้ววันต่อจากของเดิม</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© PTVgame • Poom99tv</span>
+    <span>ไม่ได้เกี่ยวข้องกับ TikTok หรือ Roblox</span>
+  </div>
+</footer>
+
+<script>
+const SUPABASE_URL="https://ynbnzpejlkodjctqtexs.supabase.co";
+const SUPABASE_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluYm56cGVqbGtvZGpjdHF0ZXhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3MTAwNTcsImV4cCI6MjEwOTI4NjA1N30.wiisZFAkuEhtQiJA2OKxZatTRs7emmUNsEC7eW_YFM8";
+const GAMES=[
+  {name:"PTVRunner",img:"ptvrunner",kind:"Roblox",desc:"วิ่งแข่งข้ามเกาะ 12 กิโลเมตร ผู้ชมส่งของขวัญเร่งหรือแกล้งนักวิ่ง"},
+  {name:"Zombie Rush",img:"zombierush",kind:"PC",desc:"พาซอมบี้ฝ่าสวนไปกินสมอง ผู้ชมส่งของขวัญเพื่อช่วยหรือแกล้งด้วยสกิล"},
+  {name:"Acorn Rush",img:"ptvegg",kind:"PC",desc:"กระรอกวิ่งเก็บลูกโอ๊ก ของขวัญทำให้ฝนลูกโอ๊กตก"},
+  {name:"PTVBoat",img:"ptvboat",kind:"PC",desc:"เรือรบประลองกลางทะเลและเกาะ"},
+  {name:"Paint World",img:"paintworld-wide",kind:"PC",desc:"ยิงสีฟ้าระบายลานให้ทั่ว พร้อมรับมือสีแดงที่เข้ามารบกวน"},
+  {name:"PTVvs",img:"ptvvs",kind:"PC",desc:"นักสู้ประลองกลางสนาม"},
+  {name:"PTVCar",img:"ptvcar-v2",kind:"PC",desc:"เกมรถสำหรับไลฟ์บน Windows"},
+  {name:"Per Fun Box",img:"roblox-box-1",kind:"Roblox",desc:"แมพ Roblox เล่นกับผู้ชมผ่าน Game To Earn"},
+  {name:"Fun Ladder",img:"roblox-unnamed",kind:"Roblox",desc:"แมพ Roblox ปีนบันไดแข่งกับของขวัญผู้ชม"},
+  {name:"PTY jump",img:"roblox-pty-jump",kind:"Roblox",desc:"แมพ Roblox กระโดดข้ามด่าน"},
+  {name:"Gear Box",img:"roblox-box-2",kind:"Roblox",desc:"แมพ Roblox กล่องสุ่มเฟือง"}
+];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num=n=>Number(n||0).toLocaleString("th-TH");
+
+// showcase rows (duplicated so the loop is seamless)
+function tile(g,hidden){return `<div class="tile"${hidden?' aria-hidden="true"':''}><img src="img/${g.img}.webp" alt="${hidden?'':esc(g.name)}" loading="lazy" width="340" height="191"><i class="${g.kind==='Roblox'?'rbx':''}">${g.kind}</i><span>${esc(g.name)}</span></div>`;}
+const half=Math.ceil(GAMES.length/2), a=GAMES.slice(0,half), b=GAMES.slice(half).concat(GAMES.slice(0,1));
+for(const [id,list] of [["row1",a],["row2",b]]){const el=document.getElementById(id);const set=list.concat(list);el.innerHTML=set.map(g=>tile(g,false)).join("")+set.map(g=>tile(g,true)).join("");}
+document.getElementById("gameList").innerHTML=GAMES.map(g=>`<article class="game"><img src="img/${g.img}.webp" alt="" loading="lazy" width="360" height="203"><h3>${esc(g.name)} <em>${g.kind}</em></h3><p>${esc(g.desc)}</p></article>`).join("");
+
+async function rpc(fn,body){const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:SUPABASE_ANON,Authorization:"Bearer "+SUPABASE_ANON,"Content-Type":"application/json"},body:JSON.stringify(body||{})});if(!r.ok)throw new Error(r.status);return r.json();}
+function since(t){const m=Math.max(1,Math.round((Date.now()-new Date(t))/60000));return m<60?m+" นาที":Math.floor(m/60)+" ชม. "+(m%60)+" นาที";}
+function card(s){
+  const u=esc(s.tiktok_username), name=esc(s.display_name||s.tiktok_username), ini=esc((s.display_name||s.tiktok_username||"?").trim().charAt(0).toUpperCase());
+  const pic=s.avatar_url?`<img src="${esc(s.avatar_url)}" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML='<span class=&quot;ini&quot;>${ini}</span>'">`:`<span class="ini">${ini}</span>`;
+  return `<a class="streamer" href="https://www.tiktok.com/@${encodeURIComponent(s.tiktok_username)}/live" target="_blank" rel="noopener" aria-label="ดูไลฟ์ของ ${name} บน TikTok">
+    <span class="ring">${pic}<span class="badge">LIVE</span></span>
+    <b>${name}</b><small>@${u}</small>
+    <span class="meta">${s.game?`<span>🎮 ${esc(s.game)}</span>`:""}${s.viewers?`<span>👀 ${num(s.viewers)}</span>`:""}<span>⏱ ${since(s.started_at)}</span>${s.vip?'<span class="vip">♛ VIP</span>':""}</span>
+    <span class="watch">ดูไลฟ์</span></a>`;
+}
+async function loadLive(){
+  const box=document.getElementById("streamers"),count=document.getElementById("liveCount"),chip=document.getElementById("heroLive");
+  try{
+    const list=await rpc("live_now");
+    box.setAttribute("aria-busy","false");
+    if(!list.length){
+      box.className=""; count.innerHTML="";
+      box.innerHTML=`<div class="empty"><span class="ring"><span class="ini">📡</span></span><div><h3>ยังไม่มีใครไลฟ์อยู่ตอนนี้</h3><p>เปิด Launcher แล้วเชื่อมต่อ TikTok LIVE ในหน้า Game To Earn รูปโปรไฟล์ของคุณจะขึ้นที่นี่ภายใน 1 นาที</p></div></div>`;
+      chip.hidden=true; return;
+    }
+    box.className="streamers"; box.innerHTML=list.map(card).join("");
+    count.innerHTML=`<span class="dot"></span> ${num(list.length)} คนกำลังไลฟ์`;
+    chip.hidden=false; document.getElementById("heroLiveText").textContent=`${num(list.length)} คนกำลังไลฟ์ด้วย PTVgame`;
+  }catch(e){
+    box.setAttribute("aria-busy","false");
+    if(!box.children.length) box.innerHTML=`<div class="empty"><span class="ring"><span class="ini">!</span></span><div><h3>โหลดรายชื่อไลฟ์ไม่ได้</h3><p>เช็กอินเทอร์เน็ตแล้วรีเฟรชหน้านี้ ระบบจะลองใหม่เองทุก 30 วินาที</p></div></div>`;
+  }
+}
+async function loadPlans(){
+  let plans=[];
+  try{const r=await fetch(SUPABASE_URL+"/rest/v1/plans?select=code,name,days,price_thb,price_usd,list_price_usd&active=eq.true&order=sort",{headers:{apikey:SUPABASE_ANON,Authorization:"Bearer "+SUPABASE_ANON}});if(r.ok)plans=await r.json();}catch(e){}
+  if(!plans.length)plans=[{code:"monthly",days:30,price_thb:690,price_usd:20,list_price_usd:25},{code:"yearly",days:365,price_thb:7590,price_usd:220,list_price_usd:300}];
+  const baht=n=>"฿"+Number(n).toLocaleString("th-TH",{maximumFractionDigits:0});
+  const vip=["เล่นได้ทุกเกมใน PTVgame","แมพ Roblox + Game To Earn ครบ","เกมใหม่เล่นได้ทันทีที่เปิดตัว","อัปเดตเกมอัตโนมัติ"];
+  let html=`<div class="plan free"><h3>ฟรี</h3><div class="price">฿0 <span>/ ตลอดไป</span></div><ul><li>Game To Earn: TikTok LIVE → ปุ่มกดใน Roblox</li><li>Preset ของขวัญ / Like / ติดตาม</li><li>จอ OBS และ TikTok LIVE Studio + แก้วโหล</li><li>เกมฟรีใน Launcher</li><li class="no">เกม VIP</li></ul><a class="btn btn-ghost dl" href="#">ดาวน์โหลดฟรี</a></div>`;
+  for(const p of plans){const yearly=p.code==="yearly";const list=p.list_price_usd&&p.price_usd?Math.round(p.price_thb*p.list_price_usd/p.price_usd/10)*10:0;
+    html+=`<div class="plan${yearly?" best":""}"><h3>${yearly?"VIP รายปี":"VIP รายเดือน"}${yearly?"<small>คุ้มที่สุด</small>":""}</h3><div class="price">${list>p.price_thb?`<s>${baht(list)}</s>`:""}${baht(p.price_thb)} <span>/ ${yearly?"ปี":"เดือน"}</span></div><ul><li>VIP ${p.days} วัน</li>${vip.map(v=>`<li>${v}</li>`).join("")}</ul><a class="btn btn-blue dl" href="#">ดาวน์โหลดแล้วซื้อใน Launcher</a></div>`;}
+  document.getElementById("plans").innerHTML=html; setDownload();
+}
+let DL=document.querySelector(".dl").href;
+function setDownload(){document.querySelectorAll(".dl").forEach(a=>a.href=DL);}
+fetch("https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/launcher.json").then(r=>r.ok?r.json():null).then(m=>{if(m&&/^https:\/\/github\.com\//.test(m.url)){DL=m.url;setDownload();}}).catch(()=>{});
+loadLive(); setInterval(loadLive,30000); loadPlans();
+</script>
+</body>
+</html>
