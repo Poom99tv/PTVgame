@@ -398,7 +398,31 @@ namespace PTVgame {
    try { list=await AccountService.Plans(); } catch(Exception ex) { if(id==renderId) { holder.Children.Clear(); holder.Children.Add(Text("โหลดราคาไม่สำเร็จ: "+ex.Message,13,Ui.Red)); } return; }
    if(id!=renderId) return; holder.Children.Clear();
    var monthly=list.FirstOrDefault(p=>p.code=="monthly");
+   if(target==null&&!wallet) holder.Children.Add(FreeCard());
    foreach(var p in list) holder.Children.Add(PlanCard(p,monthly,target,wallet));
+  }
+
+  // free plan: ฿0 — Game To Earn and free games, no payment needed
+  UIElement FreeCard() {
+   var a=AccountService.Current; bool vip=a!=null&&(a.IsAdmin||(a.vipUntil!=null&&a.vipUntil.Value>DateTime.UtcNow));
+   var c=new StackPanel { Width=300 };
+   var top=new DockPanel(); top.Children.Add(Ui.Bold(Text("ฟรี",15)));
+   if(!vip) { var cur=Ui.Pill("แพ็กเกจปัจจุบัน",ColorBrush("#0F4A2E"),ColorBrush("#5CF29B")); cur.HorizontalAlignment=HorizontalAlignment.Right; top.Children.Add(cur); }
+   c.Children.Add(top);
+   var head=Ui.Bold(Text("เริ่มต้นใช้งาน",26)); head.Margin=new Thickness(0,14,0,2); c.Children.Add(head);
+   c.Children.Add(Text("ใช้ Game To Earn ไลฟ์ TikTok กับ Roblox ได้เลย ไม่ต้องจ่าย",13,muted));
+   var price=new WrapPanel { Margin=new Thickness(0,18,0,0) };
+   price.Children.Add(Ui.Bold(Line(Ui.Thai?Ui.Money(0,"THB"):Ui.Money(0,"USD"),Ui.Thai?36:40)));
+   var per=Text(" / ตลอดไป",15,muted); per.VerticalAlignment=VerticalAlignment.Bottom; per.Margin=new Thickness(4,0,0,8); price.Children.Add(per);
+   c.Children.Add(price);
+   c.Children.Add(Text("ไม่ต้องใช้บัตรหรือชำระเงิน",12,muted));
+   var feats=new StackPanel { Margin=new Thickness(0,16,0,12) }; c.Children.Add(feats);
+   foreach(var f in new[]{ new[]{"✓","Game To Earn: เชื่อม TikTok LIVE → กดคีย์ใน Roblox"},new[]{"✓","Preset และคำสั่ง ของขวัญ / Like / ติดตาม"},new[]{"✓","หน้าจอ OBS / TikTok LIVE Studio + แก้วโหล"},new[]{"✓","เกมฟรีใน PTVgame"},new[]{"—","เกม VIP ทั้งหมด (อัปเกรดได้ทุกเมื่อ)"} }) {
+    var r=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,5,0,0) }; r.Children.Add(Line(f[0],14,f[0]=="✓"?Ui.Green:muted));
+    var t=Text(f[1],13,f[0]=="✓"?Foreground:muted); t.Margin=new Thickness(10,0,0,0); t.TextWrapping=TextWrapping.Wrap; t.MaxWidth=270; r.Children.Add(t); feats.Children.Add(r);
+   }
+   var go=Btn("▶  ใช้ Game To Earn ฟรี",ColorBrush("#166534")); go.Margin=new Thickness(0,6,0,0); go.FontWeight=FontWeights.Bold; go.Click+=(s,e)=>Go(PageGte); c.Children.Add(go);
+   var box=Box(c); box.BorderBrush=ColorBrush("#2E8B57"); return box;
   }
 
   UIElement PlanCard(Plan p,Plan monthly,Func<long?> target,bool wallet) {
