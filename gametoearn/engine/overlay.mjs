@@ -44,7 +44,7 @@ const sim=new JarSim(),imgs={},queue=[];
 function img(f){if(!imgs[f]){const i=new Image();i.src='/gift-image/'+encodeURIComponent(f)+'?t='+encodeURIComponent(T);imgs[f]=i;}return imgs[f];}
 function render(s){if(clearSeq!==s.jarClear){if(clearSeq>=0){sim.clear();queue.length=0;}clearSeq=s.jarClear;}for(const d of s.drops||[])for(let i=0;i<d.count;i++)queue.push(d.file);}
 function rr(x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
-function drawGift(q){const i=img(q.img);g.save();g.translate(q.x,q.y);g.rotate(q.rot*Math.PI/180);const s=JAR.size;if(i.complete&&i.naturalWidth)g.drawImage(i,-s/2,-s/2,s,s);else{g.fillStyle='#ff4f9a';g.beginPath();g.arc(0,0,s*.4,0,7);g.fill();}g.restore();}
+function drawGift(q){const i=img(q.img);g.save();g.globalAlpha=Math.max(0,q.alpha??1);g.translate(q.x,q.y);g.rotate(q.rot*Math.PI/180);const s=JAR.size;if(i.complete&&i.naturalWidth)g.drawImage(i,-s/2,-s/2,s,s);else{g.fillStyle='#ff4f9a';g.beginPath();g.arc(0,0,s*.4,0,7);g.fill();}g.restore();}
 function drawJar(){const J=JAR,cx=J.cx,jt=J.jt,jb=J.jb,jx1=J.jx1,jx2=J.jx2,nx1=J.nx1,nx2=J.nx2,nh=J.neckH;
  g.beginPath();g.moveTo(nx1,jt+nh);g.quadraticCurveTo(jx1+3,jt+nh+10,jx1+3,jt+nh+40);g.lineTo(jx1+3,jb-35);g.quadraticCurveTo(jx1+3,jb,jx1+35,jb);g.lineTo(jx2-35,jb);g.quadraticCurveTo(jx2-3,jb,jx2-3,jb-35);g.lineTo(jx2-3,jt+nh+40);g.quadraticCurveTo(jx2-3,jt+nh+10,nx2,jt+nh);g.closePath();
  const gr=g.createLinearGradient(jx1,0,jx2,0);[[0,.47],[.1,.2],[.3,.06],[.5,.02],[.7,.06],[.9,.2],[1,.47]].forEach(([o,a])=>gr.addColorStop(o,'rgba(230,245,255,'+a+')'));

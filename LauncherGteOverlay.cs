@@ -98,13 +98,15 @@ namespace PTVgame {
  public class GteJarSim {
   public const double W=500,H=580,Cx=250,Jt=290,Jb=Jt+280,Jx1=Cx-110,Jx2=Cx+110,Nx1=Cx-86,Nx2=Cx+86,NeckH=32,Size=32,R=15;
   public const double InX1=Jx1+16,InX2=Jx2-16,FloorIn=Jb-16,Ground=Jb,G=0.42; public const int Max=170,Iter=10;
-  public class P { public double x,y,px,py,rot,vrot,finalRot,r=R; public string img; public bool overflow,sleep; public int still,rim; }
+  public class P { public double x,y,px,py,rot,vrot,finalRot,r=R,alpha=1; public string img; public bool overflow,sleep,dying; public int still,rim; }
   public readonly List<P> Items=new List<P>(); readonly Random rnd=new Random();
   public void Add(string img) {
    double x=Nx1+22+rnd.NextDouble()*(Nx2-Nx1-44);
-   Items.Add(new P { x=x,y=-Size,px=x,py=-Size-3,rot=(rnd.NextDouble()-.5)*70,vrot=(rnd.NextDouble()-.5)*3,finalRot=(rnd.NextDouble()-.5)*60,img=img });
+   double y0=-Size-rnd.NextDouble()*40;
+   Items.Add(new P { x=x,y=y0,px=x,py=y0-3,rot=(rnd.NextDouble()-.5)*70,vrot=(rnd.NextDouble()-.5)*3,finalRot=(rnd.NextDouble()-.5)*60,img=img });
    foreach(var q in Items) if(q.sleep&&q.y<Jt+90) { q.sleep=false; q.still=0; }
-   if(Items.Count>Max) { int i=Items.FindIndex(q=>q.overflow); Items.RemoveAt(i>=0?i:0); foreach(var q in Items) { q.sleep=false; q.still=0; } }
+   // too many: the oldest spilled gift fades out (never pops away)
+   if(Items.Count(q=>!q.dying)>Max) { var old=Items.FirstOrDefault(q=>q.overflow&&!q.dying)??Items.FirstOrDefault(q=>!q.dying); if(old!=null) old.dying=true; }
   }
   public void Clear() { Items.Clear(); }
   public static void Walls(double y,out double a,out double b) {
@@ -126,13 +128,16 @@ namespace PTVgame {
     double x1=bx[0],y1=bx[1],x2=bx[2],y2=bx[3];
     double cx=Math.Max(x1,Math.Min(q.x,x2)),cy=Math.Max(y1,Math.Min(q.y,y2)),dx=q.x-cx,dy=q.y-cy,d=Math.Sqrt(dx*dx+dy*dy);
     if(d>=q.r) continue;
-    if(d==0) { double l=q.x-x1,r=x2-q.x,t=q.y-y1,m=Math.Min(l,Math.Min(r,t)); if(m==t) { q.y=y1-q.r; onTop=true; } else if(m==l) q.x=x1-q.r; else q.x=x2+q.r; continue; }
+    if(d==0) { double l=q.x-x1,r=x2-q.x,t=q.y-y1,m=q.py<y1?t:Math.Min(l,Math.Min(r,t)); if(m==t) { q.y=y1-q.r; onTop=true; } else if(m==l) q.x=x1-q.r; else q.x=x2+q.r; continue; }
     q.x+=dx/d*(q.r-d); q.y+=dy/d*(q.r-d); if(dy/d< -0.6) onTop=true;
    }
    if(q.y+q.r>Ground) q.y=Ground-q.r;
    return onTop;
   }
   public void Step() {
+   bool removed=false;
+   foreach(var q in Items) if(q.dying) { q.alpha-=1/40.0; if(q.alpha<=0) removed=true; }
+   if(removed) { Items.RemoveAll(q=>q.alpha<=0); foreach(var q in Items) { q.sleep=false; q.still=0; } }
    var ps=Items; int n=ps.Count;
    foreach(var q in ps) {
     if(q.sleep) { q.px=q.x; q.py=q.y; continue; }
@@ -167,9 +172,10 @@ namespace PTVgame {
     if(q.y-q.py< -2.5) q.py=q.y+2.5;
     double hx=q.x-q.px; if(Math.Abs(hx)>5) q.px=q.x-Math.Sign(hx)*5;
     if(!q.overflow) {
-     bool slow=Math.Abs(q.y-q.py)<0.8; q.rim=q.y<Jt-4&&slow?q.rim+1:0;
-     if(q.rim>6) { q.overflow=true; q.px=q.x-(q.x<Cx?-2.2:2.2); }
-    }
+     // above the rim but outside the opening = lying on the glass edge -> spills over (no snapping inside)
+     if(q.y<Jt+q.r&&(q.x<Nx1+4||q.x>Nx2-4)) { q.overflow=true; q.rim=0; }
+     else { bool slow=Math.Abs(q.y-q.py)<0.8; q.rim=q.y<Jt-4&&slow?q.rim+1:0; if(q.rim>6) { q.overflow=true; q.px=q.x-(q.x<Cx?-1.2:1.2); } }
+    } else if(q.x>Nx1+4+q.r&&q.x<Nx2-4-q.r&&q.y>Jt-q.r+6&&q.y<Jt+NeckH) { q.overflow=false; q.rim=0; }
     double moving=Math.Sqrt((q.x-q.px)*(q.x-q.px)+(q.y-q.py)*(q.y-q.py));
     bool restless=q.overflow?q.y<Jt+6&&q.x>Nx1-24&&q.x<Nx2+24:q.y<Jt;
     if(!restless&&moving<0.12) { if(++q.still>8) q.sleep=true; } else q.still=0;
@@ -210,9 +216,9 @@ namespace PTVgame {
   public void Queue(string file) { if(queue.Count<600) queue.Enqueue(file); }
   public void Clear() { sim.Clear(); queue.Clear(); InvalidateVisual(); }
   void Gift(DrawingContext dc,GteJarSim.P q) {
-   var img=GteData.Image(q.img); dc.PushTransform(new RotateTransform(q.rot,q.x,q.y));
+   var img=GteData.Image(q.img); bool fade=q.alpha<1; if(fade) dc.PushOpacity(Math.Max(0,q.alpha)); dc.PushTransform(new RotateTransform(q.rot,q.x,q.y));
    if(img!=null) dc.DrawImage(img,new Rect(q.x-GteJarSim.Size/2,q.y-GteJarSim.Size/2,GteJarSim.Size,GteJarSim.Size)); else dc.DrawEllipse(Brushes.HotPink,null,new Point(q.x,q.y),12,12);
-   dc.Pop();
+   dc.Pop(); if(fade) dc.Pop();
   }
   protected override void OnRender(DrawingContext dc) {
    double w=ActualWidth,h=ActualHeight; if(w<10||h<10) return;
@@ -227,7 +233,7 @@ namespace PTVgame {
    dc.DrawGeometry(null,ShinePen1,Shine1); dc.DrawGeometry(null,ShinePen2,Shine2);
    foreach(var q in sim.Items) if(q.overflow) Gift(dc,q);
    dc.Pop();
-   var ft=new FormattedText("🎁 "+sim.Items.Count,System.Globalization.CultureInfo.InvariantCulture,FlowDirection.LeftToRight,new Typeface(new FontFamily("Segoe UI"),FontStyles.Normal,FontWeights.Black,FontStretches.Normal),16,Brushes.White);
+   var ft=new FormattedText("🎁 "+sim.Items.Count(q=>!q.dying),System.Globalization.CultureInfo.InvariantCulture,FlowDirection.LeftToRight,new Typeface(new FontFamily("Segoe UI"),FontStyles.Normal,FontWeights.Black,FontStretches.Normal),16,Brushes.White);
    dc.DrawText(ft,new Point((w-ft.Width)/2,4));
   }
  }
