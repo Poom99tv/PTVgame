@@ -14,8 +14,8 @@ public sealed class PTVLicense : MonoBehaviour
 {
     public const string GameId = "zombierush";
     // Public key of the play-ticket service (base64url modulus / exponent, kid "play-v1").
-    const string KeyN = "__PTV_KEY_N__";
-    const string KeyE = "__PTV_KEY_E__";
+    const string KeyN = "yuD0PJvY8G_-qQmFmc5GbRkbASrXyhKYsyXWXit_KDqnTcXkvYZYWJizJdah_0zYgWZUApou4nfcdGqqkgMn7v5dCIzTF-fMnMZnpsf3HIzJHwNIdOzXUKuVnKhwB8woTiuHp4OlUpN_yF4Ioj6EQQnO-bQ-tt27GpYi_AIjHDGA7IRZeolR19sxJPCbpFkD_QmON7dvn316txwPPWcMjAiMH7Tm3rAqiTyizoxlOccDSE_57Sx739m0DxuKlz3RAUvwaX0ibLyPysumu7ZSB6ij0Wxt5fwH0DjMcv1BR-ZJbvW_vX_95WCKgwjJcRB9NGoAsOeTx17UM0XZmh7Cvw";
+    const string KeyE = "AQAB";
     const long ClockSlackSeconds = 15 * 60;   // tolerate a PC clock that is a little off
 
     [Serializable] public sealed class Claims { public int v; public string kid, game, name, role, vip_until, nonce; public long ptv_id, iat, exp; public bool admin; }
