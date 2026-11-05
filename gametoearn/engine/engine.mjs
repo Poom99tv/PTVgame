@@ -15,7 +15,7 @@ import { OVERLAY_HTML } from './overlay.mjs';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.GTE_PORT || 8767);
-const WEB_ORIGINS = new Set(['https://poom99tv.github.io', ...String(process.env.GTE_WEB_ORIGINS || '').split(',').filter(Boolean)]);
+const WEB_ORIGINS = new Set(['https://poom99tv.github.io', 'https://ptvgame.com', 'https://www.ptvgame.com', ...String(process.env.GTE_WEB_ORIGINS || '').split(',').filter(Boolean)]);
 const TOKEN = String(process.env.GTE_TOKEN || '');
 const GIFTS = process.env.GTE_GIFTS || path.join(dir, 'gifts');
 const DATA = process.env.GTE_DATA || dir;
