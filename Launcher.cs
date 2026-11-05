@@ -119,6 +119,7 @@ namespace PTVgame {
    }
   }
   public static void Play(Game g,string ticket=null) {
+   if(g.playTicket&&string.IsNullOrEmpty(ticket)) throw new Exception(AppLanguage.T("กรุณาเปิดเกมผ่าน PTVgame Launcher ด้วยบัญชี VIP"));
    var i=Storage.Current(g); if(i==null) throw new Exception(AppLanguage.T("ยังไม่ได้ติดตั้งเกม"));
    string root=Storage.GameRoot(g)+Path.DirectorySeparatorChar;
    if(!Path.GetFullPath(i.folder).StartsWith(root,StringComparison.OrdinalIgnoreCase)) throw new Exception(AppLanguage.T("ตำแหน่งติดตั้งไม่ถูกต้อง"));
@@ -224,6 +225,9 @@ AccountTests.Run();
     AppLanguage.Language="th";Assert(AppLanguage.T("การตั้งค่า")=="การตั้งค่า","Thai settings label");AppLanguage.Language="en";
     var catalogPath=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"catalog.json");
     var catalog=Storage.Json.Deserialize<List<Game>>(File.ReadAllText(catalogPath));
+    Assert(catalog.All(g=>g.access=="vip"),"every catalog game requires VIP");
+    Assert(catalog.Where(g=>g.category=="Unity").All(g=>g.playTicket),"every Unity game receives a signed ticket");
+    Assert(catalog.Select(g=>g.id).Distinct().Count()==catalog.Count,"unique game ids for tickets");
     var runner=catalog.Single(g=>g.id=="ptvrunner");
     Assert(runner.placeId=="71880688656931"&&runner.category=="Roblox","PTVRunner targets the correct map");
     Updater.Https(runner.companionManifestUrl);
@@ -243,3 +247,4 @@ AccountTests.Run();
   }
  }
 }
+

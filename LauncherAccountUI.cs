@@ -269,10 +269,10 @@ namespace PTVgame {
   /// <summary>Called before installing or launching: VIP games need an active VIP.</summary>
   bool Gate(Game g) {
    if(AccountService.CanPlay(g)) return true;
-   status.Text=AppLanguage.T(AccountService.Current==null?"กรุณาเข้าสู่ระบบก่อนเล่น":"เกมนี้สำหรับสมาชิก VIP • สมัคร VIP ได้ที่หน้าร้านค้า");
+   status.Text=AppLanguage.T(!AccountConfig.Current.Enabled?"ยังไม่ได้ตั้งค่าระบบบัญชี VIP ของ Launcher":AccountService.Current==null?"กรุณาเข้าสู่ระบบก่อนเล่น":"เกมนี้สำหรับสมาชิก VIP • สมัคร VIP ได้ที่หน้าร้านค้า");
    Go(PageStore); return false;
   }
-  bool Locked(Game g) { return AccountConfig.Current.Enabled&&!AccountService.CanPlay(g); }
+  bool Locked(Game g) { return !AccountService.CanPlay(g); }
 
   async void RefreshAccount() {
    if(!AccountConfig.Current.Enabled||AccountService.Session==null) return;
@@ -886,3 +886,4 @@ namespace PTVgame {
   }
  }
 }
+

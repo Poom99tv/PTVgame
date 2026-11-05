@@ -6,7 +6,9 @@
     "name": "PTVCar",
     "id": "ptvcar",
     "cover": "assets/ptvcar-v2.png",
-    "descriptionEn": "PTVCar for Windows"
+    "descriptionEn": "PTVCar for Windows",
+    "access": "vip",
+    "playTicket": true
   },
   {
     "description": "PTVvs • นักสู้ประลองในสนามจากโปรเจกต์ SuMo",
@@ -15,7 +17,9 @@
     "name": "PTVvs",
     "id": "sumo",
     "cover": "assets/ptvvs.png",
-    "descriptionEn": "PTVvs • Arena fighting from the SuMo project"
+    "descriptionEn": "PTVvs • Arena fighting from the SuMo project",
+    "access": "vip",
+    "playTicket": true
   },
   {
     "id": "paintworld",
@@ -24,7 +28,9 @@
     "category": "Unity",
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/paintworld.json",
     "cover": "assets/paintworld-wide.png",
-    "descriptionEn": "Cover the arena in blue paint while holding off the red team"
+    "descriptionEn": "Cover the arena in blue paint while holding off the red team",
+    "access": "vip",
+    "playTicket": true
   },
   {
     "id": "ptvboat",
@@ -33,7 +39,9 @@
     "category": "Unity",
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvboat.json",
     "cover": "assets/ptvboat.png",
-    "descriptionEn": "Naval battles across islands with TikTok LIVE integration"
+    "descriptionEn": "Naval battles across islands with TikTok LIVE integration",
+    "access": "vip",
+    "playTicket": true
   },
   {
     "id": "ptvegg",
@@ -42,7 +50,9 @@
     "category": "Unity",
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvegg.json",
     "cover": "assets/ptvegg.png",
-    "descriptionEn": "A squirrel collects acorns across the meadow • TikTok LIVE gifts make acorns rain"
+    "descriptionEn": "A squirrel collects acorns across the meadow • TikTok LIVE gifts make acorns rain",
+    "access": "vip",
+    "playTicket": true
   },
   {
     "id": "zombierush",
@@ -52,7 +62,8 @@
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/zombierush.json",
     "cover": "assets/zombierush.png",
     "descriptionEn": "Guide a zombie through the garden to eat brains! TikTok LIVE viewers send gifts to help or prank the player with skills. Includes English and Thai menus.",
-    "playTicket": true
+    "playTicket": true,
+    "access": "vip"
   },
   {
     "id": "ptvrunner",
@@ -64,7 +75,8 @@
     "placeId": "71880688656931",
     "companionManifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvrunner-bridge.json",
     "cover": "assets/ptvrunner.jpg",
-    "descriptionEn": "Race 12 km across islands • Launch Roblox and TikTokBridge together, then pair your LIVE in private server settings"
+    "descriptionEn": "Race 12 km across islands • Launch Roblox and TikTokBridge together, then pair your LIVE in private server settings",
+    "access": "vip"
   },
   {
     "description": "แมพ Roblox • 78508971781182",
@@ -73,7 +85,8 @@
     "name": "Per Fun Box",
     "id": "roblox-box-1",
     "cover": "assets/roblox-box-1.png",
-    "descriptionEn": "Roblox experience • 78508971781182"
+    "descriptionEn": "Roblox experience • 78508971781182",
+    "access": "vip"
   },
   {
     "description": "แมพ Roblox • 72721337468698",
@@ -82,7 +95,8 @@
     "name": "Fun Ladder",
     "id": "roblox-unnamed",
     "cover": "assets/roblox-unnamed.png",
-    "descriptionEn": "Roblox experience • 72721337468698"
+    "descriptionEn": "Roblox experience • 72721337468698",
+    "access": "vip"
   },
   {
     "description": "แมพ Roblox • 117977885975665",
@@ -91,7 +105,8 @@
     "name": "PTY jump",
     "id": "roblox-pty-jump",
     "cover": "assets/roblox-pty-jump.png",
-    "descriptionEn": "Roblox experience • 117977885975665"
+    "descriptionEn": "Roblox experience • 117977885975665",
+    "access": "vip"
   },
   {
     "description": "แมพ Roblox • 86222058260862",
@@ -100,6 +115,7 @@
     "name": "Gear Box",
     "id": "roblox-box-2",
     "cover": "assets/roblox-box-2.png",
-    "descriptionEn": "Roblox experience • 86222058260862"
+    "descriptionEn": "Roblox experience • 86222058260862",
+    "access": "vip"
   }
 ]
