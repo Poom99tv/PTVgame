@@ -376,13 +376,16 @@ namespace PTVgame {
       using(client) {
        var stream=client.GetStream(); stream.ReadTimeout=5000;
        string line=ReadLine(stream); // "GET /auth/callback?code=... HTTP/1.1"
+       if(string.IsNullOrEmpty(line)) continue; // browser pre-connect socket with no request
+       try { string h; do { h=ReadLine(stream); } while(!string.IsNullOrEmpty(h)); } catch {} // read the rest of the request so closing does not reset it
        var parts=(line??"").Split(' '); string target=parts.Length>1?parts[1]:"/";
        int q=target.IndexOf('?'); string p=q<0?target:target.Substring(0,q); string qs=q<0?"":target.Substring(q+1);
        bool match=paths.Contains(p);
        string html="<!doctype html><meta charset='utf-8'><title>PTVgame</title><body style='background:#00101F;color:#fff;font-family:Segoe UI,sans-serif;display:grid;place-items:center;height:90vh'><div style='text-align:center'><h2>"+(match?WebUtility.HtmlEncode(AppLanguage.T(message)):"PTVgame")+"</h2><p style='color:#88AAC9'>"+WebUtility.HtmlEncode(AppLanguage.T("ปิดแท็บนี้ได้"))+"</p></div>";
        byte[] body=Encoding.UTF8.GetBytes(html);
        byte[] head=Encoding.ASCII.GetBytes("HTTP/1.1 "+(match?"200 OK":"404 Not Found")+"\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: "+body.Length+"\r\nConnection: close\r\nCache-Control: no-store\r\n\r\n");
-       try { stream.Write(head,0,head.Length); stream.Write(body,0,body.Length); } catch {}
+       try { stream.Write(head,0,head.Length); stream.Write(body,0,body.Length); stream.Flush(); } catch {}
+       CloseGently(client);
        if(!match) continue;
        if(onQuery!=null) onQuery(ParseQuery(qs));
        return p;
@@ -390,6 +393,11 @@ namespace PTVgame {
      }
     }
    }
+  }
+  // Half-close and let the browser read the page before the socket goes away; an abrupt close makes
+  // Chrome retry the request after the listener has stopped and show "127.0.0.1 refused to connect".
+  static void CloseGently(TcpClient client) {
+   try { client.Client.Shutdown(SocketShutdown.Send); var buf=new byte[512]; client.Client.ReceiveTimeout=1000; var until=DateTime.UtcNow.AddSeconds(1); while(DateTime.UtcNow<until&&client.Client.Receive(buf)>0) {} } catch {}
   }
   static string ReadLine(Stream s) { var sb=new StringBuilder(); int b; while(sb.Length<8192&&(b=s.ReadByte())>=0) { if(b=='\n') break; if(b!='\r') sb.Append((char)b); } return sb.ToString(); }
   public static Dictionary<string,string> ParseQuery(string qs) {
