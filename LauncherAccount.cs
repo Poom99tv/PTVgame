@@ -276,7 +276,9 @@ namespace PTVgame {
   }
 
   // ---------------------------------------------------------------- store
+  public static bool OnlinePay; // PayPal / card checkout switched on by the admin (setting online_pay_enabled)
   public static async Task<List<Plan>> Plans() {
+   try { var po=await RpcObj("pay_options",null); OnlinePay=po!=null&&J.B(po,"online"); } catch { OnlinePay=false; }
    var list=J.List(await Send(HttpMethod.Get,Rest("plans?select=*&active=eq.true&order=sort"),null,Session!=null));
    return list.Select(d=>new Plan { code=J.S(d,"code"),name=J.S(d,"name"),days=(int)J.L(d,"days"),priceUsd=J.M(d,"price_usd"),listPriceUsd=J.M(d,"list_price_usd"),
     agentPriceUsd=J.M(d,"agent_price_usd"),priceThb=J.M(d,"price_thb"),agentPriceThb=J.M(d,"agent_price_thb"),active=J.B(d,"active") }).ToList();

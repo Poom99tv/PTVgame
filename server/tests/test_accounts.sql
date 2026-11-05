@@ -1,4 +1,5 @@
 \set ON_ERROR_STOP 1
+update public.settings set value='true' where key='online_pay_enabled';  -- these tests cover PayPal orders
 -- users: admin, agent, alice (normal), bob (normal)
 insert into auth.users values
  ('00000000-0000-0000-0000-00000000000a','admin@x.com','{"full_name":"Admin Poom"}','{"provider":"email"}'),

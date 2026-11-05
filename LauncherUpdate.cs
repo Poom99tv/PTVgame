@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace PTVgame {
  public static class LauncherUpdate {
-  public const string Version="1.9.0";
+  public const string Version="2.0.0";
   public const string ManifestUrl="https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/launcher.json";
   public static bool IsNewer(string version) { return new System.Version(version)>new System.Version(Version); }
   public static async Task<bool> Check(IProgress<string> progress,CancellationToken token) {
@@ -53,7 +53,7 @@ namespace PTVgame {
    var files=Directory.GetFiles(source,"*",SearchOption.AllDirectories);
    string prefix=Path.GetFullPath(source).TrimEnd(Path.DirectorySeparatorChar)+Path.DirectorySeparatorChar;
    // Only launcher payload files are replaced. Games and user settings live elsewhere.
-   foreach(string file in files){string rel=file.Substring(prefix.Length);if(rel!="PTVgame-Launcher.exe"&&rel!="catalog.json"&&rel!="README.md"&&!rel.StartsWith("assets"+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))throw new Exception("Unexpected launcher file: "+rel);}
+   foreach(string file in files){string rel=file.Substring(prefix.Length);if(rel!="PTVgame-Launcher.exe"&&rel!="catalog.json"&&rel!="README.md"&&rel!="account.json"&&!rel.StartsWith("assets"+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))throw new Exception("Unexpected launcher file: "+rel);}
    string backup=Path.Combine(target,"launcher-backup-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(backup);
    var changed=new System.Collections.Generic.List<string>();
    try {

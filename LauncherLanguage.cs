@@ -244,7 +244,7 @@ public static class AppLanguage {
 {" / ปี"," / year"},
 {" / เดือน"," / month"},
 {" ผ่าน QR พร้อมเพย์"," via PromptPay QR"},
-{"หรือ ","or "},
+{"ชำระผ่าน QR พร้อมเพย์","Pay with PromptPay QR"},{"ยังไม่เปิดรับชำระด้วย PayPal / บัตร กรุณาใช้ QR พร้อมเพย์","PayPal / card payments are not open yet. Please use PromptPay QR."},{"หรือ ","or "},
 {" • ราคาตัวแทน"," • agent price"},
 {"  • ราคาตัวแทน","  • agent price"},
 {"ถูกกว่าจ่ายรายเดือน 12 เดือน ","Cheaper than 12 monthly payments by "},

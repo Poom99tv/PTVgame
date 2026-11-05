@@ -442,7 +442,7 @@ namespace PTVgame {
    var big=Ui.Bold(Line(mainPrice,Ui.Thai?36:40)); price.Children.Add(big);
    var per=Text(yearly?" / ปี":" / เดือน",15,muted); per.VerticalAlignment=VerticalAlignment.Bottom; per.Margin=new Thickness(4,0,0,8); price.Children.Add(per);
    c.Children.Add(price);
-   c.Children.Add(Text((Ui.Thai?"หรือ "+Ui.Money(usd,"USD")+" ผ่าน PayPal / บัตร":"หรือ "+Ui.Money(thb,"THB")+" ผ่าน QR พร้อมเพย์")+(agent?" • ราคาตัวแทน":"")+(disc?" • ลด "+storeDiscountPct+"% ครั้งแรก":""),12,disc?Ui.Green:muted));
+   c.Children.Add(Text((!AccountService.OnlinePay?(Ui.Thai?"ชำระผ่าน QR พร้อมเพย์":"หรือ "+Ui.Money(thb,"THB")+" ผ่าน QR พร้อมเพย์"):Ui.Thai?"หรือ "+Ui.Money(usd,"USD")+" ผ่าน PayPal / บัตร":"หรือ "+Ui.Money(thb,"THB")+" ผ่าน QR พร้อมเพย์")+(agent?" • ราคาตัวแทน":"")+(disc?" • ลด "+storeDiscountPct+"% ครั้งแรก":""),12,disc?Ui.Green:muted));
    if(yearly&&monthly!=null&&!disc) { decimal m=(agent?monthly.agentPriceUsd:monthly.priceUsd)*12; if(m>usd) c.Children.Add(Text("ถูกกว่าจ่ายรายเดือน 12 เดือน "+Math.Round((m-usd)/m*100)+"%",12,Ui.Green)); }
    var feats=new StackPanel { Margin=new Thickness(0,16,0,12) }; c.Children.Add(feats);
    var list=new List<string>{"เข้าเล่นได้ทุกเกมใน PTVgame","เกม Roblox + Game To Earn ครบทุกแมพ","เกมใหม่เล่นได้ทันทีที่เปิดตัว","อัปเดตเกมอัตโนมัติ","ซื้อเพิ่มแล้ววันสะสมต่อจากของเดิม"};
@@ -455,6 +455,7 @@ namespace PTVgame {
    var qr=Btn("ชำระด้วย QR พร้อมเพย์ • "+Ui.Money(thb,"THB"),accent); qr.Margin=new Thickness(0,wallet?8:6,0,0); c.Children.Add(qr);
    var pp=Btn("PayPal • "+Ui.Money(usd,"USD"),ColorBrush("#FFC439")); pp.Foreground=ColorBrush("#14274E"); pp.Margin=new Thickness(0,8,0,0); c.Children.Add(pp);
    var card=Btn("บัตรเครดิต / เดบิต • "+Ui.Money(usd,"USD"),ColorBrush("#193B58")); card.Margin=new Thickness(0,8,0,0); c.Children.Add(card);
+   if(!AccountService.OnlinePay) { pp.Visibility=Visibility.Collapsed; card.Visibility=Visibility.Collapsed; }
    qr.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayPromptPay(p.code,t,qr,"vip",1); };
    pp.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayOnline(p.code,"paypal",t,"vip",1); };
    card.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayOnline(p.code,"card",t,"vip",1); };
@@ -616,7 +617,7 @@ namespace PTVgame {
    var bw=Btn("จ่ายด้วยกระเป๋าเงิน",Ui.Gold); bw.Foreground=Ui.B("#2A1C00"); payRow.Children.Add(bw); bw.Click+=async(s,e)=>{ int q=q0(); if(q==0||chosen==null) return; await PayWallet(chosen,"codes",null,q,bw); };
    var bq=Btn("QR พร้อมเพย์",accent); payRow.Children.Add(bq); bq.Click+=async(s,e)=>{ int q=q0(); if(q==0||chosen==null) return; await PayPromptPay(chosen.code,null,bq,"codes",q); };
    var bp=Btn("PayPal",ColorBrush("#FFC439")); bp.Foreground=ColorBrush("#14274E"); payRow.Children.Add(bp); bp.Click+=async(s,e)=>{ int q=q0(); if(q==0||chosen==null) return; await PayOnline(chosen.code,"paypal",null,"codes",q); };
-   var bc=Btn("บัตรเครดิต / เดบิต",ColorBrush("#193B58")); payRow.Children.Add(bc); bc.Click+=async(s,e)=>{ int q=q0(); if(q==0||chosen==null) return; await PayOnline(chosen.code,"card",null,"codes",q); };
+   var bc=Btn("บัตรเครดิต / เดบิต",ColorBrush("#193B58")); payRow.Children.Add(bc); if(!AccountService.OnlinePay) { bp.Visibility=Visibility.Collapsed; bc.Visibility=Visibility.Collapsed; } bc.Click+=async(s,e)=>{ int q=q0(); if(q==0||chosen==null) return; await PayOnline(chosen.code,"card",null,"codes",q); };
    holder.Children.Add(Box(buy));
 
    // 4. my codes

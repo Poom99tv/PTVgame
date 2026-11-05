@@ -1,0 +1,7 @@
+{
+  "supabaseUrl": "https://ynbnzpejlkodjctqtexs.supabase.co",
+  "anonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluYm56cGVqbGtvZGpjdHF0ZXhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3MTAwNTcsImV4cCI6MjEwOTI4NjA1N30.wiisZFAkuEhtQiJA2OKxZatTRs7emmUNsEC7eW_YFM8",
+  "defaultAccess": "vip",
+  "callbackPort": 53682,
+  "offlineHours": 72
+}
