@@ -51,7 +51,8 @@
     "category": "Unity",
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/zombierush.json",
     "cover": "assets/zombierush.png",
-    "descriptionEn": "Guide a zombie through the garden to eat brains! TikTok LIVE viewers send gifts to help or prank the player with skills. Includes English and Thai menus."
+    "descriptionEn": "Guide a zombie through the garden to eat brains! TikTok LIVE viewers send gifts to help or prank the player with skills. Includes English and Thai menus.",
+    "playTicket": true
   },
   {
     "id": "ptvrunner",
@@ -102,4 +103,3 @@
     "descriptionEn": "Roblox experience • 86222058260862"
   }
 ]
-

@@ -16,7 +16,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace PTVgame {
- public class Game { public string id,name,description,descriptionEn,manifestUrl,category; public string placeId,cover,companionManifestUrl,universeId,newBadge; public string access; }
+ public class Game { public string id,name,description,descriptionEn,manifestUrl,category; public string placeId,cover,companionManifestUrl,universeId,newBadge; public string access; public bool playTicket; }
  public class Manifest { public string version,url,sha256,executable; public long size; }
  public class Installed { public string version,folder,executable,sha256; }
  public class Settings { public string language="en"; public string theme="Midnight"; public bool autoUpdate=true; public bool gameToEarnWithRoblox=true; public List<string> favorites=new List<string>(); }
@@ -118,12 +118,14 @@ namespace PTVgame {
     }
    }
   }
-  public static void Play(Game g) {
+  public static void Play(Game g,string ticket=null) {
    var i=Storage.Current(g); if(i==null) throw new Exception(AppLanguage.T("ยังไม่ได้ติดตั้งเกม"));
    string root=Storage.GameRoot(g)+Path.DirectorySeparatorChar;
    if(!Path.GetFullPath(i.folder).StartsWith(root,StringComparison.OrdinalIgnoreCase)) throw new Exception(AppLanguage.T("ตำแหน่งติดตั้งไม่ถูกต้อง"));
    string exe=SafePath(i.folder,i.executable); if(!File.Exists(exe)) throw new Exception(AppLanguage.T("ไม่พบไฟล์เกม กรุณาติดตั้งใหม่"));
-   Process.Start(new ProcessStartInfo(exe) { WorkingDirectory=Path.GetDirectoryName(exe),UseShellExecute=false });
+   var psi=new ProcessStartInfo(exe) { WorkingDirectory=Path.GetDirectoryName(exe),UseShellExecute=false };
+   if(!string.IsNullOrEmpty(ticket)) { psi.Arguments="--ptv-ticket="+ticket; psi.EnvironmentVariables["PTV_TICKET"]=ticket; }   // signed VIP play ticket, checked by the game
+   Process.Start(psi);
   }
  }
  public class Launcher : Window {

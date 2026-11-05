@@ -170,7 +170,13 @@ namespace PTVgame {
     var current=Storage.Current(g);
     if(current==null||new Version(current.version)!=new Version(manifest.version)||!string.Equals(current.executable,manifest.executable,StringComparison.OrdinalIgnoreCase))throw new Exception("ต้องติดตั้งเวอร์ชันที่เซิร์ฟเวอร์กำหนดก่อนเล่น");
     if(!string.IsNullOrEmpty(current.sha256)&&!string.Equals(current.sha256,manifest.sha256,StringComparison.OrdinalIgnoreCase))throw new Exception("ไฟล์เวอร์ชันที่ติดตั้งไม่ตรงกับเซิร์ฟเวอร์ กรุณาอัปเดต");
-    Updater.Play(g);status.Text=AppLanguage.T("เปิด "+g.name+" v"+current.version+" แล้ว");
+    string ticket=null;
+    if(AccountConfig.Current.Enabled&&AccountService.Current!=null&&(g.playTicket||AccountService.RequiresVip(g))) {
+     status.Text=AppLanguage.T("กำลังตรวจสิทธิ์ VIP…");
+     try { ticket=await AccountService.PlayTicket(g.id); }
+     catch(Exception ex) { if(g.playTicket) throw new Exception(AppLanguage.T("ตรวจสิทธิ์ VIP ไม่สำเร็จ ")+ex.Message); }   // games that do not check tickets yet still open offline
+    }
+    Updater.Play(g,ticket);status.Text=AppLanguage.T("เปิด "+g.name+" v"+current.version+" แล้ว");
    }catch(OperationCanceledException){status.Text=AppLanguage.T("ยกเลิกแล้ว • ต้องอัปเดตให้สำเร็จก่อนเล่น");}
    catch(Exception ex){status.Text=AppLanguage.T("ยังเปิดเกมไม่ได้: "+ex.Message+" • ต้องเชื่อมต่อและตรวจเวอร์ชันให้สำเร็จ");}
    finally{busy=false;cancellation.Dispose();cancellation=null;progress.Visibility=Visibility.Collapsed;cancel.Visibility=Visibility.Collapsed;Render();}

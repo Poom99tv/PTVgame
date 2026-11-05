@@ -244,7 +244,7 @@ public static class AppLanguage {
 {" / ปี"," / year"},
 {" / เดือน"," / month"},
 {" ผ่าน QR พร้อมเพย์"," via PromptPay QR"},
-{"ชำระผ่าน QR พร้อมเพย์","Pay with PromptPay QR"},{"ยังไม่เปิดรับชำระด้วย PayPal / บัตร กรุณาใช้ QR พร้อมเพย์","PayPal / card payments are not open yet. Please use PromptPay QR."},{"หรือ ","or "},
+{"ชำระผ่าน QR พร้อมเพย์","Pay with PromptPay QR"},{"ยังไม่เปิดรับชำระด้วย PayPal / บัตร กรุณาใช้ QR พร้อมเพย์","PayPal / card payments are not open yet. Please use PromptPay QR."},{"กำลังตรวจสิทธิ์ VIP…","Checking VIP access…"},{"ตรวจสิทธิ์ VIP ไม่สำเร็จ ","Could not check VIP access: "},{"เซิร์ฟเวอร์ไม่ได้ส่งสิทธิ์เล่นกลับมา","The server did not return a play ticket"},{"หรือ ","or "},
 {" • ราคาตัวแทน"," • agent price"},
 {"  • ราคาตัวแทน","  • agent price"},
 {"ถูกกว่าจ่ายรายเดือน 12 เดือน ","Cheaper than 12 monthly payments by "},

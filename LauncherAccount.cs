@@ -254,6 +254,11 @@ namespace PTVgame {
    if(Current.vipUntil==null||Current.vipUntil.Value<=DateTime.UtcNow) return false;
    return !Offline||(DateTime.UtcNow-Current.checkedAt).TotalHours<Cfg.offlineHours;
   }
+  /// <summary>Short-lived signed ticket that a VIP game checks at start-up (see server/supabase/functions/play-ticket).</summary>
+  public static async Task<string> PlayTicket(string game) {
+   var r=J.Obj(await Send(HttpMethod.Post,Cfg.Base+"/functions/v1/play-ticket",Storage.Json.Serialize(A("game",game)),true));
+   string t=J.S(r,"ticket"); if(string.IsNullOrEmpty(t)) throw new AccountException("เซิร์ฟเวอร์ไม่ได้ส่งสิทธิ์เล่นกลับมา",500); return t;
+  }
   public static bool RequiresVip(Game g) { if(!Cfg.Enabled) return false; return (string.IsNullOrWhiteSpace(g.access)?Cfg.defaultAccess:g.access)!="free"; }
 
   // ---------------------------------------------------------------- profile
