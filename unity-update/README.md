@@ -39,3 +39,17 @@ Verification that already succeeded does not change the game's existing pause or
 
 Version 1.0.3 checks silently without creating a checking canvas. Warning UI is created only for a version mismatch, connection failure or invalid response. Gameplay still waits for verification; successful recurring checks leave gameplay and pause state unchanged.
 
+
+## VIP play tickets
+
+All 11 catalog entries use `access: "vip"`. The six Unity entries also use `playTicket: true`. The Launcher requests a signed play ticket before launching a game, including Roblox. The server rechecks the account and membership at that point.
+
+For each Unity project, install its `PTVLicense.cs` beside `PTVVersionGate.cs` under `Assets/PTVUpdate`. Zombie Rush already has its checker in `Assets/PVZ/Scripts/PTVLicense.cs`. Keep a single checker in each project.
+
+The checker uses the production `play-v1` RSA public key from Zombie Rush. It verifies the signature, game ID, launch expiry and VIP expiry, then checks VIP expiry during play. In the Editor, Play remains available for development. The version gate waits for the license result before loading gameplay.
+
+Publish the updated Windows game packages and their manifests before releasing the Launcher with this catalog. Each package must contain its game-specific checker. Test an actual VIP login through the Launcher during release validation.
+
+Roblox access is checked before the Launcher opens the experience. Access inside each Roblox experience is governed by its server scripts.
+
+

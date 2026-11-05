@@ -28,14 +28,14 @@ public sealed class PTVVersionGate : MonoBehaviour {
   if(Application.isEditor&&SceneManager.GetActiveScene().name!=BootstrapScene)return;
   if(!instance)new GameObject("PTV Mandatory Version Gate").AddComponent<PTVVersionGate>();}
  void Awake(){if(instance&&instance!=this){Destroy(gameObject);return;}instance=this;DontDestroyOnLoad(gameObject);Authorized=false;State="checking";Time.timeScale=0;AudioListener.pause=true;}
- IEnumerator Start(){yield return Check();while(true){yield return new WaitForSecondsRealtime(60);if(!checking)yield return Check();}}
+ IEnumerator Start(){while(!PTVLicense.Allowed)yield return null;yield return Check();while(true){yield return new WaitForSecondsRealtime(60);if(!checking)yield return Check();}}
  void OnApplicationFocus(bool focused){if(focused&&gameplayLoaded&&!checking)StartCoroutine(Check());}
- void LateUpdate(){if(!Authorized){Time.timeScale=0;AudioListener.pause=true;}}
+ void LateUpdate(){if(!Authorized||!PTVLicense.Allowed){Time.timeScale=0;AudioListener.pause=true;}}
  void OnDestroy(){if(instance==this){instance=null;Authorized=false;}}
  public static bool SameVersion(string local,string remote){Version a,b;if(!Version.TryParse(local,out a)||!Version.TryParse(remote,out b))return false;return a.Major==b.Major&&a.Minor==b.Minor&&Math.Max(a.Build,0)==Math.Max(b.Build,0)&&Math.Max(a.Revision,0)==Math.Max(b.Revision,0);}
  public static string Evaluate(string local,string remote,bool requestSucceeded){if(!requestSucceeded)return "connection_failed";Version parsed;if(!Version.TryParse(local,out parsed)||!Version.TryParse(remote,out parsed))return "invalid_manifest";return SameVersion(local,remote)?"allowed":"update_required";}
  public IEnumerator Check(){
-  if(checking)yield break;checking=true;bool wasAuthorized=Authorized;
+  if(checking||!PTVLicense.Allowed)yield break;checking=true;bool wasAuthorized=Authorized;
   if(!Authorized)State="checking";
   string url=ManifestUrl+"?check="+Guid.NewGuid().ToString("N");
   using(var request=UnityWebRequest.Get(url)){
@@ -44,9 +44,10 @@ public sealed class PTVVersionGate : MonoBehaviour {
    bool ok=request.result==UnityWebRequest.Result.Success&&request.responseCode==200;
    string remote=null;
    if(ok){try{if(request.downloadHandler.data.Length>65536)ok=false;else remote=JsonUtility.FromJson<RemoteManifest>(request.downloadHandler.text.TrimStart('\uFEFF'))?.version;}catch{remote=null;}}
+   if(!PTVLicense.Allowed){checking=false;yield break;}
    RemoteVersion=remote;State=Evaluate(Application.version,remote,ok);
    Debug.Log("PTV_GATE "+State+" game="+GameName+" local="+Application.version+" remote="+(remote??"unavailable"));
-   if(State=="allowed"){
+   if(State=="allowed"&&PTVLicense.Allowed){
     Authorized=true;Detail="Version verified";if(overlay)overlay.SetActive(false);if(eventSystem)eventSystem.SetActive(false);ApplyVerifiedTiming(wasAuthorized,previousScale);
     if(!gameplayLoaded){while(unloading)yield return null;gameplayLoaded=true;var load=SceneManager.LoadSceneAsync(EntryScene,LoadSceneMode.Single);if(load!=null)yield return load;}
    }else{
@@ -72,7 +73,7 @@ public sealed class PTVVersionGate : MonoBehaviour {
   Label("The latest version must be verified before gameplay can start.",new Vector2(0,-260),new Vector2(1100,50),19,new Color(.45f,.6f,.75f));
   eventSystem=new GameObject("Version Gate EventSystem",typeof(EventSystem),typeof(InputSystemUIInputModule));eventSystem.transform.SetParent(transform,false);
  }
- public static void ApplyVerifiedTiming(bool alreadyAuthorized,float previous){if(alreadyAuthorized)return;Time.timeScale=previous>0?previous:1;AudioListener.pause=false;}
+ public static void ApplyVerifiedTiming(bool alreadyAuthorized,float previous){if(alreadyAuthorized||!PTVLicense.Allowed)return;Time.timeScale=previous>0?previous:1;AudioListener.pause=false;}
  UnityEngine.UI.Text Label(string text,Vector2 position,Vector2 size,int fontSize,Color color){if(!font)font=Font.CreateDynamicFontFromOSFont(new[]{"Segoe UI","Arial"},fontSize);var go=new GameObject("Gate Label",typeof(RectTransform),typeof(UnityEngine.UI.Text));go.transform.SetParent(overlay.transform,false);var rect=go.GetComponent<RectTransform>();rect.anchorMin=rect.anchorMax=new Vector2(.5f,.5f);rect.anchoredPosition=position;rect.sizeDelta=size;var label=go.GetComponent<UnityEngine.UI.Text>();label.font=font;label.text=text;label.fontSize=fontSize;label.alignment=TextAnchor.MiddleCenter;label.color=color;label.raycastTarget=false;label.resizeTextForBestFit=true;label.resizeTextMinSize=14;label.resizeTextMaxSize=fontSize;return label;}
  void Button(string label,Vector2 position,Action action){var go=new GameObject(label,typeof(RectTransform),typeof(UnityEngine.UI.Image),typeof(UnityEngine.UI.Button));go.transform.SetParent(overlay.transform,false);var rect=go.GetComponent<RectTransform>();rect.anchorMin=rect.anchorMax=new Vector2(.5f,.5f);rect.anchoredPosition=position;rect.sizeDelta=new Vector2(265,62);go.GetComponent<UnityEngine.UI.Image>().color=new Color(.06f,.28f,.52f);go.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(()=>action());var text=Label(label,Vector2.zero,new Vector2(250,54),18,Color.white);text.transform.SetParent(go.transform,false);text.rectTransform.anchoredPosition=Vector2.zero;}
 }

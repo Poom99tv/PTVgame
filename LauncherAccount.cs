@@ -246,8 +246,9 @@ namespace PTVgame {
 
   /// <summary>VIP check used before installing or launching a game.</summary>
   public static bool CanPlay(Game g) {
-   if(!Cfg.Enabled) return true;
+   if(!Cfg.Enabled) return !g.playTicket&&g.access!="vip";
    string access=string.IsNullOrWhiteSpace(g.access)?Cfg.defaultAccess:g.access;
+   if(Current!=null&&Current.banned) return false;
    if(access=="free") return Current!=null;
    if(Current==null) return false;
    if(Current.IsAdmin) return true;
@@ -260,6 +261,17 @@ namespace PTVgame {
    string t=J.S(r,"ticket"); if(string.IsNullOrEmpty(t)) throw new AccountException("เซิร์ฟเวอร์ไม่ได้ส่งสิทธิ์เล่นกลับมา",500); return t;
   }
   public static bool RequiresVip(Game g) { if(!Cfg.Enabled) return false; return (string.IsNullOrWhiteSpace(g.access)?Cfg.defaultAccess:g.access)!="free"; }
+
+  public static bool RequiresLaunchTicket(Game g) {
+   return g.playTicket||g.access=="vip"||RequiresVip(g);
+  }
+  public static async Task<string> AuthorizeLaunch(Game g) {
+   if(!RequiresLaunchTicket(g)) return null;
+   if(!Cfg.Enabled) throw new AccountException("ยังไม่ได้ตั้งค่าระบบบัญชี VIP ของ Launcher",503);
+   if(Current==null) throw new AccountException("กรุณาเข้าสู่ระบบก่อนเล่น",401);
+   if(!CanPlay(g)) throw new AccountException("เกมนี้สำหรับสมาชิก VIP",403);
+   return await PlayTicket(g.id);
+  }
 
   // ---------------------------------------------------------------- profile
   public static Task UpdateProfile(string name,string avatarUrl) { return Rpc("update_my_profile",A("p_display_name",name,"p_avatar_url",avatarUrl)); }
@@ -549,7 +561,23 @@ namespace PTVgame {
     AccountService.Current.vipUntil=DateTime.UtcNow.AddDays(3); Assert(AccountService.CanPlay(vip),"active VIP plays");
     AccountService.Current.vipUntil=DateTime.UtcNow.AddMinutes(-1); Assert(!AccountService.CanPlay(vip),"expired VIP locked");
     AccountService.Current.role="admin"; Assert(AccountService.CanPlay(vip),"admin plays everything");
+    var guarded=new Game {id="ptvegg",access="vip",playTicket=true};
+    var roblox=new Game {id="ptvrunner",access="vip",category="Roblox"};
+    AccountConfig.Current=new AccountConfig();
+    Assert(!AccountService.CanPlay(guarded)&&!AccountService.CanPlay(roblox),"explicit VIP games require account configuration");
+    Assert(AccountService.RequiresLaunchTicket(guarded)&&AccountService.RequiresLaunchTicket(roblox),"Unity and Roblox require server launch checks");
+    bool missingConfig=false;
+    try { AccountService.AuthorizeLaunch(guarded).GetAwaiter().GetResult(); } catch(AccountException ex) { missingConfig=ex.Status==503; }
+    Assert(missingConfig,"missing config cannot silently launch a VIP game");
+    AccountConfig.Current=new AccountConfig {supabaseUrl="https://example.supabase.co",anonKey="test"};
+    AccountService.Current=null;
+    bool signedOut=false;
+    try { AccountService.AuthorizeLaunch(guarded).GetAwaiter().GetResult(); } catch(AccountException ex) { signedOut=ex.Status==401; }
+    Assert(signedOut,"signed out launch requires login");
+    AccountService.Current=new Account {role="admin",banned=true};
+    Assert(!AccountService.CanPlay(guarded)&&!AccountService.CanPlay(roblox),"suspended accounts cannot launch any category");
    } finally { AccountConfig.Current=saved; AccountService.Current=savedAccount; }
   }
  }
 }
+

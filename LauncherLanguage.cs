@@ -129,6 +129,8 @@ public static class AppLanguage {
 {"รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร","Password must be at least 6 characters"},
 {"ไม่ได้รับ token จากเซิร์ฟเวอร์","No token received from the server"},
 {"กรุณาเข้าสู่ระบบก่อนเล่น","Please sign in before playing"},
+{"ยังไม่ได้ตั้งค่าระบบบัญชี VIP ของ Launcher","VIP accounts are not configured in this Launcher"},
+{"กรุณาเปิดเกมผ่าน PTVgame Launcher ด้วยบัญชี VIP","Launch this game from PTVgame Launcher with a VIP account"},
 {"กรุณาเข้าสู่ระบบ","Please sign in"},
 {"เข้าสู่ระบบ PTVgame สำเร็จ กลับไปที่ Launcher ได้เลย","Signed in to PTVgame. You can return to the Launcher"},
 {"ไม่ได้รับรหัสยืนยันจากผู้ให้บริการ","No confirmation code received from the provider"},
@@ -708,3 +710,4 @@ public static class AppLanguage {
  public static string Normalize(string value){return value=="th"?"th":"en";}
  public static string T(string value){if(value==null||Language=="th")return value;foreach(string key in Keys)value=value.Replace(key,English[key]);return value;}
 }
+

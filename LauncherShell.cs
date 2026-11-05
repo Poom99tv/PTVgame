@@ -146,6 +146,9 @@ namespace PTVgame {
    if(busy||!Gate(g))return;long id;if(!long.TryParse(g.placeId,out id)||id<=0){status.Text=AppLanguage.T("Roblox placeId ไม่ถูกต้อง");return;}
    busy=true;cancellation=new CancellationTokenSource();progress.Visibility=Visibility.Visible;cancel.Visibility=Visibility.Visible;Render();
    try {
+    if(AccountService.RequiresLaunchTicket(g)) status.Text=AppLanguage.T("กำลังตรวจสิทธิ์ VIP…");
+    await AccountService.AuthorizeLaunch(g);
+    cancellation.Token.ThrowIfCancellationRequested();
     // Game To Earn (built into the Launcher) replaces TikTokBridge: TikTok LIVE events become key presses in the Roblox window.
     string extra="";
     try { await GteOnRobloxOpen(); if(settings.gameToEarnWithRoblox&&GteData.Str(gteState,"username","")!="") extra=" • Game To Earn เชื่อม @"+GteData.Str(gteState,"username","")+" ให้อัตโนมัติ"; }
@@ -170,12 +173,9 @@ namespace PTVgame {
     var current=Storage.Current(g);
     if(current==null||new Version(current.version)!=new Version(manifest.version)||!string.Equals(current.executable,manifest.executable,StringComparison.OrdinalIgnoreCase))throw new Exception("ต้องติดตั้งเวอร์ชันที่เซิร์ฟเวอร์กำหนดก่อนเล่น");
     if(!string.IsNullOrEmpty(current.sha256)&&!string.Equals(current.sha256,manifest.sha256,StringComparison.OrdinalIgnoreCase))throw new Exception("ไฟล์เวอร์ชันที่ติดตั้งไม่ตรงกับเซิร์ฟเวอร์ กรุณาอัปเดต");
-    string ticket=null;
-    if(AccountConfig.Current.Enabled&&AccountService.Current!=null&&(g.playTicket||AccountService.RequiresVip(g))) {
-     status.Text=AppLanguage.T("กำลังตรวจสิทธิ์ VIP…");
-     try { ticket=await AccountService.PlayTicket(g.id); }
-     catch(Exception ex) { if(g.playTicket) throw new Exception(AppLanguage.T("ตรวจสิทธิ์ VIP ไม่สำเร็จ ")+ex.Message); }   // games that do not check tickets yet still open offline
-    }
+    if(AccountService.RequiresLaunchTicket(g)) status.Text=AppLanguage.T("กำลังตรวจสิทธิ์ VIP…");
+    string ticket=await AccountService.AuthorizeLaunch(g);
+    cancellation.Token.ThrowIfCancellationRequested();
     Updater.Play(g,ticket);status.Text=AppLanguage.T("เปิด "+g.name+" v"+current.version+" แล้ว");
    }catch(OperationCanceledException){status.Text=AppLanguage.T("ยกเลิกแล้ว • ต้องอัปเดตให้สำเร็จก่อนเล่น");}
    catch(Exception ex){status.Text=AppLanguage.T("ยังเปิดเกมไม่ได้: "+ex.Message+" • ต้องเชื่อมต่อและตรวจเวอร์ชันให้สำเร็จ");}
@@ -190,4 +190,5 @@ namespace PTVgame {
   }
  }
 }
+
 
