@@ -3,7 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 public static class AppLanguage {
  public static string Language="en";
- static readonly Dictionary<string,string> English=new Dictionary<string,string> {{"TikTokBridge ยังไม่พร้อม กรุณาลองใหม่","TikTokBridge is not ready. Please try again"},
+ static readonly Dictionary<string,string> English=new Dictionary<string,string> {
+{"PTVRunner • สัญญาณเข้าเกม","PTVRunner • LIVE events to game"},
+{"ตั้งค่าของขวัญและสกิลในเกม PTVRunner","Set gifts and skills inside PTVRunner"},
+{"เชื่อม Game To Earn กับ PTVRunner","Pair Game To Earn with PTVRunner"},
+{"คัดลอกรหัสจับคู่ → ในเกมกดรูปเฟือง → Game To Earn → จับคู่","Copy pairing code → In game: Gear → Game To Earn → Pair"},
+{"เชื่อมแล้วเฉพาะห้อง PTVRunner ของคุณ","Connected to your PTVRunner room"},
+{"รอจับคู่ห้อง PTVRunner","Waiting for PTVRunner room pairing"},
+{"สร้างรหัสจับคู่","Create pairing code"},
+{"คัดลอกรหัสจับคู่","Copy pairing code"},
+{"กำลังเตรียมการเชื่อมต่อ PTVRunner…","Preparing the PTVRunner connection…"},
+{"คัดลอกแล้ว • วางรหัสใน Game To Earn ภายในเกม","Copied • Paste into Game To Earn inside the game"},
+{"เลือกช่องรหัสแล้วกด Ctrl+C เพื่อคัดลอก","Select the code and press Ctrl+C to copy"},
+{"Game To Earn → PTVRunner • ตั้งค่าสกิลในเกม","Game To Earn → PTVRunner • Set skills in game"},
+{"TikTokBridge ยังไม่พร้อม กรุณาลองใหม่","TikTokBridge is not ready. Please try again"},
 {"หน้าแรก","Home"},
 {"ไลบรารี","Library"},
 {"รายการโปรด","Favorites"},

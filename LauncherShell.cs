@@ -138,7 +138,7 @@ namespace PTVgame {
    var auto=new CheckBox { Content=AppLanguage.T("อัปเดตเกมที่ติดตั้งเมื่อเปิด Launcher"),IsChecked=settings.autoUpdate,Foreground=Foreground,Margin=new Thickness(0,25,0,20) };sections.Children.Add(auto);auto.Click+=(s,e)=>{settings.autoUpdate=auto.IsChecked==true;Save();};
    var launcherUpdate=Btn("ตรวจอัปเดต Launcher",accent);sections.Children.Add(launcherUpdate);launcherUpdate.Click+=async(s,e)=>await UpdateLauncher();
    var folder=Btn("เปิดโฟลเดอร์เกม",ColorBrush("#193B58"));folder.HorizontalAlignment=HorizontalAlignment.Left;sections.Children.Add(folder);folder.Click+=(s,e)=>{Directory.CreateDirectory(Storage.Root);Process.Start("explorer.exe",Storage.Root);};
-   sections.Children.Add(new TextBlock { Text=AppLanguage.T("PTVgame • Launcher 1.9.0\nภาพปก Roblox จากหน้าเกมจริง\nดาวน์โหลดเกมผ่าน GitHub Releases"),Foreground=muted,Margin=new Thickness(0,30,0,0),TextWrapping=TextWrapping.Wrap });
+   sections.Children.Add(new TextBlock { Text=AppLanguage.T("PTVgame • Launcher "+LauncherUpdate.Version+"\nภาพปก Roblox จากหน้าเกมจริง\nดาวน์โหลดเกมผ่าน GitHub Releases"),Foreground=muted,Margin=new Thickness(0,30,0,0),TextWrapping=TextWrapping.Wrap });
   }
   async Task<bool> UpdateLauncher() { if(busy)return false;busy=true;cancellation=new CancellationTokenSource(TimeSpan.FromMinutes(5));try { bool restart=await LauncherUpdate.Check(new Progress<string>(t=>status.Text=AppLanguage.T(t)),cancellation.Token);if(restart){busy=false;Application.Current.Shutdown();return true;} }catch(Exception ex){status.Text=AppLanguage.T("ตรวจอัปเดต Launcher ไม่สำเร็จ: "+ex.Message);}finally{busy=false;cancellation.Dispose();}return false; }
   void Save() { try { Storage.Save(settingsPath,settings); }catch(Exception ex){status.Text=AppLanguage.T("บันทึกการตั้งค่าไม่สำเร็จ: "+ex.Message);} }
@@ -148,7 +148,7 @@ namespace PTVgame {
    try {
     // Game To Earn (built into the Launcher) replaces TikTokBridge: TikTok LIVE events become key presses in the Roblox window.
     string extra="";
-    try { await GteOnRobloxOpen(); if(settings.gameToEarnWithRoblox&&GteData.Str(gteState,"username","")!="") extra=" • Game To Earn เชื่อม @"+GteData.Str(gteState,"username","")+" ให้อัตโนมัติ"; }
+    try { await GteOnRobloxOpen(g); if(settings.gameToEarnWithRoblox&&GteData.Str(gteState,"username","")!="") extra=GteSignalOnly?" • Game To Earn → PTVRunner • ตั้งค่าสกิลในเกม":" • Game To Earn เชื่อม @"+GteData.Str(gteState,"username","")+" ให้อัตโนมัติ"; }
     catch(Exception ex){ extra=" • Game To Earn: "+ex.Message; }
     cancellation.Token.ThrowIfCancellationRequested();
     Process.Start("roblox://placeId="+id);

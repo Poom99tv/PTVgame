@@ -1,4 +1,20 @@
-# Zombie Rush 1.0.7 + PTVgame Launcher 1.9.0
+# PTVgame Launcher 2.0.3 — PTVRunner Game To Earn
+
+PTVRunner (`71880688656931`) now receives raw TikTok LIVE events from Game To Earn. Gift-to-skill mappings, counts and skill behavior are configured inside the game. The Launcher hides its preset selector and preset editor for this map and sends no keyboard input or preset Win actions for it. Other Roblox maps keep their existing presets.
+
+1. Extract the complete Launcher ZIP and run `PTVgame-Launcher.exe`.
+2. Open **Game To Earn**, select **PTVRunner**, enter the TikTok LIVE username and connect.
+3. Click **Create pairing code** / **Copy pairing code**. The read-only field also supports manual Ctrl+C.
+4. In your PTVRunner private server: **Gear → Game To Earn → Pair**. Paste the `GTE1|…` code. Only the room controller can pair it.
+5. Configure gifts and skills using the in-game settings. Gifts, likes, follows and Roblox usernames from chat are relayed with their viewer identity to that paired room.
+
+The updated Roblox scripts must be published before using this route in live servers. The exported scripts and a transport check are in `roblox/PTVRunner/` in the source changes package. Pairing codes are temporary and belong to the current Launcher process. Keep the Launcher open while playing. The desktop test/demo buttons do not inject sample events into a paired game.
+
+ภาษาไทย: เลือก PTVRunner ใน Game To Earn → เชื่อม TikTok LIVE → คัดลอกรหัสจับคู่ → ในห้องส่วนตัวกดรูปเฟือง → Game To Earn → จับคู่ ตั้งค่าของขวัญและสกิลในเกมทั้งหมด แมพนี้ไม่มีตัวเลือก Preset และไม่ใช้การกดคีย์จากโปรแกรม ต้อง Publish สคริปต์ Roblox ที่แก้ก่อนใช้ในเซิร์ฟเวอร์จริง
+
+Validation: existing Launcher self-tests, six Node relay/HTTP checks, twelve desktop routing/UI checks with Windows input mocked, and compilation/transport checks in Roblox Studio. LIVE provider availability still depends on TikTok; the connection test uses offline events rather than a real broadcast.
+
+# Zombie Rush 1.0.7
 
 Zombie Rush **1.0.7** improves Rush prank placement, explosion reactions and shield visuals. Both game modes sort skill icons by the assigned gift price within each column.
 

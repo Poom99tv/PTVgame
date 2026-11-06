@@ -59,12 +59,12 @@
     "universeId": "10771728798",
     "newBadge": "assets/new-gold.png",
     "name": "PTVRunner",
-    "description": "วิ่งแข่งข้ามเกาะ 12 กิโลเมตร • เปิดแมพ Roblox และ TikTokBridge พร้อมกัน แล้วจับคู่ LIVE ในห้องส่วนตัวผ่านรูปเฟือง",
+    "description": "วิ่งแข่งข้ามเกาะ 12 กิโลเมตร • เชื่อม Game To Earn จาก Launcher แล้วจับคู่ห้องผ่านรูปเฟือง ตั้งค่าของขวัญและสกิลในเกม",
     "category": "Roblox",
     "placeId": "71880688656931",
     "companionManifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvrunner-bridge.json",
     "cover": "assets/ptvrunner.jpg",
-    "descriptionEn": "Race 12 km across islands • Launch Roblox and TikTokBridge together, then pair your LIVE in private server settings"
+    "descriptionEn": "Race 12 km across islands • Pair Game To Earn from the Launcher in your private server. Configure gifts and skills inside the game."
   },
   {
     "description": "แมพ Roblox • 78508971781182",

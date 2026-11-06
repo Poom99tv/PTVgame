@@ -12,6 +12,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { GiftMatcher, normName } from './gifts.mjs';
 import { OVERLAY_HTML } from './overlay.mjs';
+import { RunnerRelay } from './runner.mjs';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.GTE_PORT || 8767);
@@ -28,11 +29,13 @@ let host = { name: '', avatar: '', title: '', viewers: 0 };
 let connection = null, generation = 0, reconnectTimer = null, stopped = true;
 let seq = 0;
 const events = [];
+const runner = new RunnerRelay();
 const overlay = { likers: new Map(), gifters: new Map(), totals: { likes: 0, diamonds: 0, gifts: 0 }, drops: [], dropSeq: 0, jarClear: 0,
   config: { win: { count: 0, max: 10, color: '#ffffff', size: 64, label: 'WIN' }, jar: { scale: 100 }, bg: 'transparent' } };
 
 function push(e) {
   e.seq = ++seq; e.at = Date.now(); events.push(e);
+  runner.accept(e);
   if (events.length > 3000) events.shift();
   return e;
 }
@@ -161,12 +164,17 @@ async function body(req, limit = 65536) { let t = ''; for await (const c of req)
 const authorized = (req, url) => {
   const h = String(req.headers.authorization || ''); const q = url.searchParams.get('t') || '';
   const given = h.startsWith('Bearer ') ? h.slice(7) : q;
-  return given.length === TOKEN.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(TOKEN));
+  const a = Buffer.from(given), b = Buffer.from(TOKEN);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 };
 
 const server = http.createServer(async (req, res) => {
+ try {
   const url = new URL(req.url, 'http://127.0.0.1');
   if (![`127.0.0.1:${PORT}`, `localhost:${PORT}`].includes(req.headers.host)) return reply(res, 403, { error: 'host' });
+  // Public tunnel credentials only reach the PTVRunner room API, never local controls or overlays.
+  if (url.pathname.startsWith('/game/')) return await runner.handle(req, url, res, reply, body, status);
+  if (req.headers['cf-ray']) return reply(res, 403, { error: 'Local application endpoint' });
   // the PTVgame website may control this engine from the same computer (token still required)
   const origin = String(req.headers.origin || '');
   if (WEB_ORIGINS.has(origin)) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin'); }
@@ -179,9 +187,11 @@ const server = http.createServer(async (req, res) => {
   if (!authorized(req, url)) return reply(res, 401, { error: 'unauthorized' });
   try {
     const p = url.pathname;
+    if (req.method === 'GET' && p === '/runner/state') return reply(res, 200, { ...runner.state(), pairingToken: runner.token });
+    if (req.method === 'POST' && p === '/runner/config') { const b = await body(req); return reply(res, 200, runner.configure(b.enabled === true, b.placeId)); }
     if (req.method === 'GET' && p === '/health') return reply(res, 200, { ok: true, version: 1, status, gifts: matcher.catalog.length });
     if (req.method === 'GET' && p === '/state') return reply(res, 200, { status, detail, username, roomId, seq, totals: overlay.totals, host });
-    if (req.method === 'GET' && p === '/events') { const after = Number(url.searchParams.get('after') || 0); return reply(res, 200, { status, detail, seq, events: events.filter(e => e.seq > after).slice(0, 300) }); }
+    if (req.method === 'GET' && p === '/events') { const after = Number(url.searchParams.get('after') || 0); return reply(res, 200, { status, detail, seq, runner: runner.state(), events: events.filter(e => e.seq > after).slice(0, 300) }); }
     if (req.method === 'GET' && p === '/gifts') return reply(res, 200, matcher.catalog.map(g => ({ key: g.key, name: g.name, file: g.file, price: g.price || 0 })));
     if (req.method === 'POST' && p === '/connect') {
       const b = await body(req); const u = String(b.username || '').trim().replace(/^@/, '');
@@ -197,9 +207,9 @@ const server = http.createServer(async (req, res) => {
         push({ kind: 'gift', viewer, name: nick, avatar: '', amount: n, giftKey: g?.key || '', giftName: g?.name || String(b.giftName || 'Gift'), rawName: String(b.giftName || ''), file: g?.file || '', method: 'test', diamonds: per * n, demo });
         board(overlay.gifters, viewer, nick, '', per * n); overlay.totals.diamonds += per * n; overlay.totals.gifts += n;
         if (g?.file) overlay.drops.push({ id: ++overlay.dropSeq, file: g.file, count: Math.min(n, 50) });
-      } else if (b.kind === 'like') { board(overlay.likers, viewer, nick, '', n); overlay.totals.likes += n; push({ kind: 'like', viewer, name: nick, avatar: '', amount: n, demo }); }
-      else if (b.kind === 'follow') push({ kind: 'follow', viewer, name: nick, avatar: '', demo });
-      else if (b.kind === 'chat') push({ kind: 'chat', viewer, name: nick, avatar: '', comment: String(b.comment || 'สวัสดี').slice(0, 300), demo });
+      } else if (b.kind === 'like') { board(overlay.likers, viewer, nick, '', n); overlay.totals.likes += n; push({ kind: 'like', viewer, name: nick, avatar: '', amount: n, demo, test: true }); }
+      else if (b.kind === 'follow') push({ kind: 'follow', viewer, name: nick, avatar: '', demo, test: true });
+      else if (b.kind === 'chat') push({ kind: 'chat', viewer, name: nick, avatar: '', comment: String(b.comment || 'สวัสดี').slice(0, 300), demo, test: true });
       else return reply(res, 400, { error: 'kind' });
       return reply(res, 200, { ok: true });
     }
@@ -229,6 +239,7 @@ const server = http.createServer(async (req, res) => {
     }
     reply(res, 404, { error: 'not found' });
   } catch (e) { reply(res, e.status || 500, { error: String(e.message || e).slice(0, 200) }); }
+ } catch (e) { reply(res, e.status || 500, { error: String(e.message || e).slice(0, 200) }); }
 });
 server.listen(PORT, '127.0.0.1', () => console.log(JSON.stringify({ type: 'ready', port: PORT, gifts: matcher.catalog.length })));
 server.on('error', e => { console.error(JSON.stringify({ type: 'server-error', message: e.message })); process.exit(3); });

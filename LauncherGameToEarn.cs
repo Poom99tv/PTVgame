@@ -93,6 +93,7 @@ namespace PTVgame {
    return startTask;
   }
   static async Task StartCore(string token,int port,IProgress<string> progress) {
+   GteRunnerTunnel.Stop();
    if(!exitHooked&&Application.Current!=null) { exitHooked=true; Application.Current.Exit+=(s,e)=>Kill(); }
    progress.Report("กำลังเตรียมระบบ Game To Earn…");
    string dir=await Task.Run(()=>EngineDir());
@@ -117,7 +118,7 @@ namespace PTVgame {
   }
   static void Remember(string line) { if(string.IsNullOrEmpty(line)) return; lock(output) { output.Enqueue(line); while(output.Count>20) output.Dequeue(); } }
   static string Tail() { lock(output) return string.Join(" ",output.Reverse().Take(3).Reverse()); }
-  public static void Kill() { try { if(Proc!=null&&!Proc.HasExited) Proc.Kill(); } catch {} http=null; }
+  public static void Kill() { GteRunnerTunnel.Stop(); try { if(Proc!=null&&!Proc.HasExited) Proc.Kill(); } catch {} http=null; }
   static int FreePort(int preferred) {
    for(int p=preferred;p<preferred+30;p++) { try { var l=new TcpListener(IPAddress.Loopback,p); l.Start(); l.Stop(); return p; } catch {} }
    var any=new TcpListener(IPAddress.Loopback,0); any.Start(); int port=((IPEndPoint)any.LocalEndpoint).Port; any.Stop(); return port;
@@ -208,15 +209,16 @@ namespace PTVgame {
    i=Shifted.IndexOf(c); if(i>=0) { code=Codes[i]; shift=c!=' '; return true; }
    short v=VkKey(c); code=0; shift=false; if(v==-1) return false; code=(ushort)MapVirtualKey((uint)(v&0xFF),0); shift=((v>>8)&1)==1; return code!=0;
   }
-  class Job { public string seq; public int count,delay; }
+  class Job { public string seq; public int count,delay,epoch; }
+  static int epoch;
   static readonly BlockingCollection<Job> jobs=new BlockingCollection<Job>(); static Thread worker;
   public static int Pending { get { return jobs.Count; } }
   public static void Enqueue(string seq,int count,int delayMs) {
    if(string.IsNullOrWhiteSpace(seq)||count<=0) return;
    if(worker==null) { worker=new Thread(Run) { IsBackground=true,Name="GTE keys" }; worker.Start(); }
-   if(jobs.Count<500) jobs.Add(new Job { seq=seq.Trim(),count=Math.Min(count,200),delay=Math.Max(10,Math.Min(2000,delayMs)) });
+   if(jobs.Count<500) jobs.Add(new Job { seq=seq.Trim(),count=Math.Min(count,200),delay=Math.Max(10,Math.Min(2000,delayMs)),epoch=Volatile.Read(ref epoch) });
   }
-  public static void Clear() { Job j; while(jobs.TryTake(out j)) {} }
+  public static void Clear() { Interlocked.Increment(ref epoch); Job j; while(jobs.TryTake(out j)) {} }
   // "yy" = y twice • "a b" or "a,b" = a then b • named keys: up down left right space enter tab esc f1..f12 (or {up})
   public static List<ushort[]> Parse(string seq) {
    var keys=new List<ushort[]>();
@@ -238,6 +240,7 @@ namespace PTVgame {
     try {
      var keys=Parse(job.seq);
      for(int i=0;i<job.count;i++) foreach(var k in keys) {
+      if(job.epoch!=Volatile.Read(ref epoch))break;
       if(k[1]==1) Send(0x2A,false);
       Send(k[0],false); Thread.Sleep(45); Send(k[0],true);
       if(k[1]==1) Send(0x2A,true);
@@ -296,10 +299,17 @@ namespace PTVgame {
   long gteSeq; int gteEnginePid; DispatcherTimer gteTimer; bool gtePolling;
   int gteLikes,gteGifts,gteDiamonds,gteLikeCounter; readonly HashSet<string> gteFollowed=new HashSet<string>();
   StackPanel gteLogPanel; TextBlock gtePreview,gteSideStatus,gteJarCount; Border gtePill; int gteJarDrops;
+  int gteRouteGeneration;
+  bool gteRunnerPaired;
+  bool gteChangingRoute,gteConfiguredSignal;int gteConfiguredEngine;
+  readonly SemaphoreSlim gteConfigGate=new SemaphoreSlim(1,1);
+  Game GteTarget { get { return games.FirstOrDefault(g=>g.category=="Roblox"&&g.id==GteData.Str(gteState,"roblox",""))??games.FirstOrDefault(g=>g.category=="Roblox"); } }
+  bool GteSignalOnly { get { return GteRouting.SignalOnly(GteTarget); } }
 
   void GteEnsureLoaded() {
    if(gtePresets!=null) return;
    gtePresets=GteData.LoadPresets(); gteState=GteData.LoadState();
+   if(GteTarget!=null)gteState["roblox"]=GteTarget.id;
    if(GteData.Str(gteState,"token","").Length<32) { var b=new byte[24]; using(var r=RandomNumberGenerator.Create()) r.GetBytes(b); gteState["token"]=BitConverter.ToString(b).Replace("-","").ToLowerInvariant(); }
    if(GteData.Int(gteState,"port",0)<1024) gteState["port"]=8767;
    var v=GteData.Str(gteState,"voice","th-TH-PremwadeeNeural"); if(v=="thai_soft") v="th-TH-PremwadeeNeural"; if(v=="thai") v="th-TH-NiwatNeural"; gteState["voice"]=v; GteVoice.Voice=v;
@@ -361,7 +371,9 @@ namespace PTVgame {
     gtePresets=presets; gteState["synced_at"]=cloudAt; gteRows=null; gteIdx=-1;
     GteSelect(Math.Max(0,Math.Min(GteData.Int(gteState,"preset",0),gtePresets.Count-1)));
     GteVoice.Voice=GteData.Str(gteState,"voice","off");
-    GteData.Save(gtePresets,gteState); GtePushOverlay();
+    GteData.Save(gtePresets,gteState); GteKeys.Clear();gteRouteGeneration++;
+    if(GteEngine.Running)await GteConfigureRoute();
+    GtePushOverlay();
     GteAddLog("☁ ใช้การตั้งค่าล่าสุดจากเว็บแล้ว","#88AAC9","cmd");
     if(page==PageGte&&gteSub!=SubLive) Render();
    } catch {} finally { gteCloudBusy=false; if(push) GteCloudPushNow(); }
@@ -370,10 +382,11 @@ namespace PTVgame {
   // ── engine + polling ──
   async Task GteStartEngine() {
    GteEnsureLoaded();
-   if(GteEngine.Running) return;
+   if(GteEngine.Running) { await GteConfigureRoute();return; }
    await GteEngine.Start(GteData.Str(gteState,"token",""),GteData.Int(gteState,"port",8767),new Progress<string>(t=>status.Text=AppLanguage.T(t)));
    if(gteEnginePid==GteEngine.Proc.Id) return;   // another caller already finished the start
    gteEnginePid=GteEngine.Proc.Id; gteSeq=0; gteStatus="Disconnected";
+   await GteConfigureRoute();
    if(GteEngine.Port!=GteData.Int(gteState,"port",8767)) { gteState["port"]=GteEngine.Port; GteSave(true); }
    if(gteTimer==null) { gteTimer=new DispatcherTimer { Interval=TimeSpan.FromMilliseconds(300) }; gteTimer.Tick+=async(s,e)=>await GtePoll(); gteTimer.Start(); }
    GtePushOverlay();
@@ -382,9 +395,13 @@ namespace PTVgame {
   }
   async void GteBoot() { try { await GteStartEngine(); } catch(Exception ex) { GteEngine.LastError=ex.Message; status.Text=AppLanguage.T("เริ่มระบบ Game To Earn ไม่สำเร็จ: ")+ex.Message; GteAddLog(AppLanguage.T("เริ่มระบบไม่สำเร็จ: ")+ex.Message,"#FF6B6B","live"); } if(page==PageGte&&gteSub!=SubPreset) Render(); }
   async Task GtePoll() {
-   if(gtePolling||!GteEngine.Running) return; gtePolling=true;
+   if(gtePolling||gteChangingRoute||!GteEngine.Running) return; gtePolling=true;
+   int route=gteRouteGeneration;
    try {
     var d=await GteEngine.Get("events?after="+gteSeq);
+    if(route!=gteRouteGeneration)return;
+    var room=GteData.Sub(d,"runner");bool paired=GteData.Bool(room,"paired",false);
+    if(paired!=gteRunnerPaired) { gteRunnerPaired=paired;if(page==PageGte&&gteSub==SubLive)Render(); }
     object evs; if(d!=null&&d.TryGetValue("events",out evs)&&evs is IEnumerable) foreach(var item in (IEnumerable)evs) { var e=item as Dictionary<string,object>; if(e==null) continue; gteSeq=Math.Max(gteSeq,GteData.Int(e,"seq",0)); GteHandle(e); }
    } catch {}
    finally { gtePolling=false; }
@@ -397,6 +414,7 @@ namespace PTVgame {
     var old=gteStatus; gteStatus=GteData.Str(e,"status",gteStatus); gteDetail=GteData.Str(e,"detail","");
     GteAddLog(GteStatusText()+(gteDetail!=""?" • "+gteDetail:""),gteStatus=="Connected"?"#48DDAC":gteStatus=="Error"?"#FF6B6B":"#88AAC9","live");
     if(gteStatus=="Connected"&&old!="Connected") { gteLikeCounter=0; gteFollowed.Clear(); }
+    if(gteStatus!="Connected")GteKeys.Clear();
     GteLiveWeb(gteStatus=="Connected");
     GteRefreshStatus(); return;
    }
@@ -406,7 +424,7 @@ namespace PTVgame {
     var method=GteData.Str(e,"method",""); string how=method.StartsWith("image")?" 🖼":"";
     GteAddLog("🎁 "+Who(e)+" ส่ง "+name+" x"+amount+how+(raw!=""&&GteData.Norm(raw)!=GteData.Norm(name)?" ("+raw+")":""),"#FFD84D","live");
     var row=gteRows.FirstOrDefault(r=>GteData.Norm(r.name)==GteData.Norm(name))??gteRows.FirstOrDefault(r=>raw!=""&&GteData.Norm(r.name)==GteData.Norm(raw));
-    if(row!=null) {
+    if(!GteSignalOnly&&row!=null) {
      if(!string.IsNullOrWhiteSpace(row.key)) { GteKeys.Enqueue(row.key,amount,delay); GteAddLog("⌨ "+name+" x"+amount+" → กด '"+row.key+"'","#25F4EE","cmd"); }
      if(row.win&&row.delta!=0) GteWin(row.delta*amount);
     }
@@ -414,7 +432,7 @@ namespace PTVgame {
    }
    if(kind=="like") {
     int n=GteData.Int(e,"amount",0); gteLikes+=n;
-    if(GteData.Bool(p,"like_enabled",true)) {
+    if(!GteSignalOnly&&GteData.Bool(p,"like_enabled",true)) {
      int target=Math.Max(1,GteData.Int(p,"like_target",100)); var seq=GteData.Str(p,"like_seq","v"); gteLikeCounter+=n; int presses=0;
      while(gteLikeCounter>=target) { gteLikeCounter-=target; presses++; }
      if(presses>0&&seq.Trim()!="") { GteKeys.Enqueue(seq,presses,delay); GteAddLog("❤ Like ครบ "+target+" → กด '"+seq+"' x"+presses,"#FF6B9A","cmd"); }
@@ -423,6 +441,7 @@ namespace PTVgame {
    }
    if(kind=="follow") {
     var viewer=GteData.Str(e,"viewer",""); GteAddLog("👤 "+Who(e)+" ติดตามแล้ว","#B6D1EE","live");
+    if(GteSignalOnly)return;
     if(!GteData.Bool(p,"follow_enabled",true)) return;
     if(GteData.Bool(p,"follow_once",true)) { if(gteFollowed.Contains(viewer)) return; gteFollowed.Add(viewer); }
     var seq=GteData.Str(p,"follow_seq","r"); if(seq.Trim()!="") { GteKeys.Enqueue(seq,1,delay); GteAddLog("⌨ ติดตาม → กด '"+seq+"'","#25F4EE","cmd"); }
@@ -479,12 +498,12 @@ namespace PTVgame {
   }
   string GtePreviewText() { var w=GteData.Sub(gteState,"win"); return "❤  Like: "+gteLikes.ToString("#,0")+"\n🎁  Gift: "+gteGifts.ToString("#,0")+"   💎 "+gteDiamonds.ToString("#,0")+"\n🏆  Win: "+GteData.Int(w,"count",0)+(GteData.Int(w,"max",10)>0?" / "+GteData.Int(w,"max",10):""); }
 
-  async void GteConnect() {
+  async Task GteConnect() {
    GteEnsureLoaded();
    var user=GteData.Str(gteState,"username","").Trim().TrimStart('@');
    if(!Regex.IsMatch(user,@"^[A-Za-z0-9_.]{2,24}$")) { status.Text=AppLanguage.T("กรุณาใส่ชื่อ TikTok เช่น @poomtv99"); return; }
    GteSave(true);
-   try { await GteStartEngine(); gteStatus="Connecting"; GteRefreshStatus(); await GteEngine.Post("connect",new Dictionary<string,object>{{"username",user}}); }
+   try { await GteStartEngine(); if(GteSignalOnly)await GteRunnerTunnel.Start(); gteStatus="Connecting"; GteRefreshStatus(); await GteEngine.Post("connect",new Dictionary<string,object>{{"username",user}}); }
    catch(Exception ex) { gteStatus="Error"; gteDetail=ex.Message; status.Text=AppLanguage.T("เชื่อมต่อไม่สำเร็จ: ")+ex.Message; GteRefreshStatus(); }
   }
   async void GteDisconnect() { try { await GteEngine.Post("disconnect",null); } catch {} GteKeys.Clear(); }
@@ -493,11 +512,33 @@ namespace PTVgame {
    catch(Exception ex) { status.Text=AppLanguage.T("ทดสอบไม่สำเร็จ: ")+ex.Message; }
   }
   // called by OpenRoblox: get the engine ready and connect with the saved TikTok name
-  async Task GteOnRobloxOpen() {
+  async Task GteOnRobloxOpen(Game game) {
    GteEnsureLoaded();
+   await GteSetTarget(game);
    if(!settings.gameToEarnWithRoblox) return;
    await GteStartEngine();
-   if(gteStatus!="Connected"&&gteStatus!="Connecting"&&GteData.Str(gteState,"username","")!="") GteConnect();
+   if(GteSignalOnly)await GteRunnerTunnel.Start();
+   if(gteStatus!="Connected"&&gteStatus!="Connecting"&&GteData.Str(gteState,"username","")!="")await GteConnect();
+  }
+
+  async Task GteConfigureRoute() {
+   await gteConfigGate.WaitAsync();
+   try {
+    bool signal=GteSignalOnly;int pid=GteEngine.Proc.Id;
+    if(gteConfiguredEngine==pid&&gteConfiguredSignal==signal)return;
+    gteChangingRoute=true;gteRouteGeneration++;GteKeys.Clear();
+    await GteEngine.Post("runner/config",new Dictionary<string,object>{{"enabled",signal},{"placeId",signal?GteRouting.RunnerPlaceId:""}});
+    var state=await GteEngine.Get("state");gteSeq=GteData.Int(state,"seq",0);
+    if(!signal)GteRunnerTunnel.Stop();
+    gteConfiguredEngine=pid;gteConfiguredSignal=signal;
+   } finally { gteChangingRoute=false;gteConfigGate.Release(); }
+  }
+  async Task GteSetTarget(Game game) {
+   if(game==null||game.category!="Roblox")return;
+   gteRouteGeneration++;GteKeys.Clear();gteLikeCounter=0;gteFollowed.Clear();
+   gteState["roblox"]=game.id;if(GteSignalOnly&&gteSub==SubPreset)gteSub=SubLive;
+   GteSave(true);
+   if(GteEngine.Running)await GteConfigureRoute();
   }
 
   // ── UI helpers ──
@@ -519,6 +560,7 @@ namespace PTVgame {
 
   void GameToEarnPage() {
    GteEnsureLoaded();
+   if(GteSignalOnly&&gteSub==SubPreset)gteSub=SubLive;
    if(!GteEngine.Running&&string.IsNullOrEmpty(GteEngine.LastError)) GteBoot();
    gteLogPanel=null; gtePreview=null; gteJarCount=null; gtePill=null;
    var shell=new Grid(); shell.ColumnDefinitions.Add(new ColumnDefinition { Width=new GridLength(196) }); shell.ColumnDefinitions.Add(new ColumnDefinition());
@@ -528,6 +570,7 @@ namespace PTVgame {
    var head=new StackPanel { Margin=new Thickness(8,4,0,14) }; head.Children.Add(Ui.Bold(Line("Game To Earn",16))); head.Children.Add(Line("TikTok LIVE → Roblox",11,muted)); menu.Children.Add(head);
    foreach(var item in new[]{ new[]{"((•))",SubLive},new[]{"☰",SubPreset},new[]{"▭",SubObs},new[]{"≡",SubLog} }) {
     string key=item[1]; bool on=gteSub==key;
+    if(GteSignalOnly&&key==SubPreset)continue;
     var b=Btn(item[0]+"   "+AppLanguage.T(key),on?accent:Brushes.Transparent); b.HorizontalContentAlignment=HorizontalAlignment.Left; b.Padding=new Thickness(14,11,8,11); b.Margin=new Thickness(0,0,0,6); b.FontWeight=on?FontWeights.Bold:FontWeights.Normal;
     if(on) b.Foreground=Brushes.White;
     b.Click+=(s,e)=>{ if(gteSub==SubPreset&&gteDirty) GteSave(true); gteSub=key; Render(); }; menu.Children.Add(b);
@@ -551,8 +594,8 @@ namespace PTVgame {
    bool connected=gteStatus=="Connected"||gteStatus=="Connecting";
    var conn=new StackPanel(); conn.Children.Add(GTitle("เชื่อมต่อ TikTok LIVE"));
    var user=GInput(GteData.Str(gteState,"username","")==""?"":"@"+GteData.Str(gteState,"username",""),260,v=>gteState["username"]=v.Trim().TrimStart('@'));
-   user.ToolTip="@ชื่อผู้ใช้"; user.IsEnabled=!connected; user.KeyDown+=(s,e)=>{ if(e.Key==Key.Enter) GteConnect(); };
-   var go=GBtn(connected?"ตัดการเชื่อมต่อ":"เชื่อมต่อ",connected?Ui.B("#7F1D1D"):accent,()=>{ if(gteStatus=="Connected"||gteStatus=="Connecting") GteDisconnect(); else GteConnect(); });
+   user.ToolTip="@ชื่อผู้ใช้"; user.IsEnabled=!connected; user.KeyDown+=async(s,e)=>{ if(e.Key==Key.Enter)await GteConnect(); };
+   var go=GBtn(connected?"ตัดการเชื่อมต่อ":"เชื่อมต่อ",connected?Ui.B("#7F1D1D"):accent,async()=>{ if(gteStatus=="Connected"||gteStatus=="Connecting") GteDisconnect(); else await GteConnect(); });
    go.FontWeight=FontWeights.Bold; go.Padding=new Thickness(22,9,22,9);
    conn.Children.Add(GRow(user,go));
    var st=new StackPanel(); st.Children.Add(GTitle("สถานะการเชื่อมต่อ"));
@@ -560,27 +603,36 @@ namespace PTVgame {
    st.Children.Add(gtePill); if(gteDetail!=""&&gteStatus=="Error") { var d=Line(gteDetail,11,muted); d.Margin=new Thickness(0,6,0,0); st.Children.Add(d); }
    content.Children.Add(GCols(GCard(conn),GCard(st),250));
 
-   var pre=new StackPanel(); pre.Children.Add(GTitle("Preset ที่เลือก"));
-   var pick=new ComboBox { Width=260,HorizontalAlignment=HorizontalAlignment.Left };
-   for(int i=0;i<gtePresets.Count;i++) pick.Items.Add((i+1)+". "+GteData.Str(gtePresets[i],"name","Preset"));
-   pick.SelectedIndex=gteIdx; pick.SelectionChanged+=(s,e)=>{ if(pick.SelectedIndex>=0&&pick.SelectedIndex!=gteIdx) { GteSelect(pick.SelectedIndex); GteSave(true); GteAddLog("Preset: "+GteData.Str(GtePreset,"name",""),"#25F4EE","cmd"); Render(); } };
-   pre.Children.Add(pick);
+   var pre=new StackPanel();
+   if(GteSignalOnly) {
+    pre.Children.Add(GTitle("PTVRunner • สัญญาณเข้าเกม"));
+    var info=Line(AppLanguage.T("ตั้งค่าของขวัญและสกิลในเกม PTVRunner"),13,muted);info.TextWrapping=TextWrapping.Wrap;pre.Children.Add(info);
+   } else {
+    pre.Children.Add(GTitle("Preset ที่เลือก"));
+    var pick=new ComboBox { Width=260,HorizontalAlignment=HorizontalAlignment.Left };
+    for(int i=0;i<gtePresets.Count;i++) pick.Items.Add((i+1)+". "+GteData.Str(gtePresets[i],"name","Preset"));
+    pick.SelectedIndex=gteIdx; pick.SelectionChanged+=(s,e)=>{ if(pick.SelectedIndex>=0&&pick.SelectedIndex!=gteIdx) { GteSelect(pick.SelectedIndex); GteSave(true); GteAddLog("Preset: "+GteData.Str(GtePreset,"name",""),"#25F4EE","cmd"); Render(); } };
+    pre.Children.Add(pick);
+   }
    var target=new StackPanel(); target.Children.Add(GTitle("เป้าหมาย (Roblox)"));
    var maps=games.Where(g=>g.category=="Roblox").ToList(); var mapBox=new ComboBox { Width=165,Margin=new Thickness(0,0,8,0) };
    foreach(var g in maps) mapBox.Items.Add(g.name); var lastMap=GteData.Str(gteState,"roblox",""); mapBox.SelectedIndex=Math.Max(0,maps.FindIndex(g=>g.id==lastMap));
-   mapBox.SelectionChanged+=(s,e)=>{ if(mapBox.SelectedIndex>=0) { gteState["roblox"]=maps[mapBox.SelectedIndex].id; GteSave(true); } };
+   mapBox.SelectionChanged+=async(s,e)=>{ if(mapBox.SelectedIndex>=0) { mapBox.IsEnabled=false;try { await GteSetTarget(maps[mapBox.SelectedIndex]);Render(); }catch(Exception ex){status.Text=ex.Message;}finally{mapBox.IsEnabled=true;} } };
    var open=GBtn("▶ เปิด",accent,()=>{ if(mapBox.SelectedIndex>=0) OpenRoblox(maps[mapBox.SelectedIndex]); });
    target.Children.Add(GRow(GameIcon(26,true),mapBox,open));
    content.Children.Add(GCols(GCard(pre),GCard(target),330));
+   if(GteSignalOnly)GteRunnerCard(content);
 
    var check=new StackPanel(); check.Children.Add(GTitle("ก่อนเริ่ม LIVE"));
    var c1=GCheck("เชื่อมต่อ TikTok LIVE ด้วย @ชื่อผู้ใช้",gteStatus=="Connected",v=>{}); c1.IsEnabled=false; check.Children.Add(c1);
-   var c2=GCheck("เลือก Preset ที่ต้องการใช้งาน",GteData.Bool(gteState,"chk_preset",false),v=>{ gteState["chk_preset"]=v; GteSave(true); }); check.Children.Add(c2);
-   var c3=GCheck("ตั้งค่าระยะหน่วงและเสียงอ่าน (ถ้าต้องการ)",GteData.Bool(gteState,"chk_voice",false),v=>{ gteState["chk_voice"]=v; GteSave(true); }); check.Children.Add(c3);
+   if(!GteSignalOnly) { var c2=GCheck("เลือก Preset ที่ต้องการใช้งาน",GteData.Bool(gteState,"chk_preset",false),v=>{ gteState["chk_preset"]=v; GteSave(true); }); check.Children.Add(c2); }
+   if(!GteSignalOnly) { var c3=GCheck("ตั้งค่าระยะหน่วงและเสียงอ่าน (ถ้าต้องการ)",GteData.Bool(gteState,"chk_voice",false),v=>{ gteState["chk_voice"]=v; GteSave(true); }); check.Children.Add(c3); }
    var c4=GCheck("เปิดหน้า OBS และทดสอบก่อนเริ่ม LIVE",GteData.Bool(gteState,"chk_obs",false),v=>{ gteState["chk_obs"]=v; GteSave(true); }); check.Children.Add(c4);
    var web=GCheck("แสดงบนเว็บ PTVgame ว่ากำลังไลฟ์ (รูปโปรไฟล์ + ลิงก์ไปหน้าไลฟ์)",GteData.Bool(gteState,"show_on_web",true),v=>{ gteState["show_on_web"]=v; GteSave(true); GteLiveWeb(gteStatus=="Connected"); }); web.Margin=new Thickness(0,10,0,0); check.Children.Add(web);
    var auto=GCheck("เปิดแมพ Roblox แล้วเชื่อมต่อ TikTok ให้อัตโนมัติ",settings.gameToEarnWithRoblox,v=>{ settings.gameToEarnWithRoblox=v; Save(); }); auto.Margin=new Thickness(0,2,0,0); check.Children.Add(auto);
    content.Children.Add(GCard(check));
+
+   if(GteSignalOnly)return;
 
    var test=new StackPanel(); test.Children.Add(GTitle("ทดสอบโดยไม่ต้องไลฟ์"));
    var hint=Line(AppLanguage.T("คลิกหน้าต่าง Roblox ภายใน 3 วินาทีหลังกด เพื่อดูว่าคีย์ทำงาน"),12,muted); hint.Margin=new Thickness(0,0,0,8); test.Children.Add(hint);
@@ -590,6 +642,20 @@ namespace PTVgame {
     GBtn("👤 ติดตาม",Ui.B("#193B58"),()=>GteDelayed(()=>GteTest("follow","",1))),
     GBtn("💬 เสียงอ่าน",Ui.B("#193B58"),()=>GteVoice.Say(AppLanguage.T("ทดสอบเสียงอ่านแชท"),true))));
    content.Children.Add(GCard(test));
+  }
+  void GteRunnerCard(StackPanel content) {
+   var card=new StackPanel();card.Children.Add(GTitle("เชื่อม Game To Earn กับ PTVRunner"));
+   var help=Line(AppLanguage.T("คัดลอกรหัสจับคู่ → ในเกมกดรูปเฟือง → Game To Earn → จับคู่"),13,muted);help.TextWrapping=TextWrapping.Wrap;card.Children.Add(help);
+   card.Children.Add(Line(AppLanguage.T(gteRunnerPaired?"เชื่อมแล้วเฉพาะห้อง PTVRunner ของคุณ":"รอจับคู่ห้อง PTVRunner"),13,gteRunnerPaired?Ui.Green:Ui.Gold));
+   var code=new TextBox { Text=GteRunnerTunnel.Running?GteRunnerTunnel.PairCode:"",IsReadOnly=true,MinWidth=220,MaxWidth=560,Padding=new Thickness(8),Margin=new Thickness(0,8,0,8),Background=Ui.B("#102F49"),Foreground=Brushes.White,BorderBrush=muted,FontSize=11 };
+   code.GotKeyboardFocus+=(s,e)=>code.SelectAll();card.Children.Add(code);
+   var create=GBtn("สร้างรหัสจับคู่",accent,async()=>{try { status.Text=AppLanguage.T("กำลังเตรียมการเชื่อมต่อ PTVRunner…");await GteStartEngine();await GteRunnerTunnel.Start();Render(); }catch(Exception ex){status.Text=ex.Message;} });
+   var copy=GBtn("คัดลอกรหัสจับคู่",Ui.B("#166534"),async()=>{
+    string value=GteRunnerTunnel.Running?GteRunnerTunnel.PairCode:"";if(value=="")return;
+    bool copied=false;for(int n=0;n<5&&!copied;n++){try{Clipboard.SetText(value);copied=true;}catch(System.Runtime.InteropServices.ExternalException){}if(!copied)await Task.Delay(150);}
+    status.Text=AppLanguage.T(copied?"คัดลอกแล้ว • วางรหัสใน Game To Earn ภายในเกม":"เลือกช่องรหัสแล้วกด Ctrl+C เพื่อคัดลอก");
+   });copy.IsEnabled=GteRunnerTunnel.Running;
+   card.Children.Add(GRow(create,copy));content.Children.Add(GCard(card));
   }
   async void GteDelayed(Action a) { status.Text=AppLanguage.T("คลิกหน้าต่างเกมเลย… ส่งใน 3 วินาที"); await Task.Delay(3000); a(); }
 
