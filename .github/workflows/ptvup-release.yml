@@ -1,0 +1,68 @@
+name: Publish verified PTVUP build
+on:
+  push:
+    branches: ['ptvup-build-*']
+    paths: ['.release-input/ptvup/**']
+permissions:
+  contents: write
+concurrency:
+  group: ptvup-release
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reassemble and validate the Windows package
+        shell: pwsh
+        run: |
+          $metadata = Get-Content .release-input/ptvup/metadata.json -Raw | ConvertFrom-Json
+          if ($metadata.version -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid release version' }
+          if ($metadata.filename -ne "PTVUP.v$($metadata.version).zip") { throw 'Unexpected archive name' }
+          if ($metadata.targetCommit -notmatch '^[0-9a-f]{40}$') { throw 'Invalid release target' }
+          $parts = @(Get-ChildItem .release-input/ptvup/part-*.bin | Sort-Object Name)
+          if ($parts.Count -ne $metadata.parts) { throw 'Missing package parts' }
+          New-Item dist -ItemType Directory -Force | Out-Null
+          $output = Join-Path dist $metadata.filename
+          $stream = [IO.File]::Create($output)
+          try { foreach ($part in $parts) { $input = [IO.File]::OpenRead($part.FullName); try { $input.CopyTo($stream) } finally { $input.Dispose() } } } finally { $stream.Dispose() }
+          if ((Get-Item $output).Length -ne $metadata.size) { throw 'Archive size mismatch' }
+          if ((Get-FileHash $output -Algorithm SHA256).Hash.ToLower() -ne $metadata.sha256) { throw 'Archive checksum mismatch' }
+          Add-Type -AssemblyName System.IO.Compression
+          $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $output))
+          try {
+            $required = @('PTVUP/PTVUP.exe','PTVUP/UnityPlayer.dll','PTVUP/PTVUP_Data/data.unity3d','PTVUP/MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll','PTVUP/TikTokBridge/runtime/node.exe','PTVUP/TikTokBridge/bridge.mjs','PTVUP/TikTokBridge/profiles.mjs','PTVUP/TikTokBridge/node_modules/tiktok-live-connector/package.json')
+            foreach ($entry in $required) { if (!$zip.GetEntry($entry)) { throw "Incomplete package: $entry" } }
+            foreach ($entry in $zip.Entries) { if ($entry.FullName -notlike 'PTVUP/*' -or $entry.FullName -match '(^|/)\.\.(/|$)|_DoNotShip') { throw "Unexpected archive entry: $($entry.FullName)" } }
+          } finally { $zip.Dispose() }
+          "$($metadata.sha256)  $($metadata.filename)" | Set-Content dist/SHA256SUMS.txt -Encoding ascii
+          Copy-Item .release-input/ptvup/ptvup.png dist/ptvup.png
+      - name: Upload, verify, and publish the release
+        shell: pwsh
+        run: |
+          $metadata = Get-Content .release-input/ptvup/metadata.json -Raw | ConvertFrom-Json
+          $tag = "ptvup-v$($metadata.version)"
+          $existing = gh release view $tag --repo $env:GITHUB_REPOSITORY --json isDraft 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            if (!(($existing | ConvertFrom-Json).isDraft)) { throw 'This version is already published; use a new version' }
+          } else {
+            gh release create $tag --repo $env:GITHUB_REPOSITORY --target $metadata.targetCommit --title "PTVUP $($metadata.version)" --notes-file .release-input/ptvup/release-notes.md --draft --latest=false
+            if ($LASTEXITCODE -ne 0) { throw 'Could not create draft release' }
+          }
+          gh release upload $tag "dist/$($metadata.filename)" dist/SHA256SUMS.txt dist/ptvup.png --repo $env:GITHUB_REPOSITORY --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Release upload failed' }
+          New-Item dist/verify -ItemType Directory -Force | Out-Null
+          gh release download $tag --repo $env:GITHUB_REPOSITORY --pattern $metadata.filename --dir dist/verify
+          if ($LASTEXITCODE -ne 0) { throw 'Release verification download failed' }
+          $download = Join-Path dist/verify $metadata.filename
+          if ((Get-Item $download).Length -ne $metadata.size -or (Get-FileHash $download -Algorithm SHA256).Hash.ToLower() -ne $metadata.sha256) { throw 'Uploaded archive verification failed' }
+          gh release edit $tag --repo $env:GITHUB_REPOSITORY --draft=false --latest=false
+          if ($LASTEXITCODE -ne 0) { throw 'Could not publish verified release' }
+      - name: Remove the temporary upload branch
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_NAME -notmatch '^ptvup-build-\d+\.\d+\.\d+$') { throw 'Unexpected staging branch' }
+          gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/heads/$env:GITHUB_REF_NAME"
+          if ($LASTEXITCODE -ne 0) { Write-Warning 'Release is published; temporary branch cleanup needs retry'; exit 0 }
