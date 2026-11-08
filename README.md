@@ -123,3 +123,7 @@ Third Unity game: Paint World (project paint gun), ID paintworld, stable manifes
 
 PTVBoat 1.0.0: fourth Unity game, silent version gate, stable manifest release-manifests/ptvboat.json, executable PTVBoat/PTVBoat.exe. Launcher 1.6.0 shows four Unity cards in one row. Its cover was illustrated from the actual PTVBoat_Ocean game and ship model. Existing self-updating launchers receive the new catalog and cover through the launcher update.
 
+
+## PTVUP 1.0.0
+
+เกมซอมบี้ปีนต้นถั่วสูง 1000 เมตร พร้อมสกิลจาก TikTok LIVE ป้ายชื่อและปกใหม่ ใช้บัญชี VIP/แอดมินใน Launcher เพื่อขอตั๋วสิทธิ์ที่ตัวเกมตรวจลายเซ็นอีกครั้ง รองรับจอแนวตั้ง/แนวนอน รายละเอียดแพ็กและการตรวจสิทธิ์: [PTVUP](unity-update/PTVUP/README.md).

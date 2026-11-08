@@ -55,6 +55,17 @@
     "playTicket": true
   },
   {
+    "id": "ptvup",
+    "name": "PTVUP",
+    "category": "Unity",
+    "description": "พาซอมบี้ปีนต้นถั่วสู่ยอดสูง 1000 เมตร! ผู้ชม TikTok LIVE ส่งของขวัญช่วยหรือแกล้งด้วยสกิล พร้อมเมนูไทย–อังกฤษและจอแนวตั้ง/แนวนอน",
+    "descriptionEn": "Climb a giant beanstalk to 1000 metres! TikTok LIVE viewers send gifts to help or prank the zombie. Thai/English menus and portrait/landscape layouts.",
+    "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvup.json",
+    "cover": "assets/ptvup.png",
+    "access": "vip",
+    "playTicket": true
+  },
+  {
     "id": "ptvrunner",
     "universeId": "10771728798",
     "newBadge": "assets/new-gold.png",

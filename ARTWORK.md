@@ -35,3 +35,7 @@ Prompt: 16:9 stylized 3D promotional cover grounded in the actual map; blocky ru
 
 Prompt: Create a polished landscape promotional cover for ZOMBIE RUSH. Match the actual cream house, orange-red tiled roof, tall narrow dark wooden door, blue windows, flowerpots, leafy hedges, low-poly trees and lawn. Match the green zombie in a brown blazer, white shirt, red striped tie, blue jeans and brown shoes. Preserve the in-game lime/coral Comic Chaos logo and exact ZOMBIE RUSH title. Show the zombie running across the lawn with a rolling walnut and green peashooter at the edges. Bright daytime, warm sun, blue sky and white clouds. Keep the title inside the central safe area. Remove all HUD, skill lists, profiles, numbers and extra text.
 
+
+## PTVUP — 2026-11-09
+
+`assets/ptvup.png` and `assets/ptvup-logo.png` were drawn with built-in image_gen from fresh captures of the actual PVZUP Unity project: its green zombie in an orange jacket and purple shorts, giant beanstalk, rooftop lawn and colorful town. Display title: PTVUP. The cover is illustrated promotional art, with a pink brain summit reward, red balloon and yellow duck. The transparent title logo uses cream/gold comic letters, green vines and an upward arrow. Full prompts and release/VIP notes: `unity-update/PTVUP/README.md`.
