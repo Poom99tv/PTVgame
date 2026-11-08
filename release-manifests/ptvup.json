@@ -1,7 +1,7 @@
 {
-  "version": "1.0.1",
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/ptvup-v1.0.1/PTVUP.v1.0.1.zip",
-  "sha256": "51bcc68fd0c5224f1f331412210eedaa3f0101d490e6ed26906c91b7cd6c28dc",
-  "size": 183290397,
+  "version": "1.0.2",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/ptvup-v1.0.2/PTVUP.v1.0.2.zip",
+  "sha256": "4fd78fdb9986d35eaac348f710ed4059bbe3df04639e84138ccdd54e2d7173b4",
+  "size": 187664055,
   "executable": "PTVUP/PTVUP.exe"
 }
