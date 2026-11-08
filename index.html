@@ -155,6 +155,9 @@ h2{font:700 clamp(28px,3.6vw,42px)/1.15 var(--display);letter-spacing:-.6px;marg
 .plan li:before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
 .plan li.no{color:var(--mist)} .plan li.no:before{content:"–";color:var(--mist)}
 .plan .btn{justify-content:center}
+.plans{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.plan.game{padding:0 0 20px;overflow:hidden}.plan.game img{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;display:block}.plan.game h3,.plan.game .price,.plan.game .usd,.plan.game .btn{margin-left:20px;margin-right:20px}.plan.game h3{margin-top:16px}.plan.game .price{font-size:36px;margin-top:10px}
+.plan .usd{color:var(--mist);font-size:14px;margin:0 0 16px;flex:1}
 .note{color:var(--mist);font-size:14px;margin-top:18px}
 
 footer{padding:40px 0 56px;border-top:1px solid var(--line);color:var(--mist);font-size:14px}
@@ -246,9 +249,9 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   <section id="price">
     <div class="wrap">
       <h2>ราคา</h2>
-      <p class="lead">Game To Earn ใช้ฟรีตลอด อัปเกรด VIP เมื่ออยากเล่นทุกเกม</p>
+      <p class="lead">Game To Earn ใช้ฟรีตลอด ส่วนเกมซื้อแยกทีละเกม จ่ายเฉพาะเกมที่อยากเล่น</p>
       <div class="plans" id="plans"></div>
-      <p class="note">ชำระด้วย QR พร้อมเพย์ PayPal หรือบัตร ได้ในหน้าร้านค้าของ Launcher • VIP ซื้อเพิ่มแล้ววันต่อจากของเดิม</p>
+      <p class="note">ชำระด้วย QR พร้อมเพย์ PayPal หรือบัตร ได้ในหน้าร้านค้าของ Launcher • ซื้อเกมเดิมซ้ำแล้ววันต่อจากของเดิม</p>
     </div>
   </section>
 </main>
@@ -279,6 +282,7 @@ const SUPABASE_URL="https://ynbnzpejlkodjctqtexs.supabase.co";
 const SUPABASE_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluYm56cGVqbGtvZGpjdHF0ZXhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3MTAwNTcsImV4cCI6MjEwOTI4NjA1N30.wiisZFAkuEhtQiJA2OKxZatTRs7emmUNsEC7eW_YFM8";
 const GAMES=[
   {name:"PTVRunner",img:"ptvrunner",kind:"Roblox",desc:"วิ่งแข่งข้ามเกาะ 12 กิโลเมตร ผู้ชมส่งของขวัญเร่งหรือแกล้งนักวิ่ง"},
+  {name:"PTVUP",img:"ptvup",kind:"PC",desc:"พาซอมบี้ปีนต้นถั่วยักษ์สู่ยอด 1000 เมตร ผู้ชมส่งของขวัญช่วยหรือแกล้ง"},
   {name:"Zombie Rush",img:"zombierush",kind:"PC",desc:"พาซอมบี้ฝ่าสวนไปกินสมอง ผู้ชมส่งของขวัญเพื่อช่วยหรือแกล้งด้วยสกิล"},
   {name:"Acorn Rush",img:"ptvegg",kind:"PC",desc:"กระรอกวิ่งเก็บลูกโอ๊ก ของขวัญทำให้ฝนลูกโอ๊กตก"},
   {name:"PTVBoat",img:"ptvboat",kind:"PC",desc:"เรือรบประลองกลางทะเลและเกาะ"},
@@ -330,13 +334,14 @@ async function loadLive(){
 }
 async function loadPlans(){
   let plans=[];
-  try{const r=await fetch(SUPABASE_URL+"/rest/v1/plans?select=code,name,days,price_thb,price_usd,list_price_usd&active=eq.true&order=sort",{headers:{apikey:SUPABASE_ANON,Authorization:"Bearer "+SUPABASE_ANON}});if(r.ok)plans=await r.json();}catch(e){}
-  if(!plans.length)plans=[{code:"monthly",days:30,price_thb:690,price_usd:20,list_price_usd:25},{code:"yearly",days:365,price_thb:7590,price_usd:220,list_price_usd:300}];
+  try{const r=await fetch(SUPABASE_URL+"/rest/v1/plans?select=code,name,days,price_thb,price_usd,game_id&active=eq.true&order=sort",{headers:{apikey:SUPABASE_ANON,Authorization:"Bearer "+SUPABASE_ANON}});if(r.ok)plans=await r.json();}catch(e){}
+  const IMG={"ptvrunner":"ptvrunner","zombierush":"zombierush","ptvegg":"ptvegg","ptvboat":"ptvboat","paintworld":"paintworld-wide","sumo":"ptvvs","ptvcar":"ptvcar-v2","ptvup":"ptvup","roblox-box-1":"roblox-box-1","roblox-unnamed":"roblox-unnamed","roblox-pty-jump":"roblox-pty-jump","roblox-box-2":"roblox-box-2"};
   const baht=n=>"฿"+Number(n).toLocaleString("th-TH",{maximumFractionDigits:0});
-  const vip=["เล่นได้ทุกเกมใน PTVgame","แมพ Roblox + Game To Earn ครบ","เกมใหม่เล่นได้ทันทีที่เปิดตัว","อัปเดตเกมอัตโนมัติ"];
-  let html=`<div class="plan free"><h3>ฟรี</h3><div class="price">฿0 <span>/ ตลอดไป</span></div><ul><li>Game To Earn: TikTok LIVE → ปุ่มกดใน Roblox</li><li>Preset ของขวัญ / Like / ติดตาม</li><li>จอ OBS และ TikTok LIVE Studio + แก้วโหล</li><li>เกมฟรีใน Launcher</li><li class="no">เกม VIP</li></ul><a class="btn btn-ghost dl" href="#">ดาวน์โหลดฟรี</a></div>`;
-  for(const p of plans){const yearly=p.code==="yearly";const list=p.list_price_usd&&p.price_usd?Math.round(p.price_thb*p.list_price_usd/p.price_usd/10)*10:0;
-    html+=`<div class="plan${yearly?" best":""}"><h3>${yearly?"VIP รายปี":"VIP รายเดือน"}${yearly?"<small>คุ้มที่สุด</small>":""}</h3><div class="price">${list>p.price_thb?`<s>${baht(list)}</s>`:""}${baht(p.price_thb)} <span>/ ${yearly?"ปี":"เดือน"}</span></div><ul><li>VIP ${p.days} วัน</li>${vip.map(v=>`<li>${v}</li>`).join("")}</ul><a class="btn btn-blue dl" href="#">ดาวน์โหลดแล้วซื้อใน Launcher</a></div>`;}
+  const usd=n=>"$"+Number(n).toLocaleString("en-US",{maximumFractionDigits:2});
+  let html=`<div class="plan free"><h3>ฟรี</h3><div class="price">฿0 <span>/ ตลอดไป</span></div><ul><li>Game To Earn: TikTok LIVE → ปุ่มกดใน Roblox</li><li>Preset ของขวัญ / Like / ติดตาม</li><li>จอ OBS และ TikTok LIVE Studio + แก้วโหล</li><li>ซื้อเฉพาะเกมที่อยากเล่นได้ทีละเกม</li></ul><a class="btn btn-ghost dl" href="#">ดาวน์โหลดฟรี</a></div>`;
+  const games=plans.filter(p=>p.game_id);
+  html+=games.map(p=>`<div class="plan game"><img src="img/${IMG[p.game_id]||p.game_id}.webp" alt="" loading="lazy" width="360" height="203"><h3>${esc(p.name)}</h3><div class="price">${baht(p.price_thb)} <span>/ ${p.days} วัน</span></div><p class="usd">หรือ ${usd(p.price_usd)} ผ่าน PayPal / บัตร</p><a class="btn btn-blue dl" href="#">ซื้อใน Launcher</a></div>`).join("");
+  if(!games.length) html+=`<div class="plan"><h3>เกมแต่ละเกม</h3><p class="usd">ดูราคาได้ในหน้าร้านค้าของ Launcher</p></div>`;
   document.getElementById("plans").innerHTML=html; setDownload();
 }
 let DL=document.querySelector(".dl").href;
