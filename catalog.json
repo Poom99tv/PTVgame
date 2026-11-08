@@ -63,7 +63,8 @@
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvup.json",
     "cover": "assets/ptvup.png",
     "access": "vip",
-    "playTicket": true
+    "playTicket": true,
+    "newBadge": "assets/new-gold.png"
   },
   {
     "id": "ptvrunner",

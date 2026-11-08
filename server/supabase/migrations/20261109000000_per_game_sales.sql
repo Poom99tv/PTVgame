@@ -30,7 +30,8 @@ insert into public.plans(code, name, days, price_usd, list_price_usd, agent_pric
   ('g_ptvboat', 'PTVBoat', 30, 25.00, null, 19.00, 690.00, 520.00, 17, 'ptvboat'),
   ('g_ptvegg', 'Acorn Rush', 30, 25.00, null, 19.00, 690.00, 520.00, 18, 'ptvegg'),
   ('g_zombierush', 'Zombie Rush', 30, 25.00, null, 19.00, 690.00, 520.00, 19, 'zombierush'),
-  ('g_ptvup', 'PTVUP', 30, 25.00, null, 19.00, 690.00, 520.00, 20, 'ptvup')
+  ('g_ptvup', 'PTVUP', 30, 25.00, null, 19.00, 690.00, 520.00, 20, 'ptvup'),
+  ('g_ptvrunner', 'PTVRunner', 30, 25.00, null, 19.00, 690.00, 520.00, 21, 'ptvrunner')
 on conflict (code) do update set name = excluded.name, price_usd = excluded.price_usd, price_thb = excluded.price_thb,
   agent_price_usd = excluded.agent_price_usd, agent_price_thb = excluded.agent_price_thb, game_id = excluded.game_id, active = true;
 update public.plans set active = false where game_id is null;   -- stop selling the all-games VIP pass
