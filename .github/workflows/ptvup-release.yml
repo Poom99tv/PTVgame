@@ -74,13 +74,7 @@ jobs:
           }
           if (!$ready) { throw 'Stable manifest still points to an older game; no release was deleted' }
           foreach ($version in $metadata.retireVersions) {
-            if ($version -notmatch '^\d+\.\d+\.\d+
-        shell: pwsh
-        run: |
-          if ($env:GITHUB_REF_NAME -notmatch '^ptvup-build-\d+\.\d+\.\d+$') { throw 'Unexpected staging branch' }
-          gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/heads/$env:GITHUB_REF_NAME"
-          if ($LASTEXITCODE -ne 0) { Write-Warning 'Release is published; temporary branch cleanup needs retry'; exit 0 }
- -or [Version]$version -ge [Version]$metadata.version) { throw 'Refusing unsafe release removal' }
+            if ($version -notmatch '^\d+\.\d+\.\d+$' -or [Version]$version -ge [Version]$metadata.version) { throw 'Refusing unsafe release removal' }
             $tag = "ptvup-v$version"
             gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
             if ($LASTEXITCODE -eq 0) {
@@ -94,3 +88,4 @@ jobs:
           if ($env:GITHUB_REF_NAME -notmatch '^ptvup-build-\d+\.\d+\.\d+$') { throw 'Unexpected staging branch' }
           gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/heads/$env:GITHUB_REF_NAME"
           if ($LASTEXITCODE -ne 0) { Write-Warning 'Release is published; temporary branch cleanup needs retry'; exit 0 }
+
