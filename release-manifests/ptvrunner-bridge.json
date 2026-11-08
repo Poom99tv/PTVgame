@@ -1,7 +1,7 @@
 {
-  "sha256": "e396c60d6abbf7c80a2316b8ce647616d6aa8ad9c55ff72426f6a0d92280df35",
   "version": "7.0.2",
-  "size": 68432310,
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/launcher-v2.0.5/PTVRunner-Bridge-v7.0.2.zip",
-  "executable": "TikTokBridge-v7.exe"
+  "executable": "TikTokBridge-v7.exe",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/launcher-v2.0.6/PTVRunner-Bridge-v7.0.2.zip",
+  "size": 68433259,
+  "sha256": "b765ce35d2b9d94e7d0fb1580fa20584371ead8585877edb934d17948eed02c9"
 }
