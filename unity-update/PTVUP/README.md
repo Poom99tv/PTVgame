@@ -1,8 +1,8 @@
-# PTVUP 1.0.0
+# PTVUP 1.0.2
 
 Windows x64 Unity game. Product name: PTVUP. Launcher ID and ticket audience: ptvup.
 
-The complete package is published as PTVUP.v1.0.0.zip in the ptvup-v1.0.0 release. ZIP root: PTVUP/. Entry point: PTVUP/PTVUP.exe. Include UnityPlayer.dll, PTVUP_Data, MonoBleedingEdge and the entire production TikTokBridge with runtime/node.exe and node_modules.
+The complete package is published as PTVUP.v1.0.2.zip in the ptvup-v1.0.2 release. ZIP root: PTVUP/. Entry point: PTVUP/PTVUP.exe. Include UnityPlayer.dll, PTVUP_Data, MonoBleedingEdge and the entire production TikTokBridge with runtime/node.exe and node_modules.
 
 ## VIP verification
 
@@ -23,3 +23,13 @@ Use case: logo-brand. Asset type: game title logo on a genuine transparent backg
 Cover prompt:
 
 Use case: stylized-concept. Asset type: landscape 16:9 polished game cover / launcher thumbnail. Exact title text at top left: PTVUP, large and highly legible, five uppercase Latin letters P T V U P, dimensional ivory/gold cartoon lettering with dark green ink outline and little curling green vines, matching a playful garden comic game. References: image 1 is the exact main zombie model, preserve his identity (lime green skin, sleepy friendly half closed eyes, swept brown hair, two big separated front teeth, torn orange-brown jacket over pale cream shirt, purple torn shorts, chunky brown boots); image 2 is the actual beanstalk/rooftop city and comic visual theme. Composition: dynamic friendly zombie prominently on the right half, three-quarter face visible while climbing/hugging a massive vivid green twisting beanstalk that rises diagonally toward soft white clouds and a glowing pink brain reward at upper right. Far below left is a sunny colorful low-poly rooftop lawn and small town like the game. A small mischievous red balloon and yellow rubber duck near the vine hint at skills, subtle upward luminous green trails and loose leaves. Bright clear cyan sky, warm sunlight, joyful comedic adventure, polished cartoon 3D illustration with ink contour accents. Show vertical climbing scale. Leave title clean readable negative space at upper left; no login menu, no HUD, no buttons, no progress bar, no extra text or logos. Full bleed landscape 16:9 cover.
+
+## 1.0.2: verified current player build
+
+The previous player crashed in BonkChoySkill.Initialize because URP Unlit was stripped. ClimbGame.BuildUI stopped after creating the legacy duck button, before it hid old buttons or built the new two-column HUD. This was a player-only startup failure, not simply a version-number mismatch.
+
+PTVUPBuildGuard retains the runtime-only shader and enables read/write on meshes used for runtime beanstalk colliders and balloon mesh extraction. It runs before every build. PTVUPPlayerAudit reports startup readiness (8 skills, 2 columns, 8 tiles, no active legacy duck UI).
+
+A separate local development QA build with PTV_RELEASE_QA exercised all eight actual skill paths and both screen orientations. This QA flag only bypasses the ticket gate when DEVELOPMENT_BUILD is also defined. The distributed clean release has neither flag; its compiled Boot method calls the production ticket check and its audit contains no QA automation. Standalone startup was verified with ready=True, shaderUnlit=True and the expected no-ticket lock, without startup exceptions or collision-mesh errors. Source fingerprints are in build-info.json.
+
+Broken 1.0.0 and 1.0.1 releases are retired only after the 1.0.2 archive is verified and the stable manifest points to it.

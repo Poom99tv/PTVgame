@@ -1,0 +1,257 @@
+{
+  "product": "PTVUP",
+  "version": "1.0.2",
+  "unity": "6000.0.59f2",
+  "scene": "Assets/ClimbGame/Scenes/BeanstalkClimb.unity",
+  "build": "CleanBuildCache, CompressWithLz4HC; no development mode or QA defines",
+  "files": [
+    {
+      "path": "Assets/ClimbGame/Beanstalk/BS_Core_A.fbx.meta",
+      "sha256": "5e6957e87aab3d35fa70f4617dcc5ab80d3813ffb4315f8f2ad42073849e58be"
+    },
+    {
+      "path": "Assets/ClimbGame/Beanstalk/BS_Core_B.fbx.meta",
+      "sha256": "17298ec796cedd39bba8ea206a689bf27ffa989d375c3747f8032116a204704f"
+    },
+    {
+      "path": "Assets/ClimbGame/Beanstalk/BS_Core_C.fbx.meta",
+      "sha256": "2c360e5cf11f447ec0e25ecd4adbba104f3fcb0687ce173edb2712a38b8d2b7f"
+    },
+    {
+      "path": "Assets/ClimbGame/Beanstalk/BS_Core_D.fbx.meta",
+      "sha256": "d52236596b3fd674800f365e248173a1597e0e2b34c110be4ef3c5058d157e74"
+    },
+    {
+      "path": "Assets/ClimbGame/Beanstalk/BS_RootBase.fbx.meta",
+      "sha256": "00d03828fbbe7ac98d007c21e986378f4e04338746d79e124e5185a029bbd5c0"
+    },
+    {
+      "path": "Assets/ClimbGame/Scenes/BeanstalkClimb.unity",
+      "sha256": "f017d0fb74fd7c13f0027c5045c984f5ebd079649fd8a74afb71332cc06eedbe"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/BalloonLiftSkill.cs",
+      "sha256": "50108557a34876b83c10bfe94166f2619699c8b57d2e17447484fddae5a04a8e"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/BannerPlaneFlyby.cs",
+      "sha256": "644b6d2167c96ad8970ea4b5e3a151affe779eb6ed8e888bf41abc8ecda4371e"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/BonkChoySkill.cs",
+      "sha256": "8194a9ce64413756accb06901e2e298b13f7899e64cc868a64438afacd3b09cf"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/BrainBoostSkill.cs",
+      "sha256": "168b55ffc257ed77ce2d68ef9a49a05acce6b995922fa5d15ee2d5248528ca04"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/BrainVisual.cs",
+      "sha256": "3b6808c483056e1279f62ca901c4d2b3a856abe6e3e570b904d2090b044fc73e"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/ChiliBombSkill.cs",
+      "sha256": "a79c67d8b73627748f5a71a5865b382d50344cf52007b7624bc7c286161d37c0"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/ClimbAtmosphere.cs",
+      "sha256": "53b6c3127149d15c6046179a9dde623dca8c84cc51db5333c03a4068ed94dbbe"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/ClimbFog.cs",
+      "sha256": "a06606d7923d2297b98ce1ea7771a2912ed8a9cbf9e930f98dd3749ad72db25d"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/ClimbGame.cs",
+      "sha256": "332607f3456121c93a565646508cb27998b555f32b5ceffacb5fc1277df79f39"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/CloudSummit.cs",
+      "sha256": "65273618427829caa2e56a189b15dc71275527514119baa00102020ebf041542"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/CoconutCannonSkill.cs",
+      "sha256": "43a890e4bdeacde008d1799b69f60bdb9a567fadbcac6d2e2b32ee54e73445c0"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/DuckStarSkill.cs",
+      "sha256": "acfcacaeebc3ee02bc488f5e0101552082bc97ca93b607ca04972c54ff65bd60"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/FanGustSkill.cs",
+      "sha256": "f0faa84276ec932a9fa36b89a3b5146196a28ef0571bd81f17b85546b3cd1683"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/GameAudio.cs",
+      "sha256": "56b0dbe85bcfe41df02e9844bdb4d517b99034435e2b4d00b55bceb92c899507"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/GardenCourtyard.cs",
+      "sha256": "58d8e1535e321ab7fb99d659b052667ff687430a3f693c6e78d9fb9eb3a54326"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/HeavenSummit.cs",
+      "sha256": "d8985a9fbb79df78426d01ccd24aaefb577c36bb1c845141535f0c0a4e763fe6"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/JetpackSkill.cs",
+      "sha256": "e2f32a848a3e2a70b5b9fd35a04cba3882a409ca77f9dcb99d360049c689b7ea"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/LoopSounds.cs",
+      "sha256": "a812d3653f3d8fc0e3ed2852e998297b24ba42643f2fcc59a688e8d629091e58"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/RooftopCity.cs",
+      "sha256": "6166473ee306f1dbd9af0d73b04795fb38a7db4b27dd55cf7b4ff73fcd3f8db7"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/SkillDirector.cs",
+      "sha256": "ac25a8dbbfd4cca005e3216e77859ea9010531b426b485821cc7d5394d72570a"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/SkillFx.cs",
+      "sha256": "537224fd16b61027c77c1e24f1a3c4675fe70744a84a5bd7b6ec314e1b0ce47b"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/SkillPalette.cs",
+      "sha256": "0c70587661af7acf47a79b5acf327b9c1f4da9ad3dea7e8896726f48eecbae4a"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/SummitSequence.cs",
+      "sha256": "bd898ff41b97efded5dc297478cc70a3427c43a2e7a69fab0c68ed9a4291779a"
+    },
+    {
+      "path": "Assets/ClimbGame/Shaders/CloudPuff.shader",
+      "sha256": "6c0c6e59ab2f05d6b6eed37a9ef8dd54ddfe856843821947f691575ffe4e47cd"
+    },
+    {
+      "path": "Assets/ClimbGame/Shaders/CloudSurface.shader",
+      "sha256": "b00ba16e222d105d6c2d7a467a0235f49b9e1640b8b8c1a2df3658a1a7849ba3"
+    },
+    {
+      "path": "Assets/ClimbGame/Shaders/FogParticle.shader",
+      "sha256": "52dc0d6d67bb090ad17dd738c2b255cdab9701b90c8b505dc0230f1e9d3431aa"
+    },
+    {
+      "path": "Assets/ClimbGame/Shaders/Halo.shader",
+      "sha256": "779221b546cb3e9c7b4ff53d70fb768bd91fa57657f1c78327bde1ecc92abadf"
+    },
+    {
+      "path": "Assets/ClimbGame/Shaders/HeavenSkybox.shader",
+      "sha256": "5757751c58a7359eb54a85029a9552976de250fc7553ba0f23761441daa9ffd7"
+    },
+    {
+      "path": "Assets/ClimbGame/Shaders/LightShaft.shader",
+      "sha256": "23d528d959a3ff36bb303de7eb7760dd3cff97ba67992c9ff3db8598132b18fd"
+    },
+    {
+      "path": "Assets/ClimbGame/Shaders/SkyBackdrop.shader",
+      "sha256": "5835aa4484a11c398c91747975849be5ae6edc92a54f6cf102131c21d2eb95fd"
+    },
+    {
+      "path": "Assets/ClimbGame/Shaders/SoftMist.shader",
+      "sha256": "389dbe403bbcce0bfc8846217b7b5946b14b66d63504b0e8b74181cb23e43f92"
+    },
+    {
+      "path": "Assets/ClimbGame/Shaders/ToonBrain.shader",
+      "sha256": "c81f0d196e1c88e25edad6fd76d9f4c81c216e1c27993ef6691d6d8123ff5859"
+    },
+    {
+      "path": "Assets/ClimbGame/Shaders/VertexColorLit.shader",
+      "sha256": "b654d438a3821ce7f57082431a03f84f625e70b1c4776bd04a44af9b8e413b74"
+    },
+    {
+      "path": "Assets/PTV/Editor/PTVUPBuildGuard.cs",
+      "sha256": "3751d16351af98a613944212fa4f894fa868aeb279b618952b0020cef863701b"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVAudio.cs",
+      "sha256": "d571550a7fe5187ea37822d110c12348df654cd2b17c887dd9c85146090edcf0"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVComicOutline.cs",
+      "sha256": "357d0f9e266ff6cec91c40a74b5261aa37aeaec14524ba54af46d885c80dac41"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVComicSettings.cs",
+      "sha256": "9c06351729d5af4131b0d9fa33767083f9a351d1d375a6dbc8d804424c00f9e7"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVDrag.cs",
+      "sha256": "1ec11868b32d93ce6c5baf019baed838137c8c70718f249d8ce465034cf82122"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVGiftCatalog.cs",
+      "sha256": "320940ef52d0c1f079e346b71eedc606d80d1df5b5f9ffdbd8be94a141dce99e"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVGiftNotice.cs",
+      "sha256": "9cc2a7f5525986708bd3295d9e0549e6be9339972e60ba4e3a8689a812ea0186"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVLang.cs",
+      "sha256": "e811b5e3c6e8bf1581b522d2dc8f8201f96a5a6ade09c8a6464729e79df203b5"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVLicense.cs",
+      "sha256": "cea6ad40ff97faa7dd6e191c4f6b86a846690be5e665fe786685b57628597713"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVScreenLayout.cs",
+      "sha256": "8e9e2bc6a074adea11462cc305dda165d8630dbf3c1e5ebc38bd9a56075fe228"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVStartMenu.cs",
+      "sha256": "dc564f8adf4642e880442b243e993fde77c3dd2e581d525c48e9ccb7eec25c6e"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVText.cs",
+      "sha256": "f1339ecb252406d2e6b693d70542a35929f07dd19038ad6bc550c440028ab1e5"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVThaiShift.cs",
+      "sha256": "a338c2b1d8ce77086ac6281be025608617a27e3dce229294e9ce1ef0ab8d9163"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVTikTokLive.cs",
+      "sha256": "5e98d872eee4bad53d781e8d05997667c5560ecc2cd46b4616deb9f93bf11461"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVUI.cs",
+      "sha256": "b4afd2d4a0cf817aebf9f0ba6e296ea4cf1d3314fcb13312964703b583455cef"
+    },
+    {
+      "path": "Assets/PTV/Scripts/PTVUPPlayerAudit.cs",
+      "sha256": "bcd524d74c369b5d82c8bebf240d9494bb335874bfef341ba690898ff23ac4eb"
+    },
+    {
+      "path": "Assets/PTV/Scripts/ZComicUI.cs",
+      "sha256": "cf31821e9c0fca0bef698a91cc216f6e01617dacf41eae35e6b961a0327a593e"
+    },
+    {
+      "path": "Assets/PTV/Scripts/ZGiftDirector.cs",
+      "sha256": "a16bbfa3e4324103c888c991e5020aa4f79bff579ede29c15376ed08c4fd3373"
+    },
+    {
+      "path": "Assets/PTV/Scripts/ZHud.cs",
+      "sha256": "31b8adab75796b282aa9a86d4db8ab1918a3881a6778b2daec451df38bf5f4bf"
+    },
+    {
+      "path": "Assets/PTV/Scripts/ZHudLayout.cs",
+      "sha256": "be7db7751fc58291e594109ced60c7d7ccb061d2099930948d1e10ef63fd2270"
+    },
+    {
+      "path": "Assets/PTV/Scripts/ZIcons.cs",
+      "sha256": "25d3f520928c1b5aabd377711f33165508ce0dacdadabc61ccfffc0b8f164e26"
+    },
+    {
+      "path": "ProjectSettings/GraphicsSettings.asset",
+      "sha256": "9ddeb8c42177b005517e2d463b2434c9ba0fd9a701b44540d4d11666294c454e"
+    },
+    {
+      "path": "ProjectSettings/ProjectSettings.asset",
+      "sha256": "8301794f49702851d709cb8527e3c460bfbf62e63e76620741b6b5c21c9ddcd2"
+    }
+  ]
+}

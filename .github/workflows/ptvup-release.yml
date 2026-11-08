@@ -60,6 +60,34 @@ jobs:
           if ((Get-Item $download).Length -ne $metadata.size -or (Get-FileHash $download -Algorithm SHA256).Hash.ToLower() -ne $metadata.sha256) { throw 'Uploaded archive verification failed' }
           gh release edit $tag --repo $env:GITHUB_REPOSITORY --draft=false --latest=false
           if ($LASTEXITCODE -ne 0) { throw 'Could not publish verified release' }
+      - name: Retire broken builds after the stable manifest is updated
+        shell: pwsh
+        run: |
+          $metadata = Get-Content .release-input/ptvup/metadata.json -Raw | ConvertFrom-Json
+          if (@($metadata.retireVersions).Count -eq 0) { exit 0 }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 120; $attempt++) {
+            $nonce = [Guid]::NewGuid().ToString('N')
+            $manifest = Invoke-RestMethod ("https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/main/release-manifests/ptvup.json?verify="+$nonce)
+            if ($manifest.version -eq $metadata.version -and $manifest.sha256 -eq $metadata.sha256) { $ready = $true; break }
+            Start-Sleep -Seconds 5
+          }
+          if (!$ready) { throw 'Stable manifest still points to an older game; no release was deleted' }
+          foreach ($version in $metadata.retireVersions) {
+            if ($version -notmatch '^\d+\.\d+\.\d+
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_NAME -notmatch '^ptvup-build-\d+\.\d+\.\d+$') { throw 'Unexpected staging branch' }
+          gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/heads/$env:GITHUB_REF_NAME"
+          if ($LASTEXITCODE -ne 0) { Write-Warning 'Release is published; temporary branch cleanup needs retry'; exit 0 }
+ -or [Version]$version -ge [Version]$metadata.version) { throw 'Refusing unsafe release removal' }
+            $tag = "ptvup-v$version"
+            gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              gh release delete $tag --repo $env:GITHUB_REPOSITORY --cleanup-tag --yes
+              if ($LASTEXITCODE -ne 0) { throw "Could not retire $tag" }
+            }
+          }
       - name: Remove the temporary upload branch
         shell: pwsh
         run: |

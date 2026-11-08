@@ -1,0 +1,18 @@
+[PTVUP Player] version=1.0.2 ready=True skills=8 columns=2 tiles=8 legacyActive=False shaderUnlit=True
+[PTVUP QA] trigger=DuckStar height=500 allowed=True
+[PTVUP QA] completed=DuckStar height=520.0003
+[PTVUP QA] trigger=BonkChoy height=520.0003 allowed=True
+[PTVUP QA] completed=BonkChoy height=500.0008
+[PTVUP QA] trigger=Balloon height=500.0008 allowed=True
+[PTVUP QA] completed=Balloon height=550.0005
+[PTVUP QA] trigger=Fan height=550.0005 allowed=True
+[PTVUP QA] completed=Fan height=500.0004
+[PTVUP QA] trigger=Coconut height=500.0004 allowed=True
+[PTVUP QA] completed=Coconut height=250.0007
+[PTVUP QA] trigger=Brain height=250.0007 allowed=True
+[PTVUP QA] completed=Brain height=275.0006
+[PTVUP QA] trigger=Chili height=275.0006 allowed=True
+[PTVUP QA] completed=Chili height=0
+[PTVUP QA] trigger=Jetpack height=0 allowed=True
+[PTVUP QA] completed=Jetpack height=499.9997
+[PTVUP QA] ALL_EIGHT_SKILLS_COMPLETED

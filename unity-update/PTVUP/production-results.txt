@@ -1,0 +1,2 @@
+[PTVLicense] locked: no-ticket
+[PTVUP Player] version=1.0.2 ready=True skills=8 columns=2 tiles=8 legacyActive=False shaderUnlit=True

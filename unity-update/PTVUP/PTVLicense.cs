@@ -32,7 +32,7 @@ public sealed class PTVLicense : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
     {
-#if UNITY_EDITOR
+#if UNITY_EDITOR || (DEVELOPMENT_BUILD && PTV_RELEASE_QA)
         Allowed = true; return;            // play mode in the editor is never locked
 #else
         // A verified session survives scene reloads; VIP expiry is still checked every minute.
