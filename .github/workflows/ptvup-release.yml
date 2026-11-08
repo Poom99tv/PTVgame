@@ -67,8 +67,9 @@ jobs:
           if (@($metadata.retireVersions).Count -eq 0) { exit 0 }
           $ready = $false
           for ($attempt = 0; $attempt -lt 120; $attempt++) {
-            $nonce = [Guid]::NewGuid().ToString('N')
-            $manifest = Invoke-RestMethod ("https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/main/release-manifests/ptvup.json?verify="+$nonce)
+            $encoded = (gh api "repos/$env:GITHUB_REPOSITORY/contents/release-manifests/ptvup.json?ref=main" --jq '.content') -join ''
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot verify stable game manifest' }
+            $manifest = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($encoded)) | ConvertFrom-Json
             if ($manifest.version -eq $metadata.version -and $manifest.sha256 -eq $metadata.sha256) { $ready = $true; break }
             Start-Sleep -Seconds 5
           }
