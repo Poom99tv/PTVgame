@@ -1,4 +1,5 @@
 \set ON_ERROR_STOP 1
+update public.plans set active = true where game_id is null;  -- these tests cover the VIP plans
 update public.settings set value='true' where key='online_pay_enabled';  -- these tests cover PayPal orders
 -- users: admin, agent, alice (normal), bob (normal)
 insert into auth.users values

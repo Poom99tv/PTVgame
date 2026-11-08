@@ -72,12 +72,12 @@ namespace PTVgame {
   public static decimal Rate { get { var a=AccountService.Current; return a!=null&&a.usdThbRate>0?a.usdThbRate:34.5m; } }
   /// <summary>THB amount shown as ฿ in Thai, converted to $ in English.</summary>
   public static string Local(decimal thb) { return Thai?Money(thb,"THB"):Money(Math.Round(thb/Rate,2),"USD"); }
-  public static string Money(decimal amount,string currency) { return currency=="THB"?"฿"+amount.ToString("#,0.00"):"$"+amount.ToString("#,0.00"); }
+  public static string Money(decimal amount,string currency) { string f=amount==Math.Round(amount)?"#,0":"#,0.00"; return currency=="THB"?"฿"+amount.ToString(f):"$"+amount.ToString(f); }
   public static string Status(string s) { switch(s) { case "pending": return "รอชำระ"; case "review": return "รอตรวจสลิป"; case "paid": return "ชำระสำเร็จ"; case "rejected": return "ถูกปฏิเสธ"; case "cancelled": return "ยกเลิกแล้ว"; default: return s??""; } }
   public static Brush StatusColor(string s) { return s=="paid"?Green:s=="rejected"||s=="cancelled"?Red:Gold; }
   public static string Method(string m) { switch(m) { case "promptpay": return "QR พร้อมเพย์"; case "paypal": return "PayPal"; case "card": return "บัตรเครดิต/เดบิต"; default: return m??""; } }
   public static string Role(string r) { return r=="admin"?"แอดมิน":r=="agent"?"ตัวแทน":"ผู้ใช้"; }
-  public static string PlanName(string code) { return code=="yearly"?"VIP รายปี":code=="monthly"?"VIP รายเดือน":code; }
+  public static string PlanName(string code) { string n; if(code!=null&&AccountService.PlanNames.TryGetValue(code,out n)&&code.StartsWith("g_")) return n; return code=="yearly"?"VIP รายปี":code=="monthly"?"VIP รายเดือน":code!=null&&code.StartsWith("g_")?code.Substring(2):code; }
   public static void Copy(string text) { for(int i=0;i<5;i++) { try { Clipboard.SetText(text); return; } catch { Thread.Sleep(60); } } }
   public static string PickImage(string title) {
    var d=new Microsoft.Win32.OpenFileDialog { Title=AppLanguage.T(title),Filter="Images|*.png;*.jpg;*.jpeg" };
@@ -269,9 +269,11 @@ namespace PTVgame {
   /// <summary>Called before installing or launching: VIP games need an active VIP.</summary>
   bool Gate(Game g) {
    if(AccountService.CanPlay(g)) return true;
-   status.Text=AppLanguage.T(AccountService.Current==null?"กรุณาเข้าสู่ระบบก่อนเล่น":"เกมนี้สำหรับสมาชิก VIP • สมัคร VIP ได้ที่หน้าร้านค้า");
+   status.Text=AppLanguage.T(AccountService.Current==null?"กรุณาเข้าสู่ระบบก่อนเล่น":"ยังไม่ได้ซื้อเกมนี้ • ซื้อได้ที่หน้าร้านค้า");
    Go(PageStore); return false;
   }
+  /// <summary>Price on a locked game card, e.g. "฿690"; "VIP" when the game is not sold on its own.</summary>
+  string PriceTag(Game g) { Plan p; if(!AccountService.GamePlans.TryGetValue(g.id,out p)) return "♛ VIP"; return Ui.Thai?Ui.Money(p.priceThb,"THB"):Ui.Money(p.priceUsd,"USD"); }
   bool Locked(Game g) { return AccountConfig.Current.Enabled&&!AccountService.CanPlay(g); }
 
   async void RefreshAccount() {
@@ -341,11 +343,12 @@ namespace PTVgame {
   void StorePage() {
    if(!AccountsOn) { sections.Children.Add(Text("ระบบบัญชียังไม่ได้ตั้งค่า (account.json)",18,muted)); return; }
    var a=AccountService.Current; int id=renderId;
-   var title=Ui.Bold(Text("♛  PTVgame VIP",30)); sections.Children.Add(title);
-   sections.Children.Add(Text("ปลดล็อกทุกเกมใน PTVgame ด้วยไอดีเดียว ใช้ได้ทุกเครื่องที่ล็อกอิน",14,muted));
+   var title=Ui.Bold(Text("🛒  ร้านค้าเกม",30)); sections.Children.Add(title);
+   sections.Children.Add(Text("ซื้อเฉพาะเกมที่อยากเล่น ใช้ได้ทุกเครื่องที่ล็อกอินไอดีนี้ • ซื้อซ้ำแล้ววันต่อจากของเดิม",14,muted));
    bool vip=a.vipUntil!=null&&a.vipUntil.Value>DateTime.UtcNow;
-   var state=new Border { Margin=new Thickness(0,14,0,14),HorizontalAlignment=HorizontalAlignment.Left,BorderBrush=vip?Ui.Gold:ColorBrush("#2B5578"),BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(20),Padding=new Thickness(16,7,16,7),
-    Child=Text(vip?"แพ็กเกจปัจจุบันของคุณ • VIP ถึง "+Ui.Date(a.vipUntil)+" (ซื้อเพิ่มจะต่อเวลาจากวันเดิม)":"แพ็กเกจปัจจุบันของคุณ • ผู้เล่นทั่วไป",13,vip?Ui.Gold:muted) };
+   int owned=a.games==null?0:a.games.Count(kv=>kv.Value>DateTime.UtcNow);
+   var state=new Border { Margin=new Thickness(0,14,0,14),HorizontalAlignment=HorizontalAlignment.Left,BorderBrush=vip||owned>0?Ui.Gold:ColorBrush("#2B5578"),BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(20),Padding=new Thickness(16,7,16,7),
+    Child=Text(vip?"VIP เดิมของคุณเล่นได้ทุกเกมถึง "+Ui.Date(a.vipUntil):owned>0?"เกมที่ซื้อแล้ว: "+owned:"ยังไม่มีเกมที่ซื้อ • Game To Earn ใช้ฟรี",13,vip||owned>0?Ui.Gold:muted) };
    sections.Children.Add(state);
    if(a.IsAgent) sections.Children.Add(Ui.Pill("คุณเห็นราคาตัวแทน",Ui.Gold,Ui.B("#2A1C00")));
 
@@ -381,14 +384,14 @@ namespace PTVgame {
 
   UIElement RedeemBox() {
    var p=new StackPanel { Width=330 };
-   p.Children.Add(Ui.Bold(Text("แลกโค้ด VIP",16)));
-   p.Children.Add(Text("ได้โค้ดจากตัวแทน กรอกที่นี่เพื่อเปิด VIP ทันที",12,muted));
+   p.Children.Add(Ui.Bold(Text("แลกโค้ดเกม",16)));
+   p.Children.Add(Text("ได้โค้ดจากตัวแทน กรอกที่นี่เพื่อเปิดเกมทันที",12,muted));
    var row=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,8,0,0) }; p.Children.Add(row);
    var box=Ui.Input("",190); box.MaxLength=20; box.CharacterCasing=CharacterCasing.Upper; row.Children.Add(box);
    var go=Btn("แลกโค้ด",Ui.Gold); go.Foreground=Ui.B("#2A1C00"); go.Margin=new Thickness(10,0,0,6); row.Children.Add(go);
    go.Click+=async(s,e)=>{
     if(box.Text.Trim().Length<6) { status.Text=AppLanguage.T("กรุณากรอกโค้ด VIP"); return; }
-    await Act(go,"แลกโค้ดสำเร็จ • VIP พร้อมใช้งานแล้ว",async()=>{ var r=await AccountService.RedeemCode(box.Text.Trim()); await AccountService.Load(); Build(); status.Text=AppLanguage.T("แลกโค้ดสำเร็จ • ได้ VIP ")+J.L(r,"days")+AppLanguage.T(" วัน"); });
+    await Act(go,"แลกโค้ดสำเร็จ",async()=>{ var r=await AccountService.RedeemCode(box.Text.Trim()); await AccountService.Load(); Build(); string gn=J.S(r,"game_name"); status.Text=AppLanguage.T("แลกโค้ดสำเร็จ • ได้ ")+(string.IsNullOrEmpty(gn)?"VIP":gn)+" "+J.L(r,"days")+AppLanguage.T(" วัน"); });
    };
    return Box(p);
   }
@@ -399,7 +402,7 @@ namespace PTVgame {
    if(id!=renderId) return; holder.Children.Clear();
    var monthly=list.FirstOrDefault(p=>p.code=="monthly");
    if(target==null&&!wallet) holder.Children.Add(FreeCard());
-   foreach(var p in list) holder.Children.Add(PlanCard(p,monthly,target,wallet));
+   foreach(var p in list) holder.Children.Add(string.IsNullOrEmpty(p.gameId)?PlanCard(p,monthly,target,wallet):GameCard(p,target,wallet));
   }
 
   // free plan: ฿0 — Game To Earn and free games, no payment needed
@@ -460,6 +463,38 @@ namespace PTVgame {
    pp.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayOnline(p.code,"paypal",t,"vip",1); };
    card.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayOnline(p.code,"card",t,"vip",1); };
    var box=Box(c); if(yearly) box.BorderBrush=Ui.Gold; return box;
+  }
+  // one game for sale: cover, price, days, and the same payment buttons as VIP
+  UIElement GameCard(Plan p,Func<long?> target,bool wallet) {
+   var a=AccountService.Current; bool agent=a.IsAgent; bool disc=target==null&&DiscountActive;
+   decimal usd=agent?p.agentPriceUsd:p.priceUsd,thb=agent?p.agentPriceThb:p.priceThb;
+   if(disc) { usd=Math.Round(usd*(100-storeDiscountPct)/100m,2); thb=Math.Round(thb*(100-storeDiscountPct)/100m,2); }
+   var g=games==null?null:games.FirstOrDefault(x=>x.id==p.gameId);
+   var c=new StackPanel { Width=300 };
+   if(g!=null) c.Children.Add(new Border { Height=150,CornerRadius=new CornerRadius(10),ClipToBounds=true,Margin=new Thickness(0,0,0,12),Child=Picture(g) });
+   var top=new DockPanel(); top.Children.Add(Ui.Bold(Text(p.name,20)));
+   DateTime until; bool owns=a.games!=null&&a.games.TryGetValue(p.gameId,out until)&&until>DateTime.UtcNow;
+   if(owns) { var o=Ui.Pill("เล่นได้ถึง "+Ui.Date(a.games[p.gameId]),ColorBrush("#0F4A2E"),ColorBrush("#5CF29B")); o.HorizontalAlignment=HorizontalAlignment.Right; top.Children.Add(o); }
+   c.Children.Add(top);
+   c.Children.Add(Text((g!=null&&g.category=="Roblox"?"แมพ Roblox + Game To Earn":"เกม PC")+" • "+p.days+AppLanguage.T(" วัน"),13,muted));
+   var price=new WrapPanel { Margin=new Thickness(0,12,0,0) };
+   if(disc) { var s=Line(Ui.Thai?Ui.Money(p.priceThb,"THB"):Ui.Money(p.priceUsd,"USD"),18,muted); s.TextDecorations=TextDecorations.Strikethrough; s.Margin=new Thickness(0,0,8,4); s.VerticalAlignment=VerticalAlignment.Bottom; price.Children.Add(s); }
+   price.Children.Add(Ui.Bold(Line(Ui.Thai?Ui.Money(thb,"THB"):Ui.Money(usd,"USD"),Ui.Thai?34:38)));
+   var per=Text(" / "+p.days+AppLanguage.T(" วัน"),14,muted); per.VerticalAlignment=VerticalAlignment.Bottom; per.Margin=new Thickness(4,0,0,8); price.Children.Add(per);
+   c.Children.Add(price);
+   c.Children.Add(Text((AccountService.OnlinePay?(Ui.Thai?"หรือ "+Ui.Money(usd,"USD")+" ผ่าน PayPal / บัตร":"หรือ "+Ui.Money(thb,"THB")+" ผ่าน QR พร้อมเพย์"):"ชำระผ่าน QR พร้อมเพย์")+(agent?" • ราคาตัวแทน":"")+(disc?" • ลด "+storeDiscountPct+"% ครั้งแรก":""),12,disc?Ui.Green:muted));
+   if(wallet) {
+    var w=Btn("จ่ายด้วยกระเป๋าเงิน • "+Ui.Local(p.agentPriceThb),Ui.Gold); w.Foreground=Ui.B("#2A1C00"); w.Margin=new Thickness(0,10,0,0); c.Children.Add(w);
+    w.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayWallet(p,"vip",t,1,w); };
+   }
+   var qr=Btn((owns?"ต่ออายุ • ":"ซื้อด้วย QR พร้อมเพย์ • ")+Ui.Money(thb,"THB"),accent); qr.Margin=new Thickness(0,wallet?8:12,0,0); c.Children.Add(qr);
+   var pp=Btn("PayPal • "+Ui.Money(usd,"USD"),ColorBrush("#FFC439")); pp.Foreground=ColorBrush("#14274E"); pp.Margin=new Thickness(0,8,0,0); c.Children.Add(pp);
+   var card=Btn("บัตรเครดิต / เดบิต • "+Ui.Money(usd,"USD"),ColorBrush("#193B58")); card.Margin=new Thickness(0,8,0,0); c.Children.Add(card);
+   if(!AccountService.OnlinePay) { pp.Visibility=Visibility.Collapsed; card.Visibility=Visibility.Collapsed; }
+   qr.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayPromptPay(p.code,t,qr,"vip",1); };
+   pp.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayOnline(p.code,"paypal",t,"vip",1); };
+   card.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayOnline(p.code,"card",t,"vip",1); };
+   var box=Box(c); if(owns) box.BorderBrush=ColorBrush("#2E8B57"); return box;
   }
   bool Target(Func<long?> target,out long? value) {
    value=null; if(target==null) return true; value=target();
@@ -801,7 +836,9 @@ namespace PTVgame {
    if(id!=renderId) return; body.Children.Clear();
    var wrap=new WrapPanel(); body.Children.Add(wrap);
    foreach(var plan in plans) {
-    var p=plan; var c=new StackPanel { Width=300 }; c.Children.Add(Ui.Bold(Text(Ui.PlanName(p.code)+" ("+p.days+" วัน)",17)));
+    var p=plan; var c=new StackPanel { Width=300 }; c.Children.Add(Ui.Bold(Text((string.IsNullOrEmpty(p.gameId)?"♛ ":"🎮 ")+p.name,17)));
+    c.Children.Add(Text("ชื่อที่แสดง",12,muted)); var nameBox=Ui.Input(p.name??""); c.Children.Add(nameBox);
+    c.Children.Add(Text("จำนวนวันที่ได้ต่อการซื้อ 1 ครั้ง",12,muted)); var daysBox=Ui.Input(p.days.ToString()); c.Children.Add(daysBox);
     Func<string,decimal,TextBox> field=(label,value)=>{ c.Children.Add(Text(label,12,muted)); var t=Ui.Input(value.ToString("0.00",System.Globalization.CultureInfo.InvariantCulture)); c.Children.Add(t); return t; };
     var usd=field("ราคาปกติ (USD)",p.priceUsd); var list=field("ราคาก่อนลด / ขีดฆ่า (USD)",p.listPriceUsd); var agentUsd=field("ราคาตัวแทน (USD)",p.agentPriceUsd);
     var thb=field("ราคา QR พร้อมเพย์ (บาท)",p.priceThb); var agentThb=field("ราคาตัวแทน QR (บาท)",p.agentPriceThb);
@@ -809,7 +846,9 @@ namespace PTVgame {
     var save=Btn("บันทึกราคา",accent); save.HorizontalAlignment=HorizontalAlignment.Left; c.Children.Add(save);
     save.Click+=async(s,e)=>await Act(save,"บันทึกราคาแล้ว",async()=>{
      Func<TextBox,decimal> num=t=>{ decimal v; if(!decimal.TryParse(t.Text.Trim(),System.Globalization.NumberStyles.Number,System.Globalization.CultureInfo.InvariantCulture,out v)||v<=0) throw new Exception(AppLanguage.T("ราคาไม่ถูกต้อง: ")+t.Text); return Math.Round(v,2); };
-     await AccountService.AdminUpdatePlan(new Plan { code=p.code,priceUsd=num(usd),listPriceUsd=num(list),agentPriceUsd=num(agentUsd),priceThb=num(thb),agentPriceThb=num(agentThb),active=active.IsChecked==true });
+     int days; if(!int.TryParse(daysBox.Text.Trim(),out days)||days<1||days>3650) throw new Exception(AppLanguage.T("จำนวนวันต้องเป็น 1-3650"));
+     decimal listUsd; decimal.TryParse(list.Text.Trim(),System.Globalization.NumberStyles.Number,System.Globalization.CultureInfo.InvariantCulture,out listUsd);
+     await AccountService.AdminUpdatePlan(new Plan { code=p.code,name=nameBox.Text.Trim(),days=days,priceUsd=num(usd),listPriceUsd=Math.Round(listUsd,2),agentPriceUsd=num(agentUsd),priceThb=num(thb),agentPriceThb=num(agentThb),active=active.IsChecked==true });
     });
     wrap.Children.Add(Box(c));
    }

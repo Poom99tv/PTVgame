@@ -1,4 +1,5 @@
 \set ON_ERROR_STOP 1
+update public.plans set active = true where game_id is null;  -- these tests cover the VIP plans
 update public.settings set value='0812345678' where key='promptpay_id';
 insert into auth.users values ('00000000-0000-0000-0000-0000000000c1','p1@x.com','{"name":"P1"}','{"provider":"email"}');
 create function pg_temp.as_user(uid text) returns void language sql as $$ select set_config('request.jwt.claim.sub', uid, false) $$;

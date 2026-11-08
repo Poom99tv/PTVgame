@@ -31,12 +31,14 @@ namespace PTVgame {
  public class Account {
   public string id,displayName,avatarUrl,provider,role="user",email; public long ptvId; public DateTime? vipUntil; public bool isVip,banned; public DateTime checkedAt;
   public string agentCode,agentName; public long agentPtvId; public decimal walletThb,usdThbRate=34.5m; public bool discountUsed; public int discountPct=10; public DateTime? agentUntil;
+  public Dictionary<string,DateTime> games=new Dictionary<string,DateTime>();   // games bought one by one: game id -> playable until (UTC)
+  public bool Owns(string game) { DateTime t; return games!=null&&game!=null&&games.TryGetValue(game,out t)&&t>DateTime.UtcNow; }
   public bool IsAdmin { get { return role=="admin"; } }
   public bool IsAgent { get { return role=="agent"||role=="admin"; } }
   public string PtvIdText { get { return ptvId.ToString("00000000"); } }
  }
 
- public class Plan { public string code,name; public int days; public decimal priceUsd,listPriceUsd,agentPriceUsd,priceThb,agentPriceThb; public bool active; }
+ public class Plan { public string code,name,gameId; public int days; public decimal priceUsd,listPriceUsd,agentPriceUsd,priceThb,agentPriceThb; public bool active; }
 
  /// <summary>Reads loosely typed JSON produced by JavaScriptSerializer.</summary>
  public static class J {
@@ -235,6 +237,8 @@ namespace PTVgame {
    decimal rate=J.M(d,"usd_thb_rate"); if(rate>0) a.usdThbRate=rate;
    if(a.discountPct<=0) a.discountPct=10;
    if(a.banned) { SignOutLocal(); throw new AccountException("บัญชีนี้ถูกระงับ กรุณาติดต่อแอดมิน",403); }
+   try { var g=await RpcObj("my_games",null); if(g!=null) foreach(var pair in g) { DateTime t; if(pair.Value!=null&&DateTime.TryParse(pair.Value.ToString(),System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.AdjustToUniversal|System.Globalization.DateTimeStyles.AssumeUniversal,out t)) a.games[pair.Key]=t; } } catch {}
+   try { await Plans(); } catch {}   // fills plan / game names for order history
    Current=a; Offline=false; SecureFile.Save(CachePath,a); Notify(); return a;
   }
   static void Notify() { var h=Changed; if(h!=null) h(); }
@@ -251,7 +255,8 @@ namespace PTVgame {
    if(access=="free") return Current!=null;
    if(Current==null) return false;
    if(Current.IsAdmin) return true;
-   if(Current.vipUntil==null||Current.vipUntil.Value<=DateTime.UtcNow) return false;
+   bool vip=Current.vipUntil!=null&&Current.vipUntil.Value>DateTime.UtcNow;
+   if(!vip&&!Current.Owns(g.id)) return false;
    return !Offline||(DateTime.UtcNow-Current.checkedAt).TotalHours<Cfg.offlineHours;
   }
   /// <summary>Short-lived signed ticket that a VIP game checks at start-up (see server/supabase/functions/play-ticket).</summary>
@@ -281,17 +286,19 @@ namespace PTVgame {
   }
 
   // ---------------------------------------------------------------- store
+  public static readonly Dictionary<string,Plan> GamePlans=new Dictionary<string,Plan>();   // game id -> its plan on sale
+  public static readonly Dictionary<string,string> PlanNames=new Dictionary<string,string>();   // plan code -> name, for order history
   public static bool OnlinePay; // PayPal / card checkout switched on by the admin (setting online_pay_enabled)
   public static async Task<List<Plan>> Plans() {
    try { var po=await RpcObj("pay_options",null); OnlinePay=po!=null&&J.B(po,"online"); } catch { OnlinePay=false; }
    var list=J.List(await Send(HttpMethod.Get,Rest("plans?select=*&active=eq.true&order=sort"),null,Session!=null));
    return list.Select(d=>new Plan { code=J.S(d,"code"),name=J.S(d,"name"),days=(int)J.L(d,"days"),priceUsd=J.M(d,"price_usd"),listPriceUsd=J.M(d,"list_price_usd"),
-    agentPriceUsd=J.M(d,"agent_price_usd"),priceThb=J.M(d,"price_thb"),agentPriceThb=J.M(d,"agent_price_thb"),active=J.B(d,"active") }).ToList();
+    agentPriceUsd=J.M(d,"agent_price_usd"),priceThb=J.M(d,"price_thb"),agentPriceThb=J.M(d,"agent_price_thb"),active=J.B(d,"active"),gameId=J.S(d,"game_id") }).Select(p=>{ PlanNames[p.code]=p.name; if(!string.IsNullOrEmpty(p.gameId)&&p.active) GamePlans[p.gameId]=p; return p; }).ToList();
   }
   public static async Task<List<Plan>> AllPlans() {
    var list=J.List(await Send(HttpMethod.Get,Rest("plans?select=*&order=sort"),null,true));
    return list.Select(d=>new Plan { code=J.S(d,"code"),name=J.S(d,"name"),days=(int)J.L(d,"days"),priceUsd=J.M(d,"price_usd"),listPriceUsd=J.M(d,"list_price_usd"),
-    agentPriceUsd=J.M(d,"agent_price_usd"),priceThb=J.M(d,"price_thb"),agentPriceThb=J.M(d,"agent_price_thb"),active=J.B(d,"active") }).ToList();
+    agentPriceUsd=J.M(d,"agent_price_usd"),priceThb=J.M(d,"price_thb"),agentPriceThb=J.M(d,"agent_price_thb"),active=J.B(d,"active"),gameId=J.S(d,"game_id") }).Select(p=>{ PlanNames[p.code]=p.name; if(!string.IsNullOrEmpty(p.gameId)&&p.active) GamePlans[p.gameId]=p; return p; }).ToList();
   }
   public static Task<Dictionary<string,object>> CreatePromptPay(string plan,long? targetPtvId,string kind="vip",int quantity=1,string discountCode=null) { return RpcObj("create_order",A("p_plan",plan,"p_method","promptpay","p_target_ptv_id",targetPtvId,"p_kind",kind,"p_quantity",quantity,"p_discount_code",discountCode)); }
   public static Task<Dictionary<string,object>> CheckDiscount(string code) { return RpcObj("check_discount_code",A("p_code",code)); }
@@ -340,7 +347,9 @@ namespace PTVgame {
   public static Task AdminSetRole(string userId,string role) { return Rpc("admin_set_role",A("p_user",userId,"p_role",role)); }
   public static Task AdminGrantVip(string userId,int days) { return Rpc("admin_grant_vip",A("p_user",userId,"p_days",days)); }
   public static Task AdminSetBanned(string userId,bool banned) { return Rpc("admin_set_banned",A("p_user",userId,"p_banned",banned)); }
-  public static Task AdminUpdatePlan(Plan p) { return Rpc("admin_update_plan",A("p_code",p.code,"p_price_usd",p.priceUsd,"p_list_price_usd",p.listPriceUsd,"p_agent_price_usd",p.agentPriceUsd,"p_price_thb",p.priceThb,"p_agent_price_thb",p.agentPriceThb,"p_active",p.active)); }
+  public static Task AdminUpdatePlan(Plan p) { return Rpc("admin_update_plan",A("p_code",p.code,"p_price_usd",p.priceUsd,"p_list_price_usd",p.listPriceUsd>0?(object)p.listPriceUsd:null,"p_agent_price_usd",p.agentPriceUsd,"p_price_thb",p.priceThb,"p_agent_price_thb",p.agentPriceThb,"p_active",p.active,"p_days",p.days>0?(object)p.days:null,"p_name",p.name)); }
+  public static Task AdminGrantGame(string userId,string game,int days) { return Rpc("admin_grant_game",A("p_user",userId,"p_game",game,"p_days",days)); }
+  public static Task<Dictionary<string,object>> AdminUserGames(string userId) { return RpcObj("admin_user_games",A("p_user",userId)); }
   public static Task<Dictionary<string,object>> AdminSettings() { return RpcObj("admin_get_settings",null); }
   public static Task AdminSetSetting(string key,string value) { return Rpc("admin_set_setting",A("p_key",key,"p_value",value??"")); }
   public static Task<List<Dictionary<string,object>>> AdminAudit() { return RpcList("admin_audit",A("p_limit",150)); }
@@ -549,6 +558,8 @@ namespace PTVgame {
     AccountService.Current.vipUntil=DateTime.UtcNow.AddDays(3); Assert(AccountService.CanPlay(vip),"active VIP plays");
     AccountService.Current.vipUntil=DateTime.UtcNow.AddMinutes(-1); Assert(!AccountService.CanPlay(vip),"expired VIP locked");
     AccountService.Current.role="admin"; Assert(AccountService.CanPlay(vip),"admin plays everything");
+    AccountService.Current=new Account { role="user",checkedAt=DateTime.UtcNow }; AccountService.Current.games["b"]=DateTime.UtcNow.AddDays(30); Assert(AccountService.CanPlay(vip)&&!AccountService.CanPlay(new Game { id="c" }),"bought game plays, others stay locked");
+    AccountService.Current.games["b"]=DateTime.UtcNow.AddMinutes(-1); Assert(!AccountService.CanPlay(vip),"expired game locked");
    } finally { AccountConfig.Current=saved; AccountService.Current=savedAccount; }
   }
  }
