@@ -184,6 +184,8 @@ namespace PTVgame {
    return d;
   }
   public static async Task<byte[]> Bytes(string path) { var h=http; if(h==null) return null; var r=await h.GetAsync(path); return r.IsSuccessStatusCode?await r.Content.ReadAsByteArrayAsync():null; }
+  /// <summary>https link for TikTok LIVE Studio (it rejects loopback links); the page on ptvgame.com loads the overlay from this engine.</summary>
+  public static string TikTokOverlayUrl(string kind,string bg) { return "https://ptvgame.com/obs/?k="+kind+"&p="+Port+"&t="+Token+(string.IsNullOrEmpty(bg)?"":"&bg="+Uri.EscapeDataString(bg)); }
   public static string OverlayUrl(string kind,string bg) { return "http://127.0.0.1:"+Port+"/overlay/"+kind+"?t="+Token+(string.IsNullOrEmpty(bg)?"":"&bg="+Uri.EscapeDataString(bg)); }
  }
 
@@ -774,14 +776,16 @@ namespace PTVgame {
    var widgets=new StackPanel(); widgets.Children.Add(GTitle("วิดเจ็ต"));
    foreach(var wd in GteWidgets) {
     string kind=wd[0],label=AppLanguage.T(wd[1]); bool on=kind==sel;
-    var g=new Grid { Margin=new Thickness(0,0,0,8) }; g.ColumnDefinitions.Add(new ColumnDefinition()); g.ColumnDefinitions.Add(new ColumnDefinition { Width=GridLength.Auto }); g.ColumnDefinitions.Add(new ColumnDefinition { Width=GridLength.Auto });
+    var g=new Grid { Margin=new Thickness(0,0,0,8) }; g.ColumnDefinitions.Add(new ColumnDefinition()); g.ColumnDefinitions.Add(new ColumnDefinition { Width=GridLength.Auto }); g.ColumnDefinitions.Add(new ColumnDefinition { Width=GridLength.Auto }); g.ColumnDefinitions.Add(new ColumnDefinition { Width=GridLength.Auto });
     var pick=Btn(label,Ui.B(wd[2])); pick.Foreground=Ui.B(wd[3]); pick.FontWeight=FontWeights.Bold; pick.Padding=new Thickness(12,10,12,10); pick.HorizontalContentAlignment=HorizontalAlignment.Left;
     pick.BorderBrush=on?Brushes.White:Ui.B(wd[3]); pick.BorderThickness=new Thickness(on?2.5:1); pick.ToolTip=AppLanguage.T("ดูตัวอย่าง");
     pick.Click+=(s,e)=>{ gteState["obs_preview"]=kind; GteSave(true); Render(); }; g.Children.Add(pick);
-    var link=GBtn("🔗 ลิงก์",Ui.B("#193B58"),()=>{ if(!GteEngine.Running) { status.Text=AppLanguage.T("ระบบ Game To Earn ยังไม่พร้อม"); return; } try { Clipboard.SetText(GteEngine.OverlayUrl(kind,bg)); gteState["chk_obs"]=true; GteSave(true); status.Text=AppLanguage.T("คัดลอกลิงก์แล้ว: ")+label+AppLanguage.T(" • วางใน OBS (Browser) หรือ TikTok LIVE Studio (Link)"); } catch {} });
-    link.Margin=new Thickness(8,0,0,0); link.ToolTip=AppLanguage.T("คัดลอกลิงก์สำหรับ OBS Browser Source / TikTok LIVE Studio Link"); Grid.SetColumn(link,1); g.Children.Add(link);
+    var link=GBtn("🔗 OBS",Ui.B("#193B58"),()=>{ if(!GteEngine.Running) { status.Text=AppLanguage.T("ระบบ Game To Earn ยังไม่พร้อม"); return; } try { Clipboard.SetText(GteEngine.OverlayUrl(kind,bg)); gteState["chk_obs"]=true; GteSave(true); status.Text=AppLanguage.T("คัดลอกลิงก์แล้ว: ")+label+AppLanguage.T(" • วางใน OBS (Sources → Browser)"); } catch {} });
+    link.Margin=new Thickness(8,0,0,0); link.ToolTip=AppLanguage.T("คัดลอกลิงก์สำหรับ OBS Browser Source"); Grid.SetColumn(link,1); g.Children.Add(link);
+    var tt=GBtn("🎵 TikTok",Ui.B("#FE2C55"),()=>{ if(!GteEngine.Running) { status.Text=AppLanguage.T("ระบบ Game To Earn ยังไม่พร้อม"); return; } try { Clipboard.SetText(GteEngine.TikTokOverlayUrl(kind,bg)); gteState["chk_obs"]=true; GteSave(true); status.Text=AppLanguage.T("คัดลอกลิงก์แล้ว: ")+label+AppLanguage.T(" • TikTok LIVE Studio: เพิ่มแหล่ง → Link วางลิงก์ ตั้งขนาด 400×600 • เปิด Launcher ไว้ระหว่างไลฟ์"); } catch {} });
+    tt.Margin=new Thickness(6,0,0,0); tt.ToolTip=AppLanguage.T("คัดลอกลิงก์ https สำหรับ TikTok LIVE Studio (แหล่ง Link)"); Grid.SetColumn(tt,2); g.Children.Add(tt);
     var win=GBtn("🪟 หน้าต่าง",Ui.B("#14375A"),()=>{ GteOverlayWindow.Show(kind,label.Trim(),bg==""?"#00FF00":bg); gteState["chk_obs"]=true; GteSave(true); status.Text=AppLanguage.T("เปิดหน้าต่างแล้ว • ใน TikTok LIVE Studio เพิ่ม Window Capture → เลือก PTV Overlay"); });
-    win.Margin=new Thickness(6,0,0,0); win.ToolTip=AppLanguage.T("เปิดเป็นหน้าต่างให้ TikTok LIVE Studio / OBS จับภาพ (Window Capture) • คลิกขวาที่หน้าต่างเพื่อเปลี่ยนพื้นหลัง/ปิด"); Grid.SetColumn(win,2); g.Children.Add(win);
+    win.Margin=new Thickness(6,0,0,0); win.ToolTip=AppLanguage.T("เปิดเป็นหน้าต่างให้ TikTok LIVE Studio / OBS จับภาพ (Window Capture) • คลิกขวาที่หน้าต่างเพื่อเปลี่ยนพื้นหลัง/ปิด"); Grid.SetColumn(win,3); g.Children.Add(win);
     widgets.Children.Add(g);
    }
    var bgBox=new ComboBox { Width=200 }; bgBox.Items.Add(AppLanguage.T("พื้นหลังโปร่งใส")); bgBox.Items.Add(AppLanguage.T("พื้นหลังเขียว (Chroma)")); bgBox.SelectedIndex=bg==""?0:1;

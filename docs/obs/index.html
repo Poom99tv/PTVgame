@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<meta name="robots" content="noindex">
+<title>PTVgame Overlay</title>
+<style>html,body{margin:0;height:100%;background:transparent;color:#fff;font:600 15px/1.4 "Segoe UI","Noto Sans Thai",sans-serif}#m{padding:10px 14px;text-shadow:0 1px 3px #000}</style>
+</head>
+<body><div id="m"></div>
+<script>
+// TikTok LIVE Studio refuses loopback links (127.0.0.1 / localhost), so this public https page is the link to paste there.
+// It loads the overlay from PTVgame Launcher's Game To Earn engine on the same computer and runs it in place.
+(async () => {
+  const q = new URLSearchParams(location.search), m = document.getElementById("m");
+  const kind = q.get("k") || "jar", port = Number(q.get("p")), token = q.get("t") || "";
+  if (!/^(likers|gifters|win|jar|stats)$/.test(kind) || !(port > 1023 && port < 65536) || !/^[A-Za-z0-9_-]{16,128}$/.test(token)) { m.textContent = "ลิงก์ไม่ถูกต้อง • คัดลอกลิงก์ใหม่จาก PTVgame Launcher"; return; }
+  const base = "http://127.0.0.1:" + port;
+  const qs = "?t=" + encodeURIComponent(token) + (q.get("bg") ? "&bg=" + encodeURIComponent(q.get("bg")) : "");
+  for (let i = 0; ; i++) {
+    try {
+      const r = await fetch(base + "/overlay/" + kind + qs, { cache: "no-store" });
+      if (r.ok) {
+        const html = (await r.text()).replace("<head>", '<head><base href="' + base + '/">');
+        document.open(); document.write(html); document.close(); return;
+      }
+      if (r.status === 401) m.textContent = "ลิงก์หมดอายุ • คัดลอกลิงก์ใหม่จาก PTVgame Launcher";
+    } catch (e) { if (i > 0) m.textContent = "รอเปิด PTVgame Launcher (Game To Earn) บนเครื่องนี้…"; }
+    await new Promise(r => setTimeout(r, 3000));
+  }
+})();
+</script>
+</body>
+</html>

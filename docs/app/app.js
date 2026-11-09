@@ -225,6 +225,7 @@ async function engine(path, body) {
     const d = await r.json(); if (!r.ok) throw new Error(d.error || "HTTP " + r.status); return d;
   } finally { clearTimeout(t); }
 }
+const tiktokUrl = (kind, bg) => { const { port, token } = eng(); return `https://ptvgame.com/obs/?k=${kind}&p=${port}&t=${token}${bg ? "&bg=" + encodeURIComponent(bg) : ""}`; };
 const overlayUrl = (kind, bg) => { const { port, token } = eng(); return `http://127.0.0.1:${port}/overlay/${kind}?t=${token}${bg ? "&bg=" + encodeURIComponent(bg) : ""}`; };
 
 async function viewGte() {
@@ -319,13 +320,14 @@ function pickGift(current) {
 function gteObs(body) {
   const bg = gte.state.obs_bg || "";
   const W = [["likers", "❤ ยอดกด Like"], ["gifters", "🎁 ยอดส่งของขวัญ"], ["win", "🏆 นับ Win"], ["jar", "🫙 แก้วโหล"], ["stats", "📊 สรุปยอด"]];
-  body.innerHTML = `<div class="card"><h2>ลิงก์หน้าจอสำหรับ OBS / TikTok LIVE Studio</h2><p class="muted small">ลิงก์ทำงานเมื่อเปิด Launcher บนเครื่องที่ไลฟ์ • OBS: Sources → Browser วางลิงก์ กว้าง 400 สูง 600 • TikTok LIVE Studio: แหล่ง Link หรือใช้ปุ่ม 🪟 หน้าต่าง ใน Launcher แล้ว Window Capture</p>
+  body.innerHTML = `<div class="card"><h2>ลิงก์หน้าจอสำหรับ OBS / TikTok LIVE Studio</h2><p class="muted small">ลิงก์ทำงานเมื่อเปิด Launcher บนเครื่องที่ไลฟ์ • OBS: Sources → Browser วางลิงก์ กว้าง 400 สูง 600 • TikTok LIVE Studio: กดปุ่ม 🎵 ลิงก์ TikTok แล้วเพิ่มแหล่ง Link (TikTok ไม่รับลิงก์ 127.0.0.1) ขนาด 400×600 หรือใช้ปุ่ม 🪟 หน้าต่าง ใน Launcher แล้ว Window Capture</p>
     <div class="row"><span class="muted small">พื้นหลังลิงก์</span><select id="obg"><option value="">โปร่งใส</option><option value="#00ff00" ${bg ? "selected" : ""}>เขียว (Chroma)</option></select></div>
     ${eng().token ? "" : `<p class="status">เปิด Launcher ล็อกอินบัญชีนี้ แล้วเข้าหน้า Game To Earn 1 ครั้ง ลิงก์จะขึ้นที่นี่</p>`}
-    <div class="ovl" style="margin-top:12px">${W.map(w => `<div class="card"><h3>${w[1]}</h3><div class="row"><button class="btn blue" data-c="${w[0]}" ${eng().token ? "" : "disabled"}>🔗 คัดลอกลิงก์</button><button class="btn" data-v="${w[0]}" ${eng().token ? "" : "disabled"}>ดูตัวอย่าง</button></div></div>`).join("")}</div></div>
+    <div class="ovl" style="margin-top:12px">${W.map(w => `<div class="card"><h3>${w[1]}</h3><div class="row"><button class="btn blue" data-c="${w[0]}" ${eng().token ? "" : "disabled"}>🔗 ลิงก์ OBS</button><button class="btn tt" data-tt="${w[0]}" ${eng().token ? "" : "disabled"}>🎵 ลิงก์ TikTok</button><button class="btn" data-v="${w[0]}" ${eng().token ? "" : "disabled"}>ดูตัวอย่าง</button></div></div>`).join("")}</div></div>
    <div class="card"><h2 id="pvT">ตัวอย่างผลลัพธ์</h2><iframe class="frame" id="pv" title="ตัวอย่าง overlay"></iframe><p class="small muted">ตัวอย่างแสดงเมื่อ Launcher บนเครื่องนี้เปิดอยู่</p></div>`;
   $("#obg").onchange = () => { gte.state.obs_bg = $("#obg").value; saveGte(null); gteObs(body); };
-  body.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { navigator.clipboard.writeText(overlayUrl(b.dataset.c, bg)); toast("คัดลอกลิงก์แล้ว"); });
+  body.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { navigator.clipboard.writeText(overlayUrl(b.dataset.c, bg)); toast("คัดลอกลิงก์ OBS แล้ว • OBS: Sources → Browser"); });
+  body.querySelectorAll("[data-tt]").forEach(b => b.onclick = () => { navigator.clipboard.writeText(tiktokUrl(b.dataset.tt, bg)); toast("คัดลอกลิงก์ TikTok แล้ว • TikTok LIVE Studio: เพิ่มแหล่ง → Link"); });
   body.querySelectorAll("[data-v]").forEach(b => b.onclick = () => { $("#pv").src = overlayUrl(b.dataset.v, bg || "#173040"); $("#pvT").textContent = "ตัวอย่างผลลัพธ์: " + b.closest(".card").querySelector("h3").textContent; });
   engineStatus();
 }
