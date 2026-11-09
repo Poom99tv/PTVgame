@@ -251,7 +251,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
       <h2>ราคา</h2>
       <p class="lead">Game To Earn ใช้ฟรีตลอด ส่วนเกมซื้อแยกทีละเกม จ่ายเฉพาะเกมที่อยากเล่น</p>
       <div class="plans" id="plans"></div>
-      <p class="note">ชำระด้วย QR พร้อมเพย์ PayPal หรือบัตร ได้ในหน้าร้านค้าของ Launcher • ซื้อเกมเดิมซ้ำแล้ววันต่อจากของเดิม</p>
+      <p class="note">กดซื้อบนเว็บได้เลย ชำระด้วย QR พร้อมเพย์ PayPal หรือบัตร (หรือซื้อในร้านค้าของ Launcher) • ซื้อเกมเดิมซ้ำแล้ววันต่อจากของเดิม</p>
     </div>
   </section>
 </main>
@@ -311,7 +311,7 @@ function card(s){
   return `<a class="streamer" href="https://www.tiktok.com/@${encodeURIComponent(s.tiktok_username)}/live" target="_blank" rel="noopener" aria-label="ดูไลฟ์ของ ${name} บน TikTok">
     <span class="ring">${pic}<span class="badge">LIVE</span></span>
     <b>${name}</b><small>@${u}</small>
-    <span class="meta">${s.game?`<span>🎮 ${esc(s.game)}</span>`:""}${s.viewers?`<span>👀 ${num(s.viewers)}</span>`:""}<span>⏱ ${since(s.started_at)}</span>${s.vip?'<span class="vip">♛ VIP</span>':""}</span>
+    <span class="meta">${s.game?`<span>🎮 ${esc(s.game)}</span>`:""}${s.viewers?`<span>👀 ${num(s.viewers)}</span>`:""}<span>⏱ ${since(s.started_at)}</span></span>
     <span class="watch">ดูไลฟ์</span></a>`;
 }
 async function loadLive(){
@@ -340,8 +340,8 @@ async function loadPlans(){
   const usd=n=>"$"+Number(n).toLocaleString("en-US",{maximumFractionDigits:2});
   let html=`<div class="plan free"><h3>ฟรี</h3><div class="price">฿0 <span>/ ตลอดไป</span></div><ul><li>Game To Earn: TikTok LIVE → ปุ่มกดใน Roblox</li><li>Preset ของขวัญ / Like / ติดตาม</li><li>จอ OBS และ TikTok LIVE Studio + แก้วโหล</li><li>ซื้อเฉพาะเกมที่อยากเล่นได้ทีละเกม</li></ul><a class="btn btn-ghost dl" href="#">ดาวน์โหลดฟรี</a></div>`;
   const games=plans.filter(p=>p.game_id);
-  html+=games.map(p=>`<div class="plan game"><img src="img/${IMG[p.game_id]||p.game_id}.webp" alt="" loading="lazy" width="360" height="203"><h3>${esc(p.name)}</h3><div class="price">${baht(p.price_thb)} <span>/ ${p.days} วัน</span></div><p class="usd">หรือ ${usd(p.price_usd)} ผ่าน PayPal / บัตร</p><a class="btn btn-blue dl" href="#">ซื้อใน Launcher</a></div>`).join("");
-  if(!games.length) html+=`<div class="plan"><h3>เกมแต่ละเกม</h3><p class="usd">ดูราคาได้ในหน้าร้านค้าของ Launcher</p></div>`;
+  html+=games.map(p=>`<div class="plan game"><img src="img/${IMG[p.game_id]||p.game_id}.webp" alt="" loading="lazy" width="360" height="203"><h3>${esc(p.name)}</h3><div class="price">${baht(p.price_thb)} <span>/ ${p.days} วัน</span></div><p class="usd">หรือ ${usd(p.price_usd)} ผ่าน PayPal / บัตร</p><a class="btn btn-blue" href="app/#/store">ซื้อเลย</a></div>`).join("");
+  if(!games.length) html+=`<div class="plan"><h3>เกมแต่ละเกม</h3><p class="usd">ดูราคาได้ใน<a href="app/#/store">ร้านค้าเกม</a></p></div>`;
   document.getElementById("plans").innerHTML=html; setDownload();
 }
 let DL=document.querySelector(".dl").href;
@@ -355,10 +355,10 @@ const acctEl=document.getElementById("acct"),dlg=document.getElementById("loginD
 function avatarHtml(a){const ini=esc((a.display_name||"?").trim().charAt(0).toUpperCase());return a.avatar_url?`<span class="uav" style="background-image:url(&quot;${esc(a.avatar_url)}&quot;)"></span>`:`<span class="uav">${ini}</span>`;}
 function drawAcct(){
   if(!me){acctEl.innerHTML=`<button class="btn btn-ghost" id="loginBtn">เข้าสู่ระบบ</button>`;document.getElementById("loginBtn").onclick=()=>openLogin("signin");return;}
-  const admin=me.admin||me.role==="admin", vip=admin||(me.vip_until&&new Date(me.vip_until)>new Date());
+  const admin=me.admin||me.role==="admin";
   acctEl.innerHTML=`<button class="who" id="who" aria-haspopup="true" aria-expanded="false">${avatarHtml(me)}<span class="uname">${esc(me.display_name)}</span></button>
-   <div class="menu" id="menu" hidden><div class="mhead">${avatarHtml(me)}<div><b>${esc(me.display_name)}</b><small>ID ${String(me.ptv_id).padStart(8,"0")}</small><br>${vip?`<span class="tag gold">${admin?"แอดมิน • ทุกเกม":"VIP ถึง "+new Date(me.vip_until).toLocaleDateString("th-TH",{dateStyle:"medium"})}</span>`:`<span class="tag">ฟรี</span>`}</div></div>
-   <a href="app/#/gte">🎮 Game To Earn</a><a href="app/#/account">👤 บัญชีของฉัน</a>${admin?`<a href="app/#/admin">🛠 แอดมิน</a>`:""}<button class="mi" id="out">↩ ออกจากระบบ</button></div>`;
+   <div class="menu" id="menu" hidden><div class="mhead">${avatarHtml(me)}<div><b>${esc(me.display_name)}</b><small>ID ${String(me.ptv_id).padStart(8,"0")}</small><br>${admin?`<span class="tag gold">แอดมิน • ทุกเกม</span>`:""}</div></div>
+   <a href="app/#/store">🛒 ร้านค้าเกม</a><a href="app/#/gte">🎮 Game To Earn</a><a href="app/#/account">👤 บัญชีของฉัน</a>${admin?`<a href="app/#/admin">🛠 แอดมิน</a>`:""}<button class="mi" id="out">↩ ออกจากระบบ</button></div>`;
   const who=document.getElementById("who"),menu=document.getElementById("menu");
   who.onclick=e=>{e.stopPropagation();menu.hidden=!menu.hidden;who.setAttribute("aria-expanded",String(!menu.hidden));};
   document.getElementById("out").onclick=async()=>{await sb.auth.signOut();};

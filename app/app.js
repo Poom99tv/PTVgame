@@ -1,4 +1,4 @@
-// PTVgame web: sign in, account, Game To Earn (cloud presets + control of the Launcher on this computer) and admin.
+// PTVgame web: sign in, account, game store (buy each game), Game To Earn (cloud presets + control of the Launcher on this computer) and admin.
 "use strict";
 const SB_URL = "https://ynbnzpejlkodjctqtexs.supabase.co";
 const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluYm56cGVqbGtvZGpjdHF0ZXhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3MTAwNTcsImV4cCI6MjEwOTI4NjA1N30.wiisZFAkuEhtQiJA2OKxZatTRs7emmUNsEC7eW_YFM8";
@@ -19,17 +19,23 @@ async function act(btn, fn, okMsg) { if (btn) btn.disabled = true; try { const r
 
 let session = null, acct = null, recovery = false, giftData = null, planNames = {}, gamePlans = [];
 async function loadPlanNames() { try { const { data } = await sb.from("plans").select("code,name,days,price_thb,price_usd,game_id,active").order("sort"); (data || []).forEach(p => planNames[p.code] = p.name); gamePlans = (data || []).filter(p => p.game_id); } catch {} }
-const planName = c => planNames[c] || (c === "yearly" ? "VIP รายปี" : c === "monthly" ? "VIP รายเดือน" : String(c || "").replace(/^g_/, ""));
+const planName = c => planNames[c] || (c === "yearly" || c === "monthly" ? "ทุกเกม (แพ็กเกจเดิม)" : String(c || "").replace(/^g_/, ""));
 const ROLE = { admin: "แอดมิน", agent: "ตัวแทน", user: "ผู้ใช้" };
 const STATUS = { pending: "รอชำระ", review: "รอตรวจสลิป", paid: "ชำระสำเร็จ", rejected: "ถูกปฏิเสธ", cancelled: "ยกเลิก", requested: "รอโอน" };
 const METHOD = { promptpay: "QR พร้อมเพย์", paypal: "PayPal", card: "บัตร", manual: "แอดมิน", wallet: "กระเป๋าเงิน" };
-const isVip = a => a && (a.role === "admin" || (a.vip_until && new Date(a.vip_until) > new Date()));
+const store = { get: k => { try { return localStorage.getItem(k) || ""; } catch { return ""; } }, set: (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch {} } };
+// ?ref=AGENTCODE (agent links) is remembered as the first-purchase discount code; ?paypal=<order> is PayPal coming back
+const qs = new URLSearchParams(location.search);
+if (/^[A-Za-z0-9]{3,12}$/.test(qs.get("ref") || "")) store.set("ptv_ref", qs.get("ref").toUpperCase());
+let paypalBack = qs.get("paypal") || null, paypalCancel = qs.get("paypal_cancel") || null;
+if (paypalBack || paypalCancel || qs.get("ref")) { ["paypal", "paypal_cancel", "ref"].forEach(k => qs.delete(k)); history.replaceState(null, "", location.pathname + (qs.toString() ? "?" + qs : "") + ((paypalBack || paypalCancel) ? "#/store" : location.hash)); }
 function avatar(el, a) { if (!el) return; const url = a?.avatar_url; el.style.backgroundImage = url ? `url("${url.replace(/"/g, "")}")` : ""; el.textContent = url ? "" : (a?.display_name || "?").trim().charAt(0).toUpperCase(); }
 
 // ───────────────────────── routing
 async function route() {
   if (recovery) return viewReset();
   if (!session) { $("#nav").hidden = true; $("#me").hidden = true; return viewLogin(location.hash === "#forgot" ? "forgot" : "signin"); }
+  const after = store.get("ptv_after"); if (after) { store.set("ptv_after", ""); if (!location.hash || location.hash === "#") { history.replaceState(null, "", location.pathname + location.search + after); } }
   if (!acct) { try { acct = await rpc("my_account"); } catch (e) { view.innerHTML = `<div class="card pad"><h2>โหลดบัญชีไม่สำเร็จ</h2><p class="muted">${esc(e.message)}</p><button class="btn" onclick="location.reload()">ลองใหม่</button></div>`; return; } }
   $("#nav").hidden = false; $("#me").hidden = false; avatar($("#meAv"), acct);
   if (acct.admin) acct.role = "admin";
@@ -37,7 +43,10 @@ async function route() {
   const tab = (location.hash.match(/^#\/(\w+)/) || [])[1] || "gte";
   document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.dataset.tab === tab));
   stopPolling();
+  if (paypalBack) { const id = paypalBack; paypalBack = null; return paypalReturn(id); }
+  if (paypalCancel) { paypalCancel = null; toast("ยกเลิกการชำระเงินแล้ว"); }
   if (tab === "account") return viewAccount();
+  if (tab === "store") return viewStore();
   if (tab === "admin" && acct.role === "admin") return viewAdmin();
   return viewGte();
 }
@@ -49,7 +58,8 @@ async function viewLogin(mode) {
   try { const r = await fetch(SB_URL + "/auth/v1/settings", { headers: { apikey: SB_ANON } }); providers = (await r.json()).external || {}; } catch {}
   const social = ["google", "facebook"].filter(p => providers[p]);
   const titles = { signin: "เข้าสู่ระบบ", signup: "สมัครสมาชิก", forgot: "ลืมรหัสผ่าน" };
-  view.innerHTML = `<div class="auth"><h1>${titles[mode]}</h1><p class="muted">บัญชีเดียวกับ PTVgame Launcher</p>
+  const buying = /^#\/store/.test(location.hash);
+  view.innerHTML = `<div class="auth"><h1>${titles[mode]}</h1><p class="muted">${buying ? "เข้าสู่ระบบเพื่อซื้อเกม • " : ""}บัญชีเดียวกับ PTVgame Launcher</p>
    <form class="card" id="authForm">
     <label for="em">อีเมล</label><input id="em" type="email" autocomplete="email" required class="grow" style="width:100%">
     ${mode !== "forgot" ? `<label for="pw">รหัสผ่าน</label><input id="pw" type="password" minlength="6" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" required style="width:100%">` : ""}
@@ -58,7 +68,7 @@ async function viewLogin(mode) {
     <p class="small muted" style="margin:16px 0 0">${mode === "signin" ? `ยังไม่มีบัญชี? <a href="#" data-m="signup">สมัครสมาชิก</a> • <a href="#" data-m="forgot">ลืมรหัสผ่าน</a>` : `<a href="#" data-m="signin">กลับไปเข้าสู่ระบบ</a>`}</p>
    </form></div>`;
   view.querySelectorAll("[data-m]").forEach(a => a.onclick = e => { e.preventDefault(); viewLogin(a.dataset.m); });
-  view.querySelectorAll("[data-p]").forEach(b => b.onclick = () => sb.auth.signInWithOAuth({ provider: b.dataset.p, options: { redirectTo: APP_URL } }));
+  view.querySelectorAll("[data-p]").forEach(b => b.onclick = () => (store.set("ptv_after", /^#\//.test(location.hash) ? location.hash : ""), sb.auth.signInWithOAuth({ provider: b.dataset.p, options: { redirectTo: APP_URL } })));
   $("#authForm").onsubmit = async e => {
     e.preventDefault(); const email = $("#em").value.trim(), pw = $("#pw")?.value;
     await act($("#go"), async () => {
@@ -80,21 +90,116 @@ async function viewAccount() {
    <div class="card prof"><span class="av" id="bigAv"></span><div class="grow">
      <div class="row"><input id="dn" value="${esc(a.display_name)}" maxlength="40" class="w220"><button class="btn" id="saveName">บันทึกชื่อ</button></div>
      <div class="row"><span class="muted">ID ของคุณ</span><b>${String(a.ptv_id).padStart(8, "0")}</b><button class="btn ghost" id="cp">คัดลอก</button></div>
-     <div class="row"><span class="pill blue">${ROLE[a.role] || a.role}</span>${isVip(a) ? `<span class="pill gold">${a.role === "admin" ? "เล่นได้ทุกเกม" : "VIP ถึง " + fmtDate(a.vip_until)}</span>` : `<span class="pill">ฟรี</span>`}${a.agent_name ? `<span class="pill">ตัวแทน: ${esc(a.agent_name)}</span>` : ""}</div>
+     <div class="row"><span class="pill blue">${ROLE[a.role] || a.role}</span>${a.role === "admin" ? `<span class="pill gold">เล่นได้ทุกเกม</span>` : ""}${a.agent_name ? `<span class="pill">ตัวแทน: ${esc(a.agent_name)}</span>` : ""}</div>
    </div></div>
-   <div class="card"><h2>เกมของฉัน</h2><p class="muted">ซื้อเกมทีละเกมหรือแลกโค้ดได้ในหน้าร้านค้าของ Launcher (QR พร้อมเพย์ / PayPal / บัตร) แล้วสถานะจะขึ้นที่นี่ทันที</p><div class="scroll" id="mygames"><p class="muted">กำลังโหลด…</p></div></div>
+   <div class="card"><h2>เกมของฉัน</h2><p class="muted">ซื้อเกมทีละเกมหรือแลกโค้ดได้ที่ <a href="#/store">ร้านค้าเกม</a> หรือใน Launcher แล้วสถานะจะขึ้นที่นี่ทันที</p><div class="scroll" id="mygames"><p class="muted">กำลังโหลด…</p></div></div>
    <div class="card"><h2>ประวัติคำสั่งซื้อ</h2><div class="scroll" id="orders"><p class="muted">กำลังโหลด…</p></div></div>`;
   avatar($("#bigAv"), a);
   $("#cp").onclick = () => { navigator.clipboard.writeText(String(a.ptv_id).padStart(8, "0")); toast("คัดลอก ID แล้ว"); };
   $("#saveName").onclick = e => act(e.target, async () => { await rpc("update_my_profile", { p_display_name: $("#dn").value.trim(), p_avatar_url: a.avatar_url || null }); acct = await rpc("my_account"); }, "บันทึกชื่อแล้ว");
   try {
     await loadPlanNames(); const own = await rpc("my_games") || {};
-    $("#mygames").innerHTML = `<table><tr><th>เกม</th><th>ราคา</th><th>สถานะ</th></tr>${gamePlans.filter(p => p.active || own[p.game_id]).map(p => `<tr><td><b>${esc(p.name)}</b></td><td>${baht(p.price_thb)} / ${p.days} วัน</td><td>${own[p.game_id] ? `<span class="pill green">เล่นได้ถึง ${fmtDate(own[p.game_id])}</span>` : isVip(a) ? `<span class="pill gold">เล่นได้ด้วย VIP</span>` : `<span class="pill">ยังไม่ได้ซื้อ</span>`}</td></tr>`).join("")}</table>`;
+    if (!$("#mygames")) return;
+    $("#mygames").innerHTML = `<table><tr><th>เกม</th><th>ราคา</th><th>สถานะ</th></tr>${gamePlans.filter(p => p.active || own[p.game_id]).map(p => `<tr><td><b>${esc(p.name)}</b></td><td>${baht(p.price_thb)} / ${p.days} วัน</td><td>${own[p.game_id] ? `<span class="pill green">เล่นได้ถึง ${fmtDate(own[p.game_id])}</span>` : `<a class="pill" href="#/store">ยังไม่ได้ซื้อ • ซื้อเลย</a>`}</td></tr>`).join("")}</table>`;
   } catch (e) { $("#mygames").innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
   try {
     const list = await rpc("my_orders");
+    if (!$("#orders")) return;
     $("#orders").innerHTML = !list?.length ? `<p class="muted">ยังไม่มีคำสั่งซื้อ</p>` : `<table><tr><th>#</th><th>รายการ</th><th>ยอด</th><th>ช่องทาง</th><th>สถานะ</th><th>วันที่</th></tr>${list.map(o => `<tr><td>${o.order_no}</td><td>${esc(planName(o.plan_code))}${o.kind === "codes" ? " • โค้ด x" + o.quantity : ""}</td><td>${money(o.amount, o.currency)}</td><td>${METHOD[o.method] || o.method}</td><td>${STATUS[o.status] || o.status}</td><td>${fmtDate(o.created_at)}</td></tr>`).join("")}</table>`;
   } catch (e) { $("#orders").innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
+}
+
+
+// ───────────────────────── game store (buy each game: PromptPay QR + slip, PayPal / card, agent wallet)
+const COVER = { paintworld: "paintworld-wide", sumo: "ptvvs", ptvcar: "ptvcar-v2" };
+const cover = id => `../img/${COVER[id] || id}.webp`;
+let payOpts = null;
+async function viewStore() {
+  view.innerHTML = `<h1>ร้านค้าเกม</h1><p class="muted">กำลังโหลด…</p>`;
+  await loadPlanNames();
+  if (!payOpts) payOpts = await rpc("pay_options").catch(() => ({ online: false })) || { online: false };
+  const own = await rpc("my_games").catch(() => ({})) || {};
+  const agent = acct.role === "agent" || acct.role === "admin";
+  const games = gamePlans.filter(p => p.active);
+  const price = p => agent ? [p.agent_price_thb ?? p.price_thb, p.agent_price_usd ?? p.price_usd] : [p.price_thb, p.price_usd];
+  view.innerHTML = `<h1>ร้านค้าเกม</h1>
+   <p class="muted">ซื้อเฉพาะเกมที่อยากเล่น ใช้ได้ทุกเครื่องที่ล็อกอินไอดีนี้ • ซื้อซ้ำแล้ววันต่อจากของเดิม</p>
+   <div class="grid2">
+    ${agent ? `<div class="card"><h2>ส่งให้ลูกค้า (ตัวแทน)</h2><p class="small muted">ใส่ ID 8 หลักของลูกค้าเพื่อซื้อในราคาตัวแทนแล้วส่งเกมให้เขา • เว้นว่าง = ซื้อให้ตัวเอง</p>
+      <div class="row"><input id="tgt" inputmode="numeric" maxlength="8" placeholder="ID ผู้รับ" class="grow"><button class="btn" id="tgtFind">ตรวจไอดี</button></div><p class="small" id="tgtInfo"></p>
+      <p class="small muted">กระเป๋าเงิน: <b>${baht(acct.wallet_thb)}</b></p></div>`
+    : `<div class="card"><h2>โค้ดส่วนลดจากตัวแทน</h2><p class="small muted">ใช้ได้ครั้งแรกครั้งเดียวต่อไอดี</p>
+      <div class="row"><input id="dc" maxlength="12" value="${esc(store.get("ptv_ref"))}" placeholder="เช่น ABC123" class="grow" style="text-transform:uppercase"><button class="btn" id="dcChk">ตรวจโค้ด</button></div><p class="small" id="dcInfo"></p></div>`}
+    <div class="card"><h2>แลกโค้ดเกม</h2><p class="small muted">ได้โค้ดจากตัวแทน กรอกที่นี่เพื่อเปิดเกมทันที</p>
+      <div class="row"><input id="rc" maxlength="40" placeholder="โค้ดเกม" class="grow" style="text-transform:uppercase"><button class="btn gold" id="rcGo">แลกโค้ด</button></div></div>
+   </div>
+   <div class="shop">${games.map((p, i) => { const [thb, usd] = price(p); const until = own[p.game_id]; return `<div class="card game">
+     <img src="${cover(p.game_id)}" alt="" loading="lazy" width="360" height="203" onerror="this.style.visibility='hidden'">
+     <div class="gbody"><h3>${esc(p.name)}</h3>${until ? `<span class="pill green">เล่นได้ถึง ${fmtDate(until)}</span>` : ""}
+     <div class="gprice">${baht(thb)} <span>/ ${p.days} วัน</span></div>
+     <p class="small muted">${payOpts.online ? `หรือ $${Number(usd).toFixed(2)} ผ่าน PayPal / บัตร` : "ชำระผ่าน QR พร้อมเพย์"}${agent ? " • ราคาตัวแทน" : ""}</p>
+     ${agent ? `<button class="btn gold wide" data-buy="wallet" data-i="${i}">จ่ายด้วยกระเป๋าเงิน • ${baht(p.agent_price_thb)}</button>` : ""}
+     <button class="btn blue wide" data-buy="promptpay" data-i="${i}">${until ? "ต่ออายุ" : "ซื้อ"}ด้วย QR พร้อมเพย์</button>
+     ${payOpts.online ? `<div class="row" style="margin:8px 0 0"><button class="btn paypal grow" data-buy="paypal" data-i="${i}">PayPal</button><button class="btn grow" data-buy="card" data-i="${i}">บัตรเครดิต / เดบิต</button></div>` : ""}
+     </div></div>`; }).join("") || `<p class="muted">ยังไม่มีเกมที่เปิดขาย</p>`}</div>`;
+  const target = () => { const v = ($("#tgt")?.value || "").trim(); if (!v) return null; if (!/^\d{8}$/.test(v)) throw new Error("ID ผู้รับต้องเป็นตัวเลข 8 หลัก"); return Number(v); };
+  const discount = () => { const v = ($("#dc")?.value || "").trim().toUpperCase(); return v || null; };
+  if ($("#tgtFind")) $("#tgtFind").onclick = e => act(e.target, async () => { const t = target(); if (!t) throw new Error("กรุณาใส่ ID ผู้รับ"); const r = await rpc("lookup_player", { p_ptv_id: t }); if (!r) throw new Error("ไม่พบไอดีนี้"); $("#tgtInfo").innerHTML = `<span class="pill green">✓ ${esc(r.display_name)}</span>`; });
+  if ($("#dcChk")) $("#dcChk").onclick = e => act(e.target, async () => { const r = await rpc("check_discount_code", { p_code: discount() || "" }); store.set("ptv_ref", r.agent_code); $("#dcInfo").innerHTML = `<span class="pill green">ลด ${r.discount_pct}% • ตัวแทน ${esc(r.agent_name)}</span>`; });
+  $("#rcGo").onclick = e => act(e.target, async () => { const code = $("#rc").value.trim(); if (code.length < 6) throw new Error("กรุณากรอกโค้ดเกม"); const r = await rpc("redeem_code", { p_code: code }); acct = await rpc("my_account"); toast(`แลกโค้ดสำเร็จ • ${r?.game_name || "เกม"} เล่นได้ถึง ${fmtDate(r?.until || r?.vip_until)}`); viewStore(); });
+  view.querySelectorAll("[data-buy]").forEach(b => b.onclick = () => act(b, async () => {
+    const p = games[b.dataset.i], how = b.dataset.buy, t = agent ? target() : null, dc = agent || t ? null : discount();
+    if (how === "wallet") {
+      if (!confirm(`จ่ายด้วยกระเป๋าเงิน ${baht(p.agent_price_thb)} สำหรับ ${p.name}${t ? " ให้ ID " + t : ""}?`)) return;
+      await rpc("wallet_buy", { p_plan: p.code, p_kind: "vip", p_target_ptv_id: t, p_quantity: 1 }); acct = await rpc("my_account"); toast(t ? "ส่งเกมให้ลูกค้าแล้ว" : "ซื้อเกมแล้ว • เล่นได้เลย"); return viewStore();
+    }
+    if (how === "promptpay") {
+      const { data: order, error } = await sb.rpc("create_order", { p_plan: p.code, p_method: "promptpay", p_target_ptv_id: t, p_kind: "vip", p_quantity: 1, p_discount_code: dc });
+      if (error) throw new Error(error.message); return promptPayDialog(order, p);
+    }
+    const r = await fetch(SB_URL + "/functions/v1/web-paypal", { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_ANON, Authorization: "Bearer " + session.access_token },
+      body: JSON.stringify({ action: "create", plan: p.code, method: how, target_ptv_id: t, discount_code: dc }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.approve_url) throw new Error(j.error || "สร้างรายการ PayPal ไม่สำเร็จ");
+    if (!/^https:\/\/(www\.)?(sandbox\.)?paypal\.com\//.test(j.approve_url)) throw new Error("ลิงก์ชำระเงินไม่ถูกต้อง");
+    location.href = j.approve_url;
+  }));
+}
+async function promptPayDialog(order, plan) {
+  const info = await rpc("payment_info").catch(() => ({})) || {};
+  const qr = qrcode(0, "M"); qr.addData(order.promptpay_payload); qr.make();
+  const d = $("#dlg"), b = $("#dlgBody");
+  b.innerHTML = `<div class="row"><h2 class="grow" style="margin:0">ชำระด้วย QR พร้อมเพย์</h2><button class="btn ghost" value="cancel">ปิด</button></div>
+    <div class="pp"><div class="qr">${qr.createSvgTag({ cellSize: 6, margin: 4, scalable: true })}</div>
+    <div><p class="muted" style="margin:0">คำสั่งซื้อ #${order.order_no} • ${esc(plan.name)}</p><div class="gprice">${baht(order.amount)}</div>
+    ${info.promptpay_name ? `<p>ชื่อบัญชี: <b>${esc(info.promptpay_name)}</b></p>` : ""}
+    <p class="small muted">1. สแกน QR และตรวจยอดเงินกับชื่อบัญชี<br>2. โอนให้ตรงยอด แล้วบันทึกสลิป<br>3. แนบสลิปด้านล่าง • แอดมินตรวจแล้วเกมจะเปิดให้อัตโนมัติ</p>
+    <label for="slip">แนบสลิป (รูป JPG / PNG ไม่เกิน 5 MB)</label><input id="slip" type="file" accept="image/png,image/jpeg">
+    <button type="button" class="btn blue wide" id="slipGo" style="margin-top:12px">ส่งสลิป</button></div></div>`;
+  d.showModal();
+  $("#slipGo").onclick = () => act($("#slipGo"), async () => {
+    const f = $("#slip").files[0]; if (!f) throw new Error("กรุณาเลือกรูปสลิป");
+    if (!/^image\/(png|jpeg)$/.test(f.type)) throw new Error("รองรับเฉพาะรูป JPG / PNG"); if (f.size > 5 * 1024 * 1024) throw new Error("ไฟล์ใหญ่เกิน 5 MB");
+    const path = `${session.user.id}/${order.id}-${Date.now()}${f.type === "image/png" ? ".png" : ".jpg"}`;
+    const { error } = await sb.storage.from("slips").upload(path, f, { contentType: f.type, upsert: false }); if (error) throw new Error(error.message);
+    await rpc("attach_slip", { p_order: order.id, p_path: path }); d.close(); location.hash = "#/account";
+  }, "ส่งสลิปแล้ว • เกมจะเปิดให้หลังแอดมินอนุมัติ");
+}
+async function paypalReturn(id) {
+  view.innerHTML = `<div class="card pad"><h2>กำลังยืนยันการชำระเงิน…</h2><p class="muted">อย่าปิดหน้านี้</p></div>`;
+  let status = "failed", err = null;
+  for (let i = 0; i < 4; i++) {
+    try {
+      const r = await fetch(SB_URL + "/functions/v1/web-paypal", { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_ANON, Authorization: "Bearer " + session.access_token }, body: JSON.stringify({ action: "capture", order_id: id }) });
+      const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "ยืนยันการชำระเงินไม่สำเร็จ"); status = j.status;
+    } catch (e) { err = e.message; break; }
+    if (status !== "waiting") break; await new Promise(r => setTimeout(r, 3000));
+  }
+  acct = await rpc("my_account").catch(() => acct);
+  if (status === "paid") toast("ชำระเงินสำเร็จ • เกมพร้อมเล่นแล้ว");
+  else if (status === "waiting") toast("PayPal กำลังตรวจสอบรายการ • เกมจะเปิดอัตโนมัติเมื่อยืนยันแล้ว");
+  else toast(err || "PayPal ปฏิเสธรายการ กรุณาลองวิธีอื่น", true);
+  const h = status === "failed" ? "#/store" : "#/account"; if (location.hash !== h) location.hash = h; else route();
 }
 
 // ───────────────────────── Game To Earn
@@ -247,21 +352,23 @@ async function viewAdmin() {
 async function aOverview(body) {
   const s = await rpc("admin_stats");
   const box = (n, l) => `<div class="card stat"><b>${n}</b><span>${l}</span></div>`;
-  body.innerHTML = `<div class="grid3">${box(s.users, "ผู้ใช้ทั้งหมด")}${box(s.vip, "VIP ที่ใช้งาน")}${box(s.agents, "ตัวแทน")}${box(s.review, "รอตรวจสลิป")}${box(s.pending, "รอชำระ")}${box(s.withdrawals, "คำขอถอนเงิน")}${box(baht(s.revenue_thb_30d), "รายได้ THB 30 วัน")}${box("$" + Number(s.revenue_usd_30d).toFixed(2), "รายได้ USD 30 วัน")}${box(s.new_users_7d, "สมัครใหม่ 7 วัน")}</div>`;
+  body.innerHTML = `<div class="grid3">${box(s.users, "ผู้ใช้ทั้งหมด")}${box(s.buyers ?? s.vip, "ผู้เล่นที่มีเกม")}${s.games_owned != null ? box(s.games_owned, "เกมที่ขายแล้ว (ใช้งานอยู่)") : ""}${box(s.agents, "ตัวแทน")}${box(s.review, "รอตรวจสลิป")}${box(s.pending, "รอชำระ")}${box(s.withdrawals, "คำขอถอนเงิน")}${box(baht(s.revenue_thb_30d), "รายได้ THB 30 วัน")}${box("$" + Number(s.revenue_usd_30d).toFixed(2), "รายได้ USD 30 วัน")}${box(s.new_users_7d, "สมัครใหม่ 7 วัน")}</div>`;
 }
 async function aUsers(body, q) {
   body.innerHTML = `<div class="card"><div class="row"><input id="uq" placeholder="ค้นหา ID / ชื่อ / อีเมล / รหัสตัวแทน" value="${esc(q || "")}" class="grow"><button class="btn blue" id="us">ค้นหา</button></div><div class="scroll" id="ul"><p class="muted">กำลังโหลด…</p></div></div>`;
   $("#us").onclick = () => aUsers(body, $("#uq").value.trim()); $("#uq").onkeydown = e => { if (e.key === "Enter") $("#us").click(); };
   const list = await rpc("admin_list_users", { p_search: q || "", p_limit: 100, p_offset: 0 });
-  $("#ul").innerHTML = `<table><tr><th>ID</th><th>ชื่อ / อีเมล</th><th>บทบาท</th><th>VIP</th><th>ตัวแทนของ</th><th>กระเป๋า</th><th>จัดการ</th></tr>${list.map((u, i) => `<tr><td>${String(u.ptv_id).padStart(8, "0")}</td><td><b>${esc(u.display_name)}</b>${u.banned ? ' <span class="pill red">ระงับ</span>' : ""}<br><span class="small muted">${esc(u.email || "")}</span></td>
+  if (!gamePlans.length) await loadPlanNames();
+  const owned = list.length ? await rpc("admin_users_games", { p_users: list.map(u => u.id) }).catch(() => ({})) || {} : {};
+  const gname = id => (gamePlans.find(p => p.game_id === id) || {}).name || id;
+  $("#ul").innerHTML = `<table><tr><th>ID</th><th>ชื่อ / อีเมล</th><th>บทบาท</th><th>เกมที่มี</th><th>ตัวแทนของ</th><th>กระเป๋า</th><th>จัดการ</th></tr>${list.map((u, i) => `<tr><td>${String(u.ptv_id).padStart(8, "0")}</td><td><b>${esc(u.display_name)}</b>${u.banned ? ' <span class="pill red">ระงับ</span>' : ""}<br><span class="small muted">${esc(u.email || "")}</span></td>
      <td><select data-role="${i}">${["user", "agent", "admin"].map(r => `<option value="${r}" ${u.role === r ? "selected" : ""}>${ROLE[r]}</option>`).join("")}</select>${u.agent_code ? `<br><span class="small muted">โค้ด ${esc(u.agent_code)} • ลูกค้า ${u.customers}</span>` : ""}</td>
-     <td>${u.vip_until && new Date(u.vip_until) > new Date() ? `<span class="pill gold">ถึง ${fmtDate(u.vip_until)}</span>` : '<span class="muted">-</span>'}</td>
+     <td>${Object.keys(owned[u.id] || {}).length ? Object.entries(owned[u.id]).map(([g, t]) => `<span class="pill gold" title="ถึง ${esc(fmtDate(t))}">${esc(gname(g))}</span>`).join(" ") : '<span class="muted">-</span>'}</td>
      <td>${u.agent_name ? esc(u.agent_name) + `<br><span class="small muted">${String(u.agent_ptv_id).padStart(8, "0")}</span>` : '<span class="muted">-</span>'}</td><td>${u.role === "agent" || Number(u.wallet_thb) ? baht(u.wallet_thb) : '<span class="muted">-</span>'}</td>
-     <td class="row" style="margin:0"><button class="btn gold" data-game="${i}">+ เกม</button><button class="btn" data-vip="${i}">+ VIP</button><button class="btn" data-wal="${i}">กระเป๋า</button><button class="btn" data-ref="${i}">ผูกตัวแทน</button><button class="btn ${u.banned ? "green" : "red"}" data-ban="${i}">${u.banned ? "ปลดระงับ" : "ระงับ"}</button></td></tr>`).join("")}</table>${list.length ? "" : '<p class="muted">ไม่พบผู้ใช้</p>'}`;
+     <td class="row" style="margin:0"><button class="btn gold" data-game="${i}">+ เกม</button><button class="btn" data-wal="${i}">กระเป๋า</button><button class="btn" data-ref="${i}">ผูกตัวแทน</button><button class="btn ${u.banned ? "green" : "red"}" data-ban="${i}">${u.banned ? "ปลดระงับ" : "ระงับ"}</button></td></tr>`).join("")}</table>${list.length ? "" : '<p class="muted">ไม่พบผู้ใช้</p>'}`;
   const again = () => aUsers(body, q);
   $("#ul").querySelectorAll("[data-role]").forEach(s => s.onchange = () => act(s, () => rpc("admin_set_role", { p_user: list[s.dataset.role].id, p_role: s.value }), "เปลี่ยนบทบาทแล้ว").then(again));
   $("#ul").querySelectorAll("[data-game]").forEach(b => b.onclick = () => giveGame(b, list[b.dataset.game]).then(again));
-  $("#ul").querySelectorAll("[data-vip]").forEach(b => b.onclick = () => { const d = prompt("เพิ่ม VIP กี่วัน? (ใส่ติดลบเพื่อลด)", "30"); if (!d) return; act(b, () => rpc("admin_grant_vip", { p_user: list[b.dataset.vip].id, p_days: parseInt(d, 10) }), "ปรับ VIP แล้ว").then(again); });
   $("#ul").querySelectorAll("[data-wal]").forEach(b => b.onclick = () => { const a = prompt("เพิ่ม/ลดเงินในกระเป๋า (บาท) เช่น 100 หรือ -50", ""); if (!a) return; const note = prompt("หมายเหตุ", "") || ""; act(b, () => rpc("admin_adjust_wallet", { p_user: list[b.dataset.wal].id, p_amount: Number(a), p_note: note }), "ปรับกระเป๋าแล้ว").then(again); });
   $("#ul").querySelectorAll("[data-ref]").forEach(b => b.onclick = () => { const a = prompt("ID ตัวแทน 8 หลัก (เว้นว่างเพื่อยกเลิกการผูก)", ""); if (a === null) return; act(b, () => rpc("admin_set_referrer", { p_user: list[b.dataset.ref].id, p_agent_ptv_id: a.trim() ? Number(a) : null }), "บันทึกแล้ว").then(again); });
   $("#ul").querySelectorAll("[data-ban]").forEach(b => b.onclick = () => { const u = list[b.dataset.ban]; if (!confirm((u.banned ? "ปลดระงับ " : "ระงับ ") + u.display_name + "?")) return; act(b, () => rpc("admin_set_banned", { p_user: u.id, p_banned: !u.banned }), "บันทึกแล้ว").then(again); });
@@ -290,7 +397,7 @@ async function aOrders(body, status) {
      <td class="row" style="margin:0">${o.slip_path ? `<button class="btn" data-slip="${i}">ดูสลิป</button>` : ""}${["review", "pending"].includes(o.status) ? `<button class="btn green" data-ok="${i}">อนุมัติ</button><button class="btn red" data-no="${i}">ปฏิเสธ</button>` : ""}</td></tr>`).join("")}</table>` : '<p class="muted">ไม่มีคำสั่งซื้อ</p>';
   const again = () => aOrders(body, status);
   $("#ol").querySelectorAll("[data-slip]").forEach(b => b.onclick = () => act(b, async () => { const { data, error } = await sb.storage.from("slips").download(list[b.dataset.slip].slip_path); if (error) throw new Error(error.message); const url = URL.createObjectURL(data); $("#dlgBody").innerHTML = `<div class="row"><h2 class="grow" style="margin:0">สลิป #${list[b.dataset.slip].order_no}</h2><button class="btn ghost" value="close">ปิด</button></div><img src="${url}" alt="สลิปการโอน" style="max-width:100%;margin-top:12px;border-radius:10px">`; $("#dlg").showModal(); }));
-  $("#ol").querySelectorAll("[data-ok]").forEach(b => b.onclick = () => { const o = list[b.dataset.ok]; if (!confirm(`อนุมัติคำสั่งซื้อ #${o.order_no} ${money(o.amount, o.currency)}?`)) return; act(b, () => rpc("admin_approve_order", { p_order: o.id }), "อนุมัติแล้ว • VIP เปิดให้ผู้รับแล้ว").then(again); });
+  $("#ol").querySelectorAll("[data-ok]").forEach(b => b.onclick = () => { const o = list[b.dataset.ok]; if (!confirm(`อนุมัติคำสั่งซื้อ #${o.order_no} ${money(o.amount, o.currency)}?`)) return; act(b, () => rpc("admin_approve_order", { p_order: o.id }), "อนุมัติแล้ว • เปิดเกมให้ผู้รับแล้ว").then(again); });
   $("#ol").querySelectorAll("[data-no]").forEach(b => b.onclick = () => { const r = prompt("เหตุผลที่ปฏิเสธ", "สลิปไม่ถูกต้อง"); if (r === null) return; act(b, () => rpc("admin_reject_order", { p_order: list[b.dataset.no].id, p_reason: r }), "ปฏิเสธแล้ว").then(again); });
 }
 async function aWithdrawals(body, status) {
@@ -308,7 +415,7 @@ async function aPrices(body) {
   const { data: plans, error } = await sb.from("plans").select("*").order("sort"); if (error) throw new Error(error.message);
   const st = await rpc("admin_get_settings");
   const S = [["promptpay_id", "เบอร์ / เลขพร้อมเพย์"], ["promptpay_name", "ชื่อบัญชีพร้อมเพย์"], ["usd_thb_rate", "อัตรา USD → THB"], ["discount_pct", "ส่วนลดโค้ดตัวแทน (%)"], ["commission_months", "ผูกลูกค้ากับตัวแทน (เดือน)"], ["min_withdrawal_thb", "ถอนขั้นต่ำ (บาท)"], ["max_pending_orders", "คำสั่งซื้อค้างได้สูงสุด"], ["download_url", "ลิงก์ดาวน์โหลด Launcher"], ["online_pay_enabled", "เปิดรับ PayPal / บัตร (true = เปิด • ต้องตั้ง PayPal เป็น Live ก่อน)"]];
-  body.innerHTML = `<div class="card"><h2>ราคาเกมและแพ็กเกจ</h2><p class="small muted">แต่ละเกมขายแยก • แก้ชื่อ จำนวนวัน และราคาได้ทีละแถว • ราคาตัวแทนคือราคาที่ตัวแทนซื้อ (ส่วนต่างเป็นค่าคอม)</p><div class="scroll"><table><tr><th>ชื่อ</th><th>วัน</th><th>USD</th><th>USD ขีดฆ่า</th><th>USD ตัวแทน</th><th>THB</th><th>THB ตัวแทน</th><th>เปิดขาย</th><th></th></tr>${plans.map((p, i) => `<tr><td><input data-p="${i}" data-k="name" value="${esc(p.name)}" class="w140"><br><span class="small muted">${p.game_id ? "เกม: " + esc(p.game_id) : "VIP ทุกเกม"}</span></td><td><input type="number" min="1" max="3650" data-p="${i}" data-k="days" value="${p.days}" class="w60"></td>${["price_usd", "list_price_usd", "agent_price_usd", "price_thb", "agent_price_thb"].map(k => `<td><input type="number" step="0.01" min="0" data-p="${i}" data-k="${k}" value="${p[k] ?? ""}" class="w90"></td>`).join("")}<td><input type="checkbox" data-p="${i}" data-k="active" ${p.active ? "checked" : ""}></td><td><button class="btn blue" data-save="${i}">บันทึก</button></td></tr>`).join("")}</table></div></div>
+  body.innerHTML = `<div class="card"><h2>ราคาเกมและแพ็กเกจ</h2><p class="small muted">แต่ละเกมขายแยก • แก้ชื่อ จำนวนวัน และราคาได้ทีละแถว • ราคาตัวแทนคือราคาที่ตัวแทนซื้อ (ส่วนต่างเป็นค่าคอม)</p><div class="scroll"><table><tr><th>ชื่อ</th><th>วัน</th><th>USD</th><th>USD ขีดฆ่า</th><th>USD ตัวแทน</th><th>THB</th><th>THB ตัวแทน</th><th>เปิดขาย</th><th></th></tr>${plans.map((p, i) => `<tr><td><input data-p="${i}" data-k="name" value="${esc(p.name)}" class="w140"><br><span class="small muted">${p.game_id ? "เกม: " + esc(p.game_id) : "แพ็กเกจเก่า (เลิกขาย)"}</span></td><td><input type="number" min="1" max="3650" data-p="${i}" data-k="days" value="${p.days}" class="w60"></td>${["price_usd", "list_price_usd", "agent_price_usd", "price_thb", "agent_price_thb"].map(k => `<td><input type="number" step="0.01" min="0" data-p="${i}" data-k="${k}" value="${p[k] ?? ""}" class="w90"></td>`).join("")}<td><input type="checkbox" data-p="${i}" data-k="active" ${p.active ? "checked" : ""}></td><td><button class="btn blue" data-save="${i}">บันทึก</button></td></tr>`).join("")}</table></div></div>
    <div class="card"><h2>ตั้งค่าระบบ</h2><div class="grid2">${S.map(s => `<div><label for="s_${s[0]}">${s[1]}</label><div class="row" style="margin:0"><input id="s_${s[0]}" value="${esc(st?.[s[0]] ?? "")}" class="grow"><button class="btn" data-set="${s[0]}">บันทึก</button></div></div>`).join("")}</div></div>`;
   body.querySelectorAll("[data-save]").forEach(b => b.onclick = () => { const i = b.dataset.save; const v = k => { const el = body.querySelector(`[data-p="${i}"][data-k="${k}"]`); return k === "active" ? el.checked : k === "name" ? el.value.trim() : (el.value === "" ? null : Number(el.value)); };
     act(b, () => rpc("admin_update_plan", { p_code: plans[i].code, p_price_usd: v("price_usd"), p_list_price_usd: v("list_price_usd"), p_agent_price_usd: v("agent_price_usd"), p_price_thb: v("price_thb"), p_agent_price_thb: v("agent_price_thb"), p_active: v("active"), p_days: v("days"), p_name: v("name") }).then(loadPlanNames), "บันทึกแล้ว"); });
