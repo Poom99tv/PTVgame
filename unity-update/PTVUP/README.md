@@ -1,8 +1,8 @@
-# PTVUP 1.0.3
+# PTVUP 1.0.4
 
 Windows x64 Unity game. Product name: PTVUP. Launcher ID and ticket audience: ptvup.
 
-The complete package is published as PTVUP.v1.0.3.zip in the ptvup-v1.0.3 release. ZIP root: PTVUP/. Entry point: PTVUP/PTVUP.exe. Include UnityPlayer.dll, PTVUP_Data, MonoBleedingEdge and the entire production TikTokBridge with runtime/node.exe and node_modules.
+The complete package is published as PTVUP.v1.0.4.zip in the ptvup-v1.0.4 release. ZIP root: PTVUP/. Entry point: PTVUP/PTVUP.exe. Include UnityPlayer.dll, PTVUP_Data, MonoBleedingEdge and the entire production TikTokBridge with runtime/node.exe and node_modules.
 
 ## VIP verification
 
@@ -41,3 +41,12 @@ Broken 1.0.0 and 1.0.1 releases are retired only after the 1.0.2 archive is veri
 - Settings › ขนาดสกิล: climb-meter size slider 40–300% (PVZUP.MeterScale), previewed live, kept on save, restored on cancel.
 
 Clean build (CleanBuildCache, LZ4HC, no development/QA defines). Standalone startup: `[PTVLicense] locked: no-ticket` and `[PTVUP Player] version=1.0.3 ready=True skills=8 columns=2 tiles=8 legacyActive=False shaderUnlit=True`. Package validated for the required entries and PTVUP/ root before upload. 1.0.2 is kept (not retired).
+
+## 1.0.4: climb speed, colourful sky, skyline city
+
+- Climb speed: default x1.6 of the measured clip speed (0.32 -> 0.51 m/s), Settings › การเล่น slider x0.5–x4 (PVZUP.ClimbSpeed); the climb animation speed follows.
+- Fog removed (ClimbFog no longer added; its ParticleSystem emission error is gone). New ClimbSkyLight drives a gradient sky (HeavenSkybox shader), sun, trilight ambient, a light bloom/grade volume and glowing motes through five moods by climb progress: morning, golden hour, pink sunset, violet twilight, pastel dawn. HeavenSummit now blends from these live values. Only a far sky-coloured haze remains (450–2100 m).
+- HeavenSkybox: sun rays now radiate from the sun centre (angle measured around the sun direction).
+- RooftopSkyline: high-rise street grid out to 860 m around the detailed city (6 tinted window materials, shadows off), countryside removed, mountains moved to 1000–1200 m, banner plane raised to 88 m with towers under its lane capped.
+
+Clean build. Standalone startup: `[PTVLicense] locked: no-ticket` and `[PTVUP Player] version=1.0.4 ready=True skills=8 columns=2 tiles=8 legacyActive=False shaderUnlit=True`. 1.0.3 is kept (not retired).

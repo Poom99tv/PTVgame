@@ -1,6 +1,6 @@
 {
   "product": "PTVUP",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "unity": "6000.0.59f2",
   "scene": "Assets/ClimbGame/Scenes/BeanstalkClimb.unity",
   "build": "CleanBuildCache, CompressWithLz4HC; no development mode or QA defines",
@@ -35,7 +35,7 @@
     },
     {
       "path": "Assets/ClimbGame/Scripts/BannerPlaneFlyby.cs",
-      "sha256": "644b6d2167c96ad8970ea4b5e3a151affe779eb6ed8e888bf41abc8ecda4371e"
+      "sha256": "03823f403002418ab6bdc02e3744e8c5a3b5f6df6844458597b5903c045dc95e"
     },
     {
       "path": "Assets/ClimbGame/Scripts/BonkChoySkill.cs",
@@ -63,7 +63,11 @@
     },
     {
       "path": "Assets/ClimbGame/Scripts/ClimbGame.cs",
-      "sha256": "ccc41314a37d405c2559707b011e88fca9b367ef8c7d113b3d1c3a4027c75d9b"
+      "sha256": "c0a2f5ccc2690f4706daaaf0897e09e61be8a1ea0fccfd45eef91e98daff1473"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/ClimbSkyLight.cs",
+      "sha256": "c8807af209ffcb67c38921b3d5c2a3836516d6e29d183b86abcdb39c25cfc545"
     },
     {
       "path": "Assets/ClimbGame/Scripts/CloudSummit.cs",
@@ -91,7 +95,7 @@
     },
     {
       "path": "Assets/ClimbGame/Scripts/HeavenSummit.cs",
-      "sha256": "d8985a9fbb79df78426d01ccd24aaefb577c36bb1c845141535f0c0a4e763fe6"
+      "sha256": "e9853bf57ac66591317d519ba5f5264218ff93acc25e23115a0e7181ecc28ccd"
     },
     {
       "path": "Assets/ClimbGame/Scripts/JetpackSkill.cs",
@@ -103,7 +107,11 @@
     },
     {
       "path": "Assets/ClimbGame/Scripts/RooftopCity.cs",
-      "sha256": "6166473ee306f1dbd9af0d73b04795fb38a7db4b27dd55cf7b4ff73fcd3f8db7"
+      "sha256": "3a32141f845ecb963ae8c592a614b748663be24569b7df24ee5dd1404876937d"
+    },
+    {
+      "path": "Assets/ClimbGame/Scripts/RooftopSkyline.cs",
+      "sha256": "3b09cc538f8ddbd6df1cba73a4e14a1a92c3babd176bf4ec58d52a5c8a028916"
     },
     {
       "path": "Assets/ClimbGame/Scripts/SkillDirector.cs",
@@ -139,7 +147,7 @@
     },
     {
       "path": "Assets/ClimbGame/Shaders/HeavenSkybox.shader",
-      "sha256": "5757751c58a7359eb54a85029a9552976de250fc7553ba0f23761441daa9ffd7"
+      "sha256": "13bf09215c1bdfbb5da39a7de640fcba4001f1e7e45d6cf85b9b2a1da4aa5c5f"
     },
     {
       "path": "Assets/ClimbGame/Shaders/LightShaft.shader",
@@ -175,7 +183,7 @@
     },
     {
       "path": "Assets/PTV/Scripts/PTVComicSettings.cs",
-      "sha256": "c4b01c84acdbc43c8cf6641950a8ed0f64874922fc98dd454b65cf3296305494"
+      "sha256": "9ca2ba7988347527648c2c0cfd0404c1ce935b656eef87be6443187fb381643b"
     },
     {
       "path": "Assets/PTV/Scripts/PTVDrag.cs",
@@ -251,7 +259,7 @@
     },
     {
       "path": "ProjectSettings/ProjectSettings.asset",
-      "sha256": "94650fa51e9130d515963d29f96349a78cc4bc77184e4aaac7bcac462c89daac"
+      "sha256": "b5c93030a92c35e142f987057f5185f3d7009d5ebdf0562225220d790e2f5b60"
     }
   ]
 }
