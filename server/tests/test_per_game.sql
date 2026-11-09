@@ -13,7 +13,7 @@ begin execute q; raise exception 'EXPECTED ERROR: %', msg; exception when others
 create function pg_temp.check(ok boolean, msg text) returns void language plpgsql as $$
 begin if not ok then raise exception 'CHECK FAILED: %', msg; end if; raise notice 'ok %', msg; end $$;
 
-select pg_temp.check((select count(*) from public.plans where game_id is not null and active) = 11, '11 games on sale');
+select pg_temp.check((select count(*) from public.plans where game_id is not null and active) = 12, '12 games on sale');
 select pg_temp.check((select price_thb from public.plans where game_id='roblox-box-2') = 320 and (select price_usd from public.plans where game_id='roblox-box-2') = 10, 'Gear Box 320 / $10');
 select pg_temp.check(not exists(select 1 from public.plans where game_id is null and active), 'VIP pass no longer sold');
 
@@ -58,10 +58,12 @@ select public.admin_grant_game('00000000-0000-0000-0000-0000000000e2', 'ptvboat'
 select pg_temp.check((public.admin_user_games('00000000-0000-0000-0000-0000000000e2')::jsonb) ? 'ptvboat', 'admin gave PTVBoat');
 select pg_temp.expect_error($q$select public.admin_grant_game('00000000-0000-0000-0000-0000000000e2','nope',7)$q$, 'unknown game');
 reset role;
--- VIP bought before the change still opens every game
-update public.profiles set vip_until = now() + interval '5 days' where id='00000000-0000-0000-0000-0000000000e3';
+-- an old VIP code / VIP plan now adds its days to every game
+insert into public.vip_codes(code, plan_code, days, owner_id) values ('PTV-OLDV-IPCO-DE01', 'monthly', 30, '00000000-0000-0000-0000-0000000000e3');
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000e3'); set role authenticated;
-select pg_temp.check((public.play_ticket_claims('ptvup')->>'vip_until')::timestamptz > now(), 'old VIP plays any game');
+select public.redeem_code('PTV-OLDV-IPCO-DE01');
+select pg_temp.check((select count(*) from json_object_keys(public.my_games())) = 12, 'old VIP code opens all 12 games');
+select pg_temp.check((public.my_account()->>'vip_until') is null, 'no VIP time given');
 reset role;
 select pg_temp.check(not exists(select 1 from public.game_access where user_id='00000000-0000-0000-0000-0000000000e1'), 'admin has no game rows');
 select 'ALL PER GAME TESTS PASSED';

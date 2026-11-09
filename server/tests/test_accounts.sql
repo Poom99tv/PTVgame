@@ -68,7 +68,7 @@ select public.admin_approve_order((select o.id from public.orders o where o.agen
 reset role;
 select display_name, role, vip_until > now() + interval '364 days' as yearly, vip_until > now() + interval '29 days' as monthly from public.profiles order by id;
 set role authenticated;
-select public.admin_grant_vip('00000000-0000-0000-0000-00000000000c', 0);
+select pg_temp.expect_error($q$select public.admin_grant_vip('00000000-0000-0000-0000-00000000000c', 30)$q$, 'VIP grants removed');
 select pg_temp.expect_error($q$select public.admin_set_role('00000000-0000-0000-0000-00000000000a','user')$q$, 'admin cannot demote self');
 select public.admin_set_role('00000000-0000-0000-0000-00000000000c','agent');
 select public.admin_update_plan('monthly',19,25,14,650,500,true);

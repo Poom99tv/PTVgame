@@ -1,4 +1,4 @@
-// PTVgame accounts: Supabase auth (email, Google, Facebook), profile, VIP, orders, admin.
+// PTVgame accounts: Supabase auth (email, Google, Facebook), profile, games bought, orders, admin.
 // C# 5 only (built with the .NET Framework csc.exe): no string interpolation, no ?. operator.
 using System;
 using System.IO;
@@ -16,9 +16,9 @@ using System.Threading.Tasks;
 namespace PTVgame {
  public class AccountConfig {
   public string supabaseUrl="",anonKey="";
-  public string defaultAccess="vip";     // "vip": every game needs VIP unless catalog says "access":"free"
+  public string defaultAccess="vip";     // "vip" (name kept): every game must be bought unless catalog says "access":"free"
   public int callbackPort=53682;         // add http://127.0.0.1:53682/auth/callback to Supabase redirect URLs
-  public int offlineHours=72;            // how long a verified VIP can play without internet
+  public int offlineHours=72;            // how long a verified buyer can play without internet
   static AccountConfig current;
   public static AccountConfig Current { get { if(current==null) current=Storage.Read(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"account.json"),new AccountConfig()); return current; } set { current=value; } }
   public bool Enabled { get { Uri u; return !string.IsNullOrWhiteSpace(anonKey)&&Uri.TryCreate(supabaseUrl??"",UriKind.Absolute,out u)&&u.Scheme=="https"; } }
@@ -105,7 +105,7 @@ namespace PTVgame {
    {"Invalid login credentials","อีเมลหรือรหัสผ่านไม่ถูกต้อง"},
    {"Email not confirmed","ยังไม่ได้ยืนยันอีเมล กรุณากดลิงก์ในอีเมลก่อน"},
    {"User already registered","อีเมลนี้สมัครไว้แล้ว"},
-   {"only agents can buy VIP for another ID","เฉพาะตัวแทนเท่านั้นที่ซื้อ VIP ให้ไอดีอื่นได้"},
+   {"only agents can buy VIP for another ID","เฉพาะตัวแทนเท่านั้นที่ซื้อเกมให้ไอดีอื่นได้"},
    {"PTV ID not found","ไม่พบไอดีนี้"},
    {"agents only","เฉพาะตัวแทนเท่านั้น"},
    {"admin only","เฉพาะแอดมินเท่านั้น"},
@@ -120,8 +120,8 @@ namespace PTVgame {
    {"discount already used on this ID","ไอดีนี้ใช้ส่วนลดครั้งแรกไปแล้ว"},
    {"already linked to another agent","ไอดีนี้ผูกกับตัวแทนคนอื่นแล้ว"},
    {"finish or cancel your other discounted order first","มีคำสั่งซื้อที่ใช้ส่วนลดค้างอยู่ กรุณาชำระหรือยกเลิกก่อน"},
-   {"VIP code not found","ไม่พบโค้ด VIP นี้"},
-   {"VIP code already used","โค้ด VIP นี้ถูกใช้ไปแล้ว"},
+   {"VIP code not found","ไม่พบโค้ดนี้"},
+   {"VIP code already used","โค้ดนี้ถูกใช้ไปแล้ว"},
    {"not enough wallet balance","ยอดในกระเป๋าเงินไม่พอ"},
    {"below the minimum withdrawal","ยอดถอนต่ำกว่าขั้นต่ำ"},
    {"already have a pending withdrawal","มีคำขอถอนเงินรออยู่แล้ว"},
@@ -248,18 +248,17 @@ namespace PTVgame {
   }
   static void SignOutLocal() { Session=null; Current=null; SecureFile.Delete(SessionPath); SecureFile.Delete(CachePath); }
 
-  /// <summary>VIP check used before installing or launching a game.</summary>
+  /// <summary>Ownership check used before installing or launching a game: bought (not expired) or admin.</summary>
   public static bool CanPlay(Game g) {
    if(!Cfg.Enabled) return true;
    string access=string.IsNullOrWhiteSpace(g.access)?Cfg.defaultAccess:g.access;
    if(access=="free") return Current!=null;
    if(Current==null) return false;
    if(Current.IsAdmin) return true;
-   bool vip=Current.vipUntil!=null&&Current.vipUntil.Value>DateTime.UtcNow;
-   if(!vip&&!Current.Owns(g.id)) return false;
+   if(!Current.Owns(g.id)) return false;
    return !Offline||(DateTime.UtcNow-Current.checkedAt).TotalHours<Cfg.offlineHours;
   }
-  /// <summary>Short-lived signed ticket that a VIP game checks at start-up (see server/supabase/functions/play-ticket).</summary>
+  /// <summary>Short-lived signed ticket that a paid game checks at start-up (see server/supabase/functions/play-ticket).</summary>
   public static async Task<string> PlayTicket(string game) {
    var r=J.Obj(await Send(HttpMethod.Post,Cfg.Base+"/functions/v1/play-ticket",Storage.Json.Serialize(A("game",game)),true));
    string t=J.S(r,"ticket"); if(string.IsNullOrEmpty(t)) throw new AccountException("เซิร์ฟเวอร์ไม่ได้ส่งสิทธิ์เล่นกลับมา",500); return t;
@@ -349,6 +348,7 @@ namespace PTVgame {
   public static Task AdminSetBanned(string userId,bool banned) { return Rpc("admin_set_banned",A("p_user",userId,"p_banned",banned)); }
   public static Task AdminUpdatePlan(Plan p) { return Rpc("admin_update_plan",A("p_code",p.code,"p_price_usd",p.priceUsd,"p_list_price_usd",p.listPriceUsd>0?(object)p.listPriceUsd:null,"p_agent_price_usd",p.agentPriceUsd,"p_price_thb",p.priceThb,"p_agent_price_thb",p.agentPriceThb,"p_active",p.active,"p_days",p.days>0?(object)p.days:null,"p_name",p.name)); }
   public static Task AdminGrantGame(string userId,string game,int days) { return Rpc("admin_grant_game",A("p_user",userId,"p_game",game,"p_days",days)); }
+  public static async Task<Dictionary<string,object>> AdminUsersGames(List<string> userIds) { if(userIds.Count==0) return new Dictionary<string,object>(); return await RpcObj("admin_users_games",A("p_users",userIds.ToArray())) ?? new Dictionary<string,object>(); }
   public static Task<Dictionary<string,object>> AdminUserGames(string userId) { return RpcObj("admin_user_games",A("p_user",userId)); }
   public static Task<Dictionary<string,object>> AdminSettings() { return RpcObj("admin_get_settings",null); }
   public static Task AdminSetSetting(string key,string value) { return Rpc("admin_set_setting",A("p_key",key,"p_value",value??"")); }
@@ -554,9 +554,8 @@ namespace PTVgame {
     AccountConfig.Current=new AccountConfig(); Assert(AccountService.CanPlay(vip),"no account.json keeps every game open");
     AccountConfig.Current=new AccountConfig { supabaseUrl="https://example.supabase.co",anonKey="k" };
     AccountService.Current=null; Assert(!AccountService.CanPlay(free)&&!AccountService.CanPlay(vip),"signed out cannot play");
-    AccountService.Current=new Account { role="user",checkedAt=DateTime.UtcNow }; Assert(AccountService.CanPlay(free)&&!AccountService.CanPlay(vip),"free game open, VIP game locked");
-    AccountService.Current.vipUntil=DateTime.UtcNow.AddDays(3); Assert(AccountService.CanPlay(vip),"active VIP plays");
-    AccountService.Current.vipUntil=DateTime.UtcNow.AddMinutes(-1); Assert(!AccountService.CanPlay(vip),"expired VIP locked");
+    AccountService.Current=new Account { role="user",checkedAt=DateTime.UtcNow }; Assert(AccountService.CanPlay(free)&&!AccountService.CanPlay(vip),"free game open, paid game locked");
+    AccountService.Current.vipUntil=DateTime.UtcNow.AddDays(3); Assert(!AccountService.CanPlay(vip),"old VIP field no longer unlocks games");
     AccountService.Current.role="admin"; Assert(AccountService.CanPlay(vip),"admin plays everything");
     AccountService.Current=new Account { role="user",checkedAt=DateTime.UtcNow }; AccountService.Current.games["b"]=DateTime.UtcNow.AddDays(30); Assert(AccountService.CanPlay(vip)&&!AccountService.CanPlay(new Game { id="c" }),"bought game plays, others stay locked");
     AccountService.Current.games["b"]=DateTime.UtcNow.AddMinutes(-1); Assert(!AccountService.CanPlay(vip),"expired game locked");

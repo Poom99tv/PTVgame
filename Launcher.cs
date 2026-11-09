@@ -124,7 +124,7 @@ namespace PTVgame {
    if(!Path.GetFullPath(i.folder).StartsWith(root,StringComparison.OrdinalIgnoreCase)) throw new Exception(AppLanguage.T("ตำแหน่งติดตั้งไม่ถูกต้อง"));
    string exe=SafePath(i.folder,i.executable); if(!File.Exists(exe)) throw new Exception(AppLanguage.T("ไม่พบไฟล์เกม กรุณาติดตั้งใหม่"));
    var psi=new ProcessStartInfo(exe) { WorkingDirectory=Path.GetDirectoryName(exe),UseShellExecute=false };
-   if(!string.IsNullOrEmpty(ticket)) { psi.Arguments="--ptv-ticket="+ticket; psi.EnvironmentVariables["PTV_TICKET"]=ticket; }   // signed VIP play ticket, checked by the game
+   if(!string.IsNullOrEmpty(ticket)) { psi.Arguments="--ptv-ticket="+ticket; psi.EnvironmentVariables["PTV_TICKET"]=ticket; }   // signed play ticket, checked by the game
    Process.Start(psi);
   }
  }

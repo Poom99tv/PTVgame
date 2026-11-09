@@ -1,4 +1,4 @@
-// PTVgame account UI: login window, profile, VIP store, agent page, admin console, payment dialogs.
+// PTVgame account UI: login window, profile, game store, agent page, admin console, payment dialogs.
 // C# 5 only (built with the .NET Framework csc.exe).
 using System;
 using System.IO;
@@ -77,7 +77,7 @@ namespace PTVgame {
   public static Brush StatusColor(string s) { return s=="paid"?Green:s=="rejected"||s=="cancelled"?Red:Gold; }
   public static string Method(string m) { switch(m) { case "promptpay": return "QR พร้อมเพย์"; case "paypal": return "PayPal"; case "card": return "บัตรเครดิต/เดบิต"; default: return m??""; } }
   public static string Role(string r) { return r=="admin"?"แอดมิน":r=="agent"?"ตัวแทน":"ผู้ใช้"; }
-  public static string PlanName(string code) { string n; if(code!=null&&AccountService.PlanNames.TryGetValue(code,out n)&&code.StartsWith("g_")) return n; return code=="yearly"?"VIP รายปี":code=="monthly"?"VIP รายเดือน":code!=null&&code.StartsWith("g_")?code.Substring(2):code; }
+  public static string PlanName(string code) { string n; if(code!=null&&AccountService.PlanNames.TryGetValue(code,out n)&&code.StartsWith("g_")) return n; return code=="yearly"||code=="monthly"?"ทุกเกม (แพ็กเกจเดิม)":code!=null&&code.StartsWith("g_")?code.Substring(2):code; }
   public static void Copy(string text) { for(int i=0;i<5;i++) { try { Clipboard.SetText(text); return; } catch { Thread.Sleep(60); } } }
   public static string PickImage(string title) {
    var d=new Microsoft.Win32.OpenFileDialog { Title=AppLanguage.T(title),Filter="Images|*.png;*.jpg;*.jpeg" };
@@ -112,7 +112,7 @@ namespace PTVgame {
   void Build() {
    form.Children.Clear();
    var title=Ui.Bold(Ui.T(signUp?"สร้างบัญชี PTVgame":"ยินดีต้อนรับกลับมา",26)); title.Margin=new Thickness(0,12,0,4); form.Children.Add(title);
-   var sub=Ui.T(signUp?"สมัครครั้งเดียว ใช้ได้ทุกเกมใน PTVgame":"เข้าสู่ระบบเพื่อเล่นเกมและจัดการ VIP",13,Ui.Muted); sub.Margin=new Thickness(0,0,0,18); form.Children.Add(sub);
+   var sub=Ui.T(signUp?"สมัครครั้งเดียว ใช้ได้ทุกเกมใน PTVgame":"เข้าสู่ระบบเพื่อเล่นเกมและซื้อเกม",13,Ui.Muted); sub.Margin=new Thickness(0,0,0,18); form.Children.Add(sub);
    var google=Ui.Btn("ดำเนินการต่อด้วย Google",Brushes.White,Ui.B("#1F1F1F")); google.Margin=new Thickness(0,4,0,0); google.Click+=async(s,e)=>await OAuth("google"); form.Children.Add(google);
    var facebook=Ui.Btn("ดำเนินการต่อด้วย Facebook",Ui.B("#1877F2")); facebook.Margin=new Thickness(0,10,0,0); facebook.Click+=async(s,e)=>await OAuth("facebook"); form.Children.Add(facebook);
    google.Visibility=Visibility.Collapsed; facebook.Visibility=Visibility.Collapsed;
@@ -199,7 +199,7 @@ namespace PTVgame {
   }
  }
 
- /// <summary>PromptPay QR with amount + slip upload. VIP is granted when an admin approves the slip.</summary>
+ /// <summary>PromptPay QR with amount + slip upload. The game unlocks when an admin approves the slip.</summary>
  public class PromptPayWindow {
   readonly Window w;
   public bool SlipSent;
@@ -214,7 +214,7 @@ namespace PTVgame {
    qr.Child=qrStack; p.Children.Add(qr);
    var amt=Ui.Bold(Ui.Raw(Ui.Money(amount,"THB"),34)); amt.HorizontalAlignment=HorizontalAlignment.Center; p.Children.Add(amt);
    if(!string.IsNullOrWhiteSpace(accountName)) { var n=Ui.T("ชื่อบัญชีผู้รับ: "+accountName,13,Ui.Muted); n.HorizontalAlignment=HorizontalAlignment.Center; p.Children.Add(n); }
-   var steps=Ui.T("1. สแกน QR และตรวจยอดเงินกับชื่อบัญชี\n2. โอนให้ตรงยอด แล้วบันทึกสลิป\n3. กด \"แนบสลิป\" • แอดมินตรวจแล้ว VIP จะเปิดให้อัตโนมัติ",13,Ui.Muted); steps.Margin=new Thickness(0,14,0,6); p.Children.Add(steps);
+   var steps=Ui.T("1. สแกน QR และตรวจยอดเงินกับชื่อบัญชี\n2. โอนให้ตรงยอด แล้วบันทึกสลิป\n3. กด \"แนบสลิป\" • แอดมินตรวจแล้ว เกมจะเปิดให้อัตโนมัติ",13,Ui.Muted); steps.Margin=new Thickness(0,14,0,6); p.Children.Add(steps);
    var status=Ui.Raw("",13,Ui.Muted);
    var attach=Ui.Btn("แนบสลิปการโอน",Ui.B("#268EFF")); attach.Margin=new Thickness(0,10,0,0); p.Children.Add(attach);
    attach.Click+=async(s,e)=>{
@@ -231,7 +231,7 @@ namespace PTVgame {
  }
 
  public partial class LauncherShell {
-  const string PageProfile="โปรไฟล์",PageStore="ร้านค้า VIP",PageAgent="ตัวแทน",PageAdmin="แอดมิน";
+  const string PageProfile="โปรไฟล์",PageStore="ร้านค้าเกม",PageAgent="ตัวแทน",PageAdmin="แอดมิน";
   int renderId; string adminTab="ภาพรวม",adminOrderFilter="review",adminSearch="";
   bool AccountsOn { get { return AccountConfig.Current.Enabled&&AccountService.Current!=null; } }
   bool Light { get { return settings.theme=="Frost"; } }
@@ -260,26 +260,27 @@ namespace PTVgame {
    var text=new StackPanel { Margin=new Thickness(9,0,0,0),VerticalAlignment=VerticalAlignment.Center,MaxWidth=110 };
    var name=Line(a.displayName,13); name.TextWrapping=TextWrapping.NoWrap; name.TextTrimming=TextTrimming.CharacterEllipsis; text.Children.Add(name);
    text.Children.Add(Line("ID "+a.PtvIdText,11,muted));
-   bool vip=a.IsAdmin||(a.vipUntil!=null&&a.vipUntil.Value>DateTime.UtcNow);
-   text.Children.Add(Ui.T(a.IsAdmin?"●  แอดมิน":vip?"♛  VIP":AccountService.Offline?"●  ออฟไลน์":"●  ผู้เล่นทั่วไป",11,vip?Ui.Gold:Ui.Green));
+   int owned=a.games==null?0:a.games.Count(kv=>kv.Value>DateTime.UtcNow);
+   text.Children.Add(Ui.T(a.IsAdmin?"●  แอดมิน":AccountService.Offline?"●  ออฟไลน์":owned>0?"●  เกมของฉัน "+owned:"●  ผู้เล่นทั่วไป",11,a.IsAdmin||owned>0?Ui.Gold:Ui.Green));
    row.Children.Add(text); row.MouseLeftButtonUp+=(s,e)=>Go(PageProfile);
    return row;
   }
 
-  /// <summary>Called before installing or launching: VIP games need an active VIP.</summary>
+  /// <summary>Called before installing or launching: paid games must be bought first.</summary>
   bool Gate(Game g) {
    if(AccountService.CanPlay(g)) return true;
    status.Text=AppLanguage.T(AccountService.Current==null?"กรุณาเข้าสู่ระบบก่อนเล่น":"ยังไม่ได้ซื้อเกมนี้ • ซื้อได้ที่หน้าร้านค้า");
    Go(PageStore); return false;
   }
-  /// <summary>Price on a locked game card, e.g. "฿690"; "VIP" when the game is not sold on its own.</summary>
-  string PriceTag(Game g) { Plan p; if(!AccountService.GamePlans.TryGetValue(g.id,out p)) return "♛ VIP"; return Ui.Thai?Ui.Money(p.priceThb,"THB"):Ui.Money(p.priceUsd,"USD"); }
+  /// <summary>Price on a locked game card, e.g. "฿690".</summary>
+  string PriceTag(Game g) { Plan p; if(!AccountService.GamePlans.TryGetValue(g.id,out p)) return "🔒"; return Ui.Thai?Ui.Money(p.priceThb,"THB"):Ui.Money(p.priceUsd,"USD"); }
   bool Locked(Game g) { return AccountConfig.Current.Enabled&&!AccountService.CanPlay(g); }
 
   async void RefreshAccount() {
    if(!AccountConfig.Current.Enabled||AccountService.Session==null) return;
-   var before=AccountService.Current; string key=before==null?"":before.role+"|"+before.vipUntil+"|"+before.displayName+"|"+before.avatarUrl;
-   try { var a=await AccountService.Load(); if(a.role+"|"+a.vipUntil+"|"+a.displayName+"|"+a.avatarUrl!=key) Build(); } catch {}
+   Func<Account,string> sig=x=>x==null?"":x.role+"|"+x.displayName+"|"+x.avatarUrl+"|"+string.Join(",",(x.games??new Dictionary<string,DateTime>()).OrderBy(k=>k.Key).Select(k=>k.Key+k.Value.Ticks));
+   string key=sig(AccountService.Current);
+   try { var a=await AccountService.Load(); if(sig(a)!=key) Build(); } catch {}
   }
 
   // ---------------------------------------------------------------- profile
@@ -294,9 +295,14 @@ namespace PTVgame {
    var copy=Btn("คัดลอก",ColorBrush("#193B58")); copy.FontSize=12; copy.Padding=new Thickness(10,4,10,4); copy.Margin=new Thickness(10,0,0,0); copy.Click+=(s,e)=>{ Ui.Copy(a.PtvIdText); status.Text=AppLanguage.T("คัดลอก ID แล้ว"); }; idRow.Children.Add(copy);
    var pills=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,10,0,0) }; who.Children.Add(pills);
    pills.Children.Add(Ui.Pill(Ui.Role(a.role),ColorBrush("#193B58"),Brushes.White));
-   bool vip=a.vipUntil!=null&&a.vipUntil.Value>DateTime.UtcNow;
-   pills.Children.Add(Ui.Pill(vip?"VIP ถึง "+Ui.Date(a.vipUntil):a.IsAdmin?"เล่นได้ทุกเกม (แอดมิน)":"ยังไม่เป็น VIP",vip||a.IsAdmin?Ui.Gold:ColorBrush("#3A2530"),vip||a.IsAdmin?Ui.B("#2A1C00"):Ui.Red));
+   var mine=(a.games??new Dictionary<string,DateTime>()).Where(kv=>kv.Value>DateTime.UtcNow).OrderBy(kv=>kv.Value).ToList();
+   pills.Children.Add(Ui.Pill(a.IsAdmin?"เล่นได้ทุกเกม (แอดมิน)":mine.Count>0?"เกมที่ซื้อแล้ว: "+mine.Count:"ยังไม่ได้ซื้อเกม",a.IsAdmin||mine.Count>0?Ui.Gold:ColorBrush("#3A2530"),a.IsAdmin||mine.Count>0?Ui.B("#2A1C00"):Brushes.White));
    sections.Children.Add(head);
+   if(mine.Count>0) {
+    var own=new StackPanel(); own.Children.Add(Ui.Bold(Text("เกมของฉัน",18)));
+    foreach(var kv in mine) { var g=games==null?null:games.FirstOrDefault(x=>x.id==kv.Key); var r=new DockPanel { Margin=new Thickness(0,7,0,0) }; var t=Line(AppLanguage.T("เล่นได้ถึง ")+Ui.Date(kv.Value),13,Ui.Green); DockPanel.SetDock(t,Dock.Right); r.Children.Add(t); r.Children.Add(Line(g!=null?g.name:Ui.PlanName("g_"+kv.Key),14)); own.Children.Add(r); }
+    sections.Children.Add(Box(own));
+   }
 
    var edit=new StackPanel();
    edit.Children.Add(Ui.Bold(Text("ข้อมูลโปรไฟล์",18)));
@@ -318,11 +324,11 @@ namespace PTVgame {
 
    var info=new StackPanel();
    info.Children.Add(Ui.Bold(Text("ข้อมูลบัญชี",18)));
-   foreach(var pair in new[]{ new[]{"อีเมล",a.email??"-"},new[]{"เข้าสู่ระบบด้วย",a.provider=="google"?"Google":a.provider=="facebook"?"Facebook":AppLanguage.T("อีเมล")},new[]{"ระดับบัญชี",AppLanguage.T(Ui.Role(a.role))},new[]{"สถานะ VIP",vip?AppLanguage.T("ใช้งานได้ถึง ")+Ui.Date(a.vipUntil):AppLanguage.T("ไม่มี VIP")},new[]{"ตัวแทนของคุณ",string.IsNullOrEmpty(a.agentName)?"-":a.agentName+" (ID "+a.agentPtvId.ToString("00000000")+")"+(a.agentUntil!=null?AppLanguage.T(" • ถึง ")+Ui.Date(a.agentUntil):"")} }) {
+   foreach(var pair in new[]{ new[]{"อีเมล",a.email??"-"},new[]{"เข้าสู่ระบบด้วย",a.provider=="google"?"Google":a.provider=="facebook"?"Facebook":AppLanguage.T("อีเมล")},new[]{"ระดับบัญชี",AppLanguage.T(Ui.Role(a.role))},new[]{"ตัวแทนของคุณ",string.IsNullOrEmpty(a.agentName)?"-":a.agentName+" (ID "+a.agentPtvId.ToString("00000000")+")"+(a.agentUntil!=null?AppLanguage.T(" • ถึง ")+Ui.Date(a.agentUntil):"")} }) {
     var r=new DockPanel { Margin=new Thickness(0,8,0,0) }; var k=Text(pair[0],13,muted); k.Width=150; r.Children.Add(k); r.Children.Add(Line(pair[1],13)); info.Children.Add(r);
    }
    var buttons=new WrapPanel { Margin=new Thickness(0,14,0,0) }; info.Children.Add(buttons);
-   var store=Btn(vip?"ต่ออายุ VIP":"สมัคร VIP",Ui.Gold); store.Foreground=Ui.B("#2A1C00"); store.Click+=(s,e)=>Go(PageStore); buttons.Children.Add(store);
+   var store=Btn("🛒  ร้านค้าเกม",Ui.Gold); store.Foreground=Ui.B("#2A1C00"); store.Click+=(s,e)=>Go(PageStore); buttons.Children.Add(store);
    var logout=Btn("ออกจากระบบ",ColorBrush("#3A2530")); buttons.Children.Add(logout);
    logout.Click+=async(s,e)=>{ if(MessageBox.Show(AppLanguage.T("ออกจากระบบ PTVgame?"),"PTVgame",MessageBoxButton.YesNo)!=MessageBoxResult.Yes) return; await AccountService.SignOut(); System.Diagnostics.Process.Start(System.Reflection.Assembly.GetExecutingAssembly().Location); Application.Current.Shutdown(); };
    sections.Children.Add(Box(info));
@@ -345,10 +351,9 @@ namespace PTVgame {
    var a=AccountService.Current; int id=renderId;
    var title=Ui.Bold(Text("🛒  ร้านค้าเกม",30)); sections.Children.Add(title);
    sections.Children.Add(Text("ซื้อเฉพาะเกมที่อยากเล่น ใช้ได้ทุกเครื่องที่ล็อกอินไอดีนี้ • ซื้อซ้ำแล้ววันต่อจากของเดิม",14,muted));
-   bool vip=a.vipUntil!=null&&a.vipUntil.Value>DateTime.UtcNow;
    int owned=a.games==null?0:a.games.Count(kv=>kv.Value>DateTime.UtcNow);
-   var state=new Border { Margin=new Thickness(0,14,0,14),HorizontalAlignment=HorizontalAlignment.Left,BorderBrush=vip||owned>0?Ui.Gold:ColorBrush("#2B5578"),BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(20),Padding=new Thickness(16,7,16,7),
-    Child=Text(vip?"VIP เดิมของคุณเล่นได้ทุกเกมถึง "+Ui.Date(a.vipUntil):owned>0?"เกมที่ซื้อแล้ว: "+owned:"ยังไม่มีเกมที่ซื้อ • Game To Earn ใช้ฟรี",13,vip||owned>0?Ui.Gold:muted) };
+   var state=new Border { Margin=new Thickness(0,14,0,14),HorizontalAlignment=HorizontalAlignment.Left,BorderBrush=owned>0?Ui.Gold:ColorBrush("#2B5578"),BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(20),Padding=new Thickness(16,7,16,7),
+    Child=Text(owned>0?"เกมที่ซื้อแล้ว: "+owned:"ยังไม่มีเกมที่ซื้อ • Game To Earn ใช้ฟรี",13,owned>0?Ui.Gold:muted) };
    sections.Children.Add(state);
    if(a.IsAgent) sections.Children.Add(Ui.Pill("คุณเห็นราคาตัวแทน",Ui.Gold,Ui.B("#2A1C00")));
 
@@ -390,8 +395,8 @@ namespace PTVgame {
    var box=Ui.Input("",190); box.MaxLength=20; box.CharacterCasing=CharacterCasing.Upper; row.Children.Add(box);
    var go=Btn("แลกโค้ด",Ui.Gold); go.Foreground=Ui.B("#2A1C00"); go.Margin=new Thickness(10,0,0,6); row.Children.Add(go);
    go.Click+=async(s,e)=>{
-    if(box.Text.Trim().Length<6) { status.Text=AppLanguage.T("กรุณากรอกโค้ด VIP"); return; }
-    await Act(go,"แลกโค้ดสำเร็จ",async()=>{ var r=await AccountService.RedeemCode(box.Text.Trim()); await AccountService.Load(); Build(); string gn=J.S(r,"game_name"); status.Text=AppLanguage.T("แลกโค้ดสำเร็จ • ได้ ")+(string.IsNullOrEmpty(gn)?"VIP":gn)+" "+J.L(r,"days")+AppLanguage.T(" วัน"); });
+    if(box.Text.Trim().Length<6) { status.Text=AppLanguage.T("กรุณากรอกโค้ดเกม"); return; }
+    await Act(go,"แลกโค้ดสำเร็จ",async()=>{ var r=await AccountService.RedeemCode(box.Text.Trim()); await AccountService.Load(); Build(); string gn=J.S(r,"game_name"); status.Text=AppLanguage.T("แลกโค้ดสำเร็จ • ได้ ")+(string.IsNullOrEmpty(gn)?AppLanguage.T("ทุกเกม"):gn)+" "+J.L(r,"days")+AppLanguage.T(" วัน"); });
    };
    return Box(p);
   }
@@ -400,14 +405,13 @@ namespace PTVgame {
    List<Plan> list;
    try { list=await AccountService.Plans(); } catch(Exception ex) { if(id==renderId) { holder.Children.Clear(); holder.Children.Add(Text("โหลดราคาไม่สำเร็จ: "+ex.Message,13,Ui.Red)); } return; }
    if(id!=renderId) return; holder.Children.Clear();
-   var monthly=list.FirstOrDefault(p=>p.code=="monthly");
    if(target==null&&!wallet) holder.Children.Add(FreeCard());
-   foreach(var p in list) holder.Children.Add(string.IsNullOrEmpty(p.gameId)?PlanCard(p,monthly,target,wallet):GameCard(p,target,wallet));
+   foreach(var p in list.Where(x=>!string.IsNullOrEmpty(x.gameId))) holder.Children.Add(GameCard(p,target,wallet));
   }
 
   // free plan: ฿0 — Game To Earn and free games, no payment needed
   UIElement FreeCard() {
-   var a=AccountService.Current; bool vip=a!=null&&(a.IsAdmin||(a.vipUntil!=null&&a.vipUntil.Value>DateTime.UtcNow));
+   var a=AccountService.Current; bool vip=a!=null&&(a.IsAdmin||(a.games!=null&&a.games.Any(kv=>kv.Value>DateTime.UtcNow)));
    var c=new StackPanel { Width=300 };
    var top=new DockPanel(); top.Children.Add(Ui.Bold(Text("ฟรี",15)));
    if(!vip) { var cur=Ui.Pill("แพ็กเกจปัจจุบัน",ColorBrush("#0F4A2E"),ColorBrush("#5CF29B")); cur.HorizontalAlignment=HorizontalAlignment.Right; top.Children.Add(cur); }
@@ -420,7 +424,7 @@ namespace PTVgame {
    c.Children.Add(price);
    c.Children.Add(Text("ไม่ต้องใช้บัตรหรือชำระเงิน",12,muted));
    var feats=new StackPanel { Margin=new Thickness(0,16,0,12) }; c.Children.Add(feats);
-   foreach(var f in new[]{ new[]{"✓","Game To Earn: เชื่อม TikTok LIVE → กดคีย์ใน Roblox"},new[]{"✓","Preset และคำสั่ง ของขวัญ / Like / ติดตาม"},new[]{"✓","หน้าจอ OBS / TikTok LIVE Studio + แก้วโหล"},new[]{"✓","เกมฟรีใน PTVgame"},new[]{"—","เกม VIP ทั้งหมด (อัปเกรดได้ทุกเมื่อ)"} }) {
+   foreach(var f in new[]{ new[]{"✓","Game To Earn: เชื่อม TikTok LIVE → กดคีย์ใน Roblox"},new[]{"✓","Preset และคำสั่ง ของขวัญ / Like / ติดตาม"},new[]{"✓","หน้าจอ OBS / TikTok LIVE Studio + แก้วโหล"},new[]{"✓","เกมฟรีใน PTVgame"},new[]{"✓","ซื้อเกมที่อยากเล่นได้ทีละเกม"} }) {
     var r=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,5,0,0) }; r.Children.Add(Line(f[0],14,f[0]=="✓"?Ui.Green:muted));
     var t=Text(f[1],13,f[0]=="✓"?Foreground:muted); t.Margin=new Thickness(10,0,0,0); t.TextWrapping=TextWrapping.Wrap; t.MaxWidth=270; r.Children.Add(t); feats.Children.Add(r);
    }
@@ -428,43 +432,7 @@ namespace PTVgame {
    var box=Box(c); box.BorderBrush=ColorBrush("#2E8B57"); return box;
   }
 
-  UIElement PlanCard(Plan p,Plan monthly,Func<long?> target,bool wallet) {
-   bool agent=AccountService.Current.IsAgent; bool yearly=p.code=="yearly"; bool disc=target==null&&DiscountActive;
-   decimal usd=agent?p.agentPriceUsd:p.priceUsd,thb=agent?p.agentPriceThb:p.priceThb; decimal strike=agent?p.priceUsd:p.listPriceUsd;
-   if(disc) { strike=p.priceUsd; usd=Math.Round(usd*(100-storeDiscountPct)/100m,2); thb=Math.Round(thb*(100-storeDiscountPct)/100m,2); }
-   var c=new StackPanel { Width=300 };
-   var top=new DockPanel(); top.Children.Add(Ui.Bold(Text(yearly?"รายปี":"รายเดือน",15)));
-   if(yearly) { var best=Ui.Pill("คุ้มที่สุด",Ui.Gold,Ui.B("#2A1C00")); best.HorizontalAlignment=HorizontalAlignment.Right; top.Children.Add(best); }
-   c.Children.Add(top);
-   var head=Ui.Bold(Text(yearly?"เล่นยาวทั้งปี":"เริ่มต้น VIP",26)); head.Margin=new Thickness(0,14,0,2); c.Children.Add(head);
-   c.Children.Add(Text(yearly?"ราคาดีที่สุดสำหรับสายสตรีมและผู้เล่นประจำ":"ทดลองปลดล็อกทุกเกม จ่ายเป็นรายเดือน",13,muted));
-   var price=new WrapPanel { Margin=new Thickness(0,18,0,0) };
-   decimal toThb=p.priceUsd>0?p.priceThb/p.priceUsd:Ui.Rate;
-   string mainPrice=Ui.Thai?Ui.Money(thb,"THB"):Ui.Money(usd,"USD"),strikePrice=Ui.Thai?Ui.Money(Math.Round(strike*toThb/10)*10,"THB"):Ui.Money(strike,"USD");
-   if(strike>usd) { var s=Line(strikePrice,18,muted); s.TextDecorations=TextDecorations.Strikethrough; s.Margin=new Thickness(0,0,8,4); s.VerticalAlignment=VerticalAlignment.Bottom; price.Children.Add(s); }
-   var big=Ui.Bold(Line(mainPrice,Ui.Thai?36:40)); price.Children.Add(big);
-   var per=Text(yearly?" / ปี":" / เดือน",15,muted); per.VerticalAlignment=VerticalAlignment.Bottom; per.Margin=new Thickness(4,0,0,8); price.Children.Add(per);
-   c.Children.Add(price);
-   c.Children.Add(Text((!AccountService.OnlinePay?(Ui.Thai?"ชำระผ่าน QR พร้อมเพย์":"หรือ "+Ui.Money(thb,"THB")+" ผ่าน QR พร้อมเพย์"):Ui.Thai?"หรือ "+Ui.Money(usd,"USD")+" ผ่าน PayPal / บัตร":"หรือ "+Ui.Money(thb,"THB")+" ผ่าน QR พร้อมเพย์")+(agent?" • ราคาตัวแทน":"")+(disc?" • ลด "+storeDiscountPct+"% ครั้งแรก":""),12,disc?Ui.Green:muted));
-   if(yearly&&monthly!=null&&!disc) { decimal m=(agent?monthly.agentPriceUsd:monthly.priceUsd)*12; if(m>usd) c.Children.Add(Text("ถูกกว่าจ่ายรายเดือน 12 เดือน "+Math.Round((m-usd)/m*100)+"%",12,Ui.Green)); }
-   var feats=new StackPanel { Margin=new Thickness(0,16,0,12) }; c.Children.Add(feats);
-   var list=new List<string>{"เข้าเล่นได้ทุกเกมใน PTVgame","เกม Roblox + Game To Earn ครบทุกแมพ","เกมใหม่เล่นได้ทันทีที่เปิดตัว","อัปเดตเกมอัตโนมัติ","ซื้อเพิ่มแล้ววันสะสมต่อจากของเดิม"};
-   list.Insert(0,yearly?"VIP 365 วัน":"VIP 30 วัน");
-   foreach(var f in list) { var r=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,5,0,0) }; r.Children.Add(Line("✓",14,Ui.Green)); var t=Text(f,13); t.Margin=new Thickness(10,0,0,0); r.Children.Add(t); feats.Children.Add(r); }
-   if(wallet) {
-    var w=Btn("จ่ายด้วยกระเป๋าเงิน • "+Ui.Local(p.agentPriceThb),Ui.Gold); w.Foreground=Ui.B("#2A1C00"); w.Margin=new Thickness(0,6,0,0); c.Children.Add(w);
-    w.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayWallet(p,"vip",t,1,w); };
-   }
-   var qr=Btn("ชำระด้วย QR พร้อมเพย์ • "+Ui.Money(thb,"THB"),accent); qr.Margin=new Thickness(0,wallet?8:6,0,0); c.Children.Add(qr);
-   var pp=Btn("PayPal • "+Ui.Money(usd,"USD"),ColorBrush("#FFC439")); pp.Foreground=ColorBrush("#14274E"); pp.Margin=new Thickness(0,8,0,0); c.Children.Add(pp);
-   var card=Btn("บัตรเครดิต / เดบิต • "+Ui.Money(usd,"USD"),ColorBrush("#193B58")); card.Margin=new Thickness(0,8,0,0); c.Children.Add(card);
-   if(!AccountService.OnlinePay) { pp.Visibility=Visibility.Collapsed; card.Visibility=Visibility.Collapsed; }
-   qr.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayPromptPay(p.code,t,qr,"vip",1); };
-   pp.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayOnline(p.code,"paypal",t,"vip",1); };
-   card.Click+=async(s,e)=>{ long? t; if(!Target(target,out t)) return; await PayOnline(p.code,"card",t,"vip",1); };
-   var box=Box(c); if(yearly) box.BorderBrush=Ui.Gold; return box;
-  }
-  // one game for sale: cover, price, days, and the same payment buttons as VIP
+  // one game for sale: cover, price, days and payment buttons
   UIElement GameCard(Plan p,Func<long?> target,bool wallet) {
    var a=AccountService.Current; bool agent=a.IsAgent; bool disc=target==null&&DiscountActive;
    decimal usd=agent?p.agentPriceUsd:p.priceUsd,thb=agent?p.agentPriceThb:p.priceThb;
@@ -510,7 +478,7 @@ namespace PTVgame {
    finally { b.IsEnabled=true; }
    if(order==null) return;
    var dlg=new PromptPayWindow(order,name); dlg.Show();
-   if(dlg.SlipSent) status.Text=AppLanguage.T("ส่งสลิปแล้ว • VIP จะเปิดให้หลังแอดมินอนุมัติ");
+   if(dlg.SlipSent) status.Text=AppLanguage.T("ส่งสลิปแล้ว • เกมจะเปิดให้หลังแอดมินอนุมัติ");
    Render();
   }
 
@@ -521,8 +489,8 @@ namespace PTVgame {
    catch(OperationCanceledException) { status.Text=AppLanguage.T("หมดเวลาหรือยกเลิกการรอ • ถ้าจ่ายแล้ว ระบบจะยืนยันให้อัตโนมัติภายหลัง"); }
    catch(Exception ex) { status.Text=AppLanguage.T("ชำระเงินไม่สำเร็จ: ")+ex.Message; }
    finally { busy=false; cancellation.Dispose(); cancellation=null; progress.Visibility=Visibility.Collapsed; cancel.Visibility=Visibility.Collapsed; cancel.Content=AppLanguage.T("ยกเลิกดาวน์โหลด"); }
-   if(result=="paid") { storeDiscountCode=null; status.Text=AppLanguage.T(kind=="codes"?"ชำระเงินสำเร็จ • โค้ด VIP อยู่ในหน้าตัวแทนแล้ว":target==null?"ชำระเงินสำเร็จ • VIP พร้อมใช้งานแล้ว":"ชำระเงินสำเร็จ • ส่ง VIP ให้ไอดีปลายทางแล้ว"); Build(); return; }
-   if(result=="waiting") status.Text=AppLanguage.T("PayPal กำลังตรวจสอบรายการ • VIP จะเปิดอัตโนมัติเมื่อยืนยันแล้ว");
+   if(result=="paid") { storeDiscountCode=null; status.Text=AppLanguage.T(kind=="codes"?"ชำระเงินสำเร็จ • โค้ดเกมอยู่ในหน้าตัวแทนแล้ว":target==null?"ชำระเงินสำเร็จ • เกมพร้อมเล่นแล้ว":"ชำระเงินสำเร็จ • ส่งเกมให้ไอดีปลายทางแล้ว"); Build(); return; }
+   if(result=="waiting") status.Text=AppLanguage.T("PayPal กำลังตรวจสอบรายการ • เกมจะเปิดอัตโนมัติเมื่อยืนยันแล้ว");
    else if(result=="cancelled") status.Text=AppLanguage.T("ยกเลิกการชำระเงินแล้ว");
    else if(result=="failed") status.Text=AppLanguage.T("PayPal ปฏิเสธรายการ กรุณาลองวิธีอื่น");
    Render();
@@ -532,7 +500,7 @@ namespace PTVgame {
    decimal cost=p.agentPriceThb*quantity;
    string what=kind=="codes"?AppLanguage.T("โค้ด ")+AppLanguage.T(Ui.PlanName(p.code))+" x"+quantity:AppLanguage.T(Ui.PlanName(p.code))+(target==null?"":AppLanguage.T(" ให้ ID ")+target.Value.ToString("00000000"));
    if(MessageBox.Show(AppLanguage.T("จ่ายด้วยกระเป๋าเงิน ")+Ui.Local(cost)+AppLanguage.T(" สำหรับ ")+what+"?","PTVgame",MessageBoxButton.YesNo)!=MessageBoxResult.Yes) return;
-   await Act(b,kind=="codes"?"สร้างโค้ด VIP แล้ว":"ส่ง VIP แล้ว",async()=>{ await AccountService.WalletBuy(p.code,kind,target,quantity); await AccountService.Load(); Render(); });
+   await Act(b,kind=="codes"?"สร้างโค้ดเกมแล้ว":"ส่งเกมแล้ว",async()=>{ await AccountService.WalletBuy(p.code,kind,target,quantity); await AccountService.Load(); Render(); });
   }
 
   async void FillOrders(StackPanel holder,int id,bool giftsOnly) {
@@ -594,7 +562,7 @@ namespace PTVgame {
    var linkBox=Ui.Input(link); linkBox.IsReadOnly=true; linkBox.FontSize=12; share.Children.Add(linkBox);
    var shareRow=new WrapPanel(); share.Children.Add(shareRow);
    var copyLink=Btn("คัดลอกลิงก์",ColorBrush("#193B58")); copyLink.FontSize=12; copyLink.Click+=(s,e)=>{ Ui.Copy(link); status.Text=AppLanguage.T("คัดลอกลิงก์แล้ว"); }; shareRow.Children.Add(copyLink);
-   string msg=AppLanguage.T("โหลด PTVgame เล่นเกม TikTok Live ได้ทุกเกม: ")+link+"\n"+AppLanguage.T("ใส่โค้ด ")+code+AppLanguage.T(" ในหน้าร้านค้า VIP ลด ")+pct+AppLanguage.T("% ครั้งแรก");
+   string msg=AppLanguage.T("โหลด PTVgame เล่นเกม TikTok Live ได้ทุกเกม: ")+link+"\n"+AppLanguage.T("ใส่โค้ด ")+code+AppLanguage.T(" ในหน้าร้านค้าเกม ลด ")+pct+AppLanguage.T("% ครั้งแรก");
    var copyMsg=Btn("คัดลอกข้อความชวนลูกค้า",accent); copyMsg.FontSize=12; copyMsg.Click+=(s,e)=>{ Ui.Copy(msg); status.Text=AppLanguage.T("คัดลอกข้อความแล้ว • วางในแชตหรือไลฟ์ได้เลย"); }; shareRow.Children.Add(copyMsg);
    share.Children.Add(Text("มีคนกดลิงก์แล้ว "+J.L(d,"clicks")+" ครั้ง • ลูกค้าที่ผูกแล้ว "+customers.Count+" คน",12,muted));
    top.Children.Add(Box(share));
@@ -602,14 +570,14 @@ namespace PTVgame {
    var w=new StackPanel { Width=300 };
    w.Children.Add(Text("กระเป๋าเงินตัวแทน",13,muted));
    w.Children.Add(Ui.Bold(Line(Ui.Local(wallet),38,Ui.Green)));
-   w.Children.Add(Text("ใช้ซื้อ VIP/โค้ดได้ทันที หรือขอถอนเป็นเงินสด",12,muted));
+   w.Children.Add(Text("ใช้ซื้อเกม/โค้ดได้ทันที หรือขอถอนเป็นเงินสด",12,muted));
    var hist=new StackPanel { Margin=new Thickness(0,10,0,0) }; w.Children.Add(hist);
    foreach(var l in ledger.Take(6)) { decimal lv=J.M(l,"amount_thb"); var r=new DockPanel { Margin=new Thickness(0,3,0,0) }; var a=Line((lv>=0?"+":"-")+Ui.Local(Math.Abs(lv)),12,lv>=0?Ui.Green:Ui.Red); DockPanel.SetDock(a,Dock.Right); r.Children.Add(a); var n=Line(Ui.Date(J.T(l,"created_at"))+"  "+(J.S(l,"note")??J.S(l,"kind")),12,muted); n.TextTrimming=TextTrimming.CharacterEllipsis; n.TextWrapping=TextWrapping.NoWrap; r.Children.Add(n); hist.Children.Add(r); }
    if(ledger.Count==0) hist.Children.Add(Text("ยังไม่มีรายการ",12,muted));
    top.Children.Add(Box(w));
 
-   // 2. send VIP to a customer
-   holder.Children.Add(Ui.Bold(Text("ส่ง VIP ให้ลูกค้า",20)));
+   // 2. send a game to a customer
+   holder.Children.Add(Ui.Bold(Text("ส่งเกมให้ลูกค้า",20)));
    var find=new StackPanel();
    find.Children.Add(Text("ให้ลูกค้าเปิดหน้าโปรไฟล์ใน PTVgame แล้วแจ้ง ID 8 หลัก",12,muted));
    var row=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,8,0,0) }; find.Children.Add(row);
@@ -620,8 +588,8 @@ namespace PTVgame {
     result.Children.Clear(); if(agentFound==null) return;
     var r=new StackPanel { Orientation=Orientation.Horizontal }; r.Children.Add(Ui.Avatar(J.S(agentFound,"avatar_url"),J.S(agentFound,"display_name"),46));
     var t=new StackPanel { Margin=new Thickness(12,0,0,0),VerticalAlignment=VerticalAlignment.Center }; t.Children.Add(Ui.Bold(Line(J.S(agentFound,"display_name"),16)));
-    var until=J.T(agentFound,"vip_until"); t.Children.Add(Line("ID "+J.L(agentFound,"ptv_id").ToString("00000000")+" • "+(until!=null&&until.Value>DateTime.UtcNow?AppLanguage.T("VIP ถึง ")+Ui.Date(until):AppLanguage.T("ยังไม่เป็น VIP")),12,muted));
-    r.Children.Add(t); result.Children.Add(r); result.Children.Add(Text("✓ ยืนยันผู้รับแล้ว • เลือกแพ็กเกจด้านล่าง",12,Ui.Green));
+    t.Children.Add(Line("ID "+J.L(agentFound,"ptv_id").ToString("00000000"),12,muted));
+    r.Children.Add(t); result.Children.Add(r); result.Children.Add(Text("✓ ยืนยันผู้รับแล้ว • เลือกเกมด้านล่าง",12,Ui.Green));
    };
    show();
    search.Click+=async(s,e)=>{
@@ -634,14 +602,13 @@ namespace PTVgame {
    };
    holder.Children.Add(Box(find));
    var gift=new WrapPanel(); holder.Children.Add(gift);
-   var monthly=plans.FirstOrDefault(p=>p.code=="monthly");
-   foreach(var p in plans) gift.Children.Add(PlanCard(p,monthly,()=>agentTarget,true));
+   foreach(var p in plans.Where(x=>!string.IsNullOrEmpty(x.gameId))) gift.Children.Add(GameCard(p,()=>agentTarget,true));
 
-   // 3. buy VIP code batches
-   holder.Children.Add(Ui.Bold(Text("ซื้อโค้ด VIP เป็นชุด (ราคาตัวแทน)",20)));
+   // 3. buy game code batches
+   holder.Children.Add(Ui.Bold(Text("ซื้อโค้ดเกมเป็นชุด (ราคาตัวแทน)",20)));
    var buy=new StackPanel { Width=520 };
-   buy.Children.Add(Text("ขายโค้ดให้ลูกค้าเองได้ในราคาที่คุณตั้ง ลูกค้าแลกโค้ดที่หน้าร้านค้า VIP แล้วไอดีจะผูกกับคุณ",12,muted));
-   Plan chosen=plans.FirstOrDefault(); var radios=new StackPanel { Margin=new Thickness(0,10,0,0) }; buy.Children.Add(radios);
+   buy.Children.Add(Text("ขายโค้ดให้ลูกค้าเองได้ในราคาที่คุณตั้ง ลูกค้าแลกโค้ดที่หน้าร้านค้าเกม แล้วไอดีจะผูกกับคุณ",12,muted));
+   plans=plans.Where(x=>!string.IsNullOrEmpty(x.gameId)).ToList(); Plan chosen=plans.FirstOrDefault(); var radios=new StackPanel { Margin=new Thickness(0,10,0,0) }; buy.Children.Add(radios);
    var qty=Ui.Input("5",90); qty.MaxLength=3; var total=Text("",14,Ui.Gold);
    Action recalc=()=>{ int q; if(chosen==null||!int.TryParse(qty.Text,out q)||q<1||q>100) { total.Text=AppLanguage.T("จำนวน 1-100 โค้ด"); return; } total.Text=AppLanguage.T("รวม ")+(Ui.Thai?Ui.Money(chosen.agentPriceThb*q,"THB"):Ui.Money(chosen.agentPriceUsd*q,"USD")); };
    foreach(var p in plans) { var plan=p; var rb=new RadioButton { GroupName="codeplan",IsChecked=plan==chosen,Foreground=Foreground,Margin=new Thickness(0,4,0,0),Content=AppLanguage.T(Ui.PlanName(plan.code))+"  •  "+(Ui.Thai?Ui.Money(plan.agentPriceThb,"THB"):Ui.Money(plan.agentPriceUsd,"USD"))+AppLanguage.T(" / โค้ด") }; rb.Checked+=(s,e)=>{ chosen=plan; recalc(); }; radios.Children.Add(rb); }
@@ -675,13 +642,12 @@ namespace PTVgame {
    // 5. customers
    holder.Children.Add(Ui.Bold(Text("ลูกค้าของฉัน ("+customers.Count+")",20)));
    var custList=new StackPanel();
-   if(customers.Count==0) custList.Children.Add(Text("ยังไม่มีลูกค้าผูกกับคุณ • แจกรหัสตัวแทนหรือโค้ด VIP ให้ลูกค้า",13,muted));
+   if(customers.Count==0) custList.Children.Add(Text("ยังไม่มีลูกค้าผูกกับคุณ • แจกรหัสตัวแทนหรือโค้ดเกมให้ลูกค้า",13,muted));
    foreach(var c in customers) {
     var r=new DockPanel { Margin=new Thickness(0,5,0,0) };
     var earn=Line("+"+Ui.Local(J.M(c,"earned_thb")),13,Ui.Green); DockPanel.SetDock(earn,Dock.Right); r.Children.Add(earn);
     r.Children.Add(Ui.Avatar(J.S(c,"avatar_url"),J.S(c,"display_name"),30));
-    var until=J.T(c,"vip_until"); bool vip=until!=null&&until.Value>DateTime.UtcNow;
-    var info=Line("  "+J.S(c,"display_name")+"  •  ID "+J.L(c,"ptv_id").ToString("00000000")+"  •  "+(J.B(c,"active")?AppLanguage.T("ผูกถึง ")+Ui.Date(J.T(c,"linked_until")):AppLanguage.T("หมดอายุการผูกแล้ว"))+"  •  "+(vip?AppLanguage.T("VIP ถึง ")+Ui.Date(until):AppLanguage.T("ไม่มี VIP")),12,muted); r.Children.Add(info);
+    var info=Line("  "+J.S(c,"display_name")+"  •  ID "+J.L(c,"ptv_id").ToString("00000000")+"  •  "+(J.B(c,"active")?AppLanguage.T("ผูกถึง ")+Ui.Date(J.T(c,"linked_until")):AppLanguage.T("หมดอายุการผูกแล้ว")),12,muted); r.Children.Add(info);
     custList.Children.Add(r);
    }
    holder.Children.Add(Box(custList));
@@ -738,7 +704,7 @@ namespace PTVgame {
    try { s=await AccountService.AdminStats(); } catch(Exception ex) { if(id==renderId) AdminError(body,ex); return; }
    if(id!=renderId) return; body.Children.Clear();
    var grid=new WrapPanel(); body.Children.Add(grid);
-   foreach(var tile in new[]{ new[]{"ผู้ใช้ทั้งหมด",J.S(s,"users")},new[]{"VIP ที่ใช้งานอยู่",J.S(s,"vip")},new[]{"ตัวแทน",J.S(s,"agents")},new[]{"สลิปรอตรวจ",J.S(s,"review")},
+   foreach(var tile in new[]{ new[]{"ผู้ใช้ทั้งหมด",J.S(s,"users")},new[]{"ผู้เล่นที่มีเกม",J.S(s,"vip")},new[]{"ตัวแทน",J.S(s,"agents")},new[]{"สลิปรอตรวจ",J.S(s,"review")},
      new[]{"รอชำระ",J.S(s,"pending")},new[]{"สมัครใหม่ 7 วัน",J.S(s,"new_users_7d")},new[]{"รายได้ 30 วัน (USD)",Ui.Money(J.M(s,"revenue_usd_30d"),"USD")},new[]{"รายได้ 30 วัน (THB)",Ui.Money(J.M(s,"revenue_thb_30d"),"THB")},
      new[]{"คำขอถอนเงินรอโอน",J.S(s,"withdrawals")},new[]{"ยอดในกระเป๋าตัวแทนรวม",Ui.Money(J.M(s,"wallets_thb"),"THB")} }) {
     var p=new StackPanel { Width=170 }; p.Children.Add(Text(tile[0],12,muted)); p.Children.Add(Ui.Bold(Line(tile[1],28))); var b=Box(p); b.Padding=new Thickness(18); grid.Children.Add(b);
@@ -748,15 +714,16 @@ namespace PTVgame {
   }
 
   async void AdminUsers(StackPanel body,int id) {
-   List<Dictionary<string,object>> users;
-   try { users=await AccountService.AdminUsers(adminSearch); } catch(Exception ex) { if(id==renderId) AdminError(body,ex); return; }
+   List<Dictionary<string,object>> users; Dictionary<string,object> owned; List<Plan> gamePlans;
+   try { users=await AccountService.AdminUsers(adminSearch); owned=await AccountService.AdminUsersGames(users.Select(x=>J.S(x,"id")).ToList()); gamePlans=(await AccountService.AllPlans()).Where(x=>!string.IsNullOrEmpty(x.gameId)).ToList(); } catch(Exception ex) { if(id==renderId) AdminError(body,ex); return; }
    if(id!=renderId) return; body.Children.Clear();
    var bar=new StackPanel { Orientation=Orientation.Horizontal }; body.Children.Add(bar);
    var q=Ui.Input(adminSearch,300); q.ToolTip=AppLanguage.T("ค้นหาด้วย ID, ชื่อ หรืออีเมล"); bar.Children.Add(q);
    var go=Btn("ค้นหาผู้ใช้",accent); go.Margin=new Thickness(10,0,0,6); go.IsDefault=true; bar.Children.Add(go); go.Click+=(s,e)=>{ adminSearch=q.Text.Trim(); Render(); };
    body.Children.Add(Text(users.Count+" บัญชี (แสดงสูงสุด 100)",12,muted));
    foreach(var u in users) {
-    string uid=J.S(u,"id"); var until=J.T(u,"vip_until"); bool vip=until!=null&&until.Value>DateTime.UtcNow; bool banned=J.B(u,"banned");
+    string uid=J.S(u,"id"); bool banned=J.B(u,"banned");
+    object og; var userGames=owned!=null&&owned.TryGetValue(uid,out og)?og as Dictionary<string,object>:null;
     var row=new Grid(); row.ColumnDefinitions.Add(new ColumnDefinition { Width=GridLength.Auto }); row.ColumnDefinitions.Add(new ColumnDefinition()); row.ColumnDefinitions.Add(new ColumnDefinition { Width=GridLength.Auto });
     row.Children.Add(Ui.Avatar(J.S(u,"avatar_url"),J.S(u,"display_name"),44));
     var info=new StackPanel { Margin=new Thickness(12,0,12,0),VerticalAlignment=VerticalAlignment.Center }; Grid.SetColumn(info,1); row.Children.Add(info);
@@ -764,7 +731,8 @@ namespace PTVgame {
     info.Children.Add(Line((J.S(u,"email")??"-")+" • "+(J.S(u,"provider")??"")+" • "+AppLanguage.T("สมัคร ")+Ui.Date(J.T(u,"created_at"))+" • "+AppLanguage.T("ล่าสุด ")+Ui.Date(J.T(u,"last_seen")),12,muted));
     var tags=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(0,4,0,0) }; info.Children.Add(tags);
     tags.Children.Add(Ui.Pill(Ui.Role(J.S(u,"role")),ColorBrush("#193B58"),Brushes.White));
-    tags.Children.Add(Ui.Pill(vip?"VIP ถึง "+Ui.Date(until):"ไม่มี VIP",vip?Ui.Gold:ColorBrush("#2B3B4A"),vip?Ui.B("#2A1C00"):Brushes.White));
+    tags.Children.Add(Ui.Pill(userGames!=null&&userGames.Count>0?AppLanguage.T("เกมที่ซื้อแล้ว: ")+userGames.Count:AppLanguage.T("ยังไม่ได้ซื้อเกม"),userGames!=null&&userGames.Count>0?Ui.Gold:ColorBrush("#2B3B4A"),userGames!=null&&userGames.Count>0?Ui.B("#2A1C00"):Brushes.White));
+    if(userGames!=null&&userGames.Count>0) info.Children.Add(Line(string.Join("  •  ",userGames.Select(kv=>{ var gp=gamePlans.FirstOrDefault(x=>x.gameId==kv.Key); DateTime t; return (gp!=null?gp.name:kv.Key)+" "+(DateTime.TryParse(Convert.ToString(kv.Value,System.Globalization.CultureInfo.InvariantCulture),System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.AdjustToUniversal|System.Globalization.DateTimeStyles.AssumeUniversal,out t)?AppLanguage.T("ถึง ")+Ui.Date(t):""); })),12,Ui.Green));
     if(banned) tags.Children.Add(Ui.Pill("ถูกระงับ",Ui.Red,Brushes.White));
     if(!string.IsNullOrEmpty(J.S(u,"agent_code"))) info.Children.Add(Line(AppLanguage.T("รหัสตัวแทน ")+J.S(u,"agent_code")+" • "+AppLanguage.T("กระเป๋า ")+Ui.Money(J.M(u,"wallet_thb"),"THB")+" • "+AppLanguage.T("ลูกค้า ")+J.L(u,"customers"),12,Ui.Gold));
     if(!string.IsNullOrEmpty(J.S(u,"agent_name"))) info.Children.Add(Line(AppLanguage.T("ผูกกับตัวแทน ")+J.S(u,"agent_name")+" (ID "+J.L(u,"agent_ptv_id").ToString("00000000")+")",12,muted));
@@ -772,9 +740,8 @@ namespace PTVgame {
     var role=new ComboBox { ItemsSource=new[]{"user","agent","admin"},SelectedItem=J.S(u,"role"),Width=90,Margin=new Thickness(0,6,8,0) }; act.Children.Add(role);
     var setRole=Btn("ตั้งระดับ",ColorBrush("#193B58")); setRole.FontSize=12; act.Children.Add(setRole);
     setRole.Click+=async(s,e)=>await Act(setRole,"เปลี่ยนระดับแล้ว",async()=>{ await AccountService.AdminSetRole(uid,(string)role.SelectedItem); Render(); });
-    foreach(var d in new[]{30,365}) { int days=d; var add=Btn("+"+d+" วัน",Ui.Gold); add.Foreground=Ui.B("#2A1C00"); add.FontSize=12; act.Children.Add(add);
-     add.Click+=async(s,e)=>{ if(MessageBox.Show(AppLanguage.T("เพิ่ม VIP ")+days+AppLanguage.T(" วัน ให้ ")+J.S(u,"display_name")+"?","PTVgame",MessageBoxButton.YesNo)!=MessageBoxResult.Yes) return; await Act(add,"เพิ่ม VIP แล้ว",async()=>{ await AccountService.AdminGrantVip(uid,days); Render(); }); }; }
-    if(vip) { var rm=Btn("ลบ VIP",ColorBrush("#3A2530")); rm.FontSize=12; act.Children.Add(rm); rm.Click+=async(s,e)=>{ if(MessageBox.Show(AppLanguage.T("ลบ VIP ของ ")+J.S(u,"display_name")+"?","PTVgame",MessageBoxButton.YesNo)!=MessageBoxResult.Yes) return; await Act(rm,"ลบ VIP แล้ว",async()=>{ await AccountService.AdminGrantVip(uid,0); Render(); }); }; }
+    var give=Btn("+ ให้เกม",Ui.Gold); give.Foreground=Ui.B("#2A1C00"); give.FontSize=12; act.Children.Add(give);
+    give.Click+=async(s,e)=>{ var pick=AskGame(J.S(u,"display_name"),gamePlans,userGames); if(pick==null) return; await Act(give,pick.Item2>0?"ให้เกมแล้ว":"ลดวันเล่นแล้ว",async()=>{ await AccountService.AdminGrantGame(uid,pick.Item1,pick.Item2); Render(); }); };
     var link=Btn("ผูกตัวแทน",ColorBrush("#193B58")); link.FontSize=12; act.Children.Add(link);
     link.Click+=async(s,e)=>{ string v=Ask("ID ตัวแทน 8 หลัก (เว้นว่าง = ยกเลิกการผูก)",""); if(v==null&&MessageBox.Show(AppLanguage.T("ยกเลิกการผูกตัวแทนของ ")+J.S(u,"display_name")+"?","PTVgame",MessageBoxButton.YesNo)!=MessageBoxResult.Yes) return; long ag; long? agent=v!=null&&long.TryParse(v,out ag)?(long?)ag:null; await Act(link,"บันทึกแล้ว",async()=>{ await AccountService.AdminSetReferrer(uid,agent); Render(); }); };
     if(!string.IsNullOrEmpty(J.S(u,"agent_code"))) { var adj=Btn("ปรับกระเป๋า",ColorBrush("#193B58")); adj.FontSize=12; act.Children.Add(adj);
@@ -801,7 +768,7 @@ namespace PTVgame {
     var h=new StackPanel { Orientation=Orientation.Horizontal }; h.Children.Add(Ui.Pill(Ui.Status(st),Ui.StatusColor(st),Ui.B("#14202B"))); h.Children.Add(Ui.Bold(Line("#"+J.S(o,"order_no")+"  "+Ui.Money(J.M(o,"amount"),J.S(o,"currency"))+"  •  "+AppLanguage.T(Ui.PlanName(J.S(o,"plan_code"))),15))); info.Children.Add(h);
     string buyer=J.S(o,"buyer_name")+" (ID "+J.L(o,"buyer_ptv_id").ToString("00000000")+")",target=J.S(o,"target_name")+" (ID "+J.L(o,"target_ptv_id").ToString("00000000")+")";
     info.Children.Add(Line(AppLanguage.T("ผู้ซื้อ: ")+buyer+(J.L(o,"buyer_ptv_id")!=J.L(o,"target_ptv_id")?AppLanguage.T("  →  ผู้รับ: ")+target:"")+(J.B(o,"agent_price")?AppLanguage.T("  • ราคาตัวแทน"):""),12,muted));
-    if(J.S(o,"kind")=="codes") info.Children.Add(Line(AppLanguage.T("ชุดโค้ด VIP x")+J.L(o,"quantity"),12,Ui.Gold));
+    if(J.S(o,"kind")=="codes") info.Children.Add(Line(AppLanguage.T("ชุดโค้ดเกม x")+J.L(o,"quantity"),12,Ui.Gold));
     if(J.L(o,"discount_pct")>0||J.M(o,"commission_thb")>0||!string.IsNullOrEmpty(J.S(o,"commission_agent_name"))) info.Children.Add(Line((J.L(o,"discount_pct")>0?AppLanguage.T("ส่วนลด ")+J.L(o,"discount_pct")+"% ("+J.S(o,"discount_code")+")  ":"")+(string.IsNullOrEmpty(J.S(o,"commission_agent_name"))?"":AppLanguage.T("ตัวแทน ")+J.S(o,"commission_agent_name")+"  ")+(J.M(o,"commission_thb")>0?AppLanguage.T("ค่าคอม ")+Ui.Money(J.M(o,"commission_thb"),"THB"):""),12,Ui.Gold));
     info.Children.Add(Line(AppLanguage.T(Ui.Method(J.S(o,"method")))+" • "+AppLanguage.T("สร้าง ")+Ui.Date(J.T(o,"created_at"))+(J.T(o,"paid_at")!=null?AppLanguage.T(" • ชำระ ")+Ui.Date(J.T(o,"paid_at")):"")+(string.IsNullOrEmpty(J.S(o,"paypal_order_id"))?"":" • PayPal "+J.S(o,"paypal_order_id")),12,muted));
     if(!string.IsNullOrEmpty(J.S(o,"note"))) info.Children.Add(Line(AppLanguage.T("หมายเหตุ: ")+J.S(o,"note"),12,Ui.Red));
@@ -809,7 +776,7 @@ namespace PTVgame {
     if(!string.IsNullOrEmpty(slip)) { var view=Btn("ดูสลิป",ColorBrush("#193B58")); view.FontSize=12; act.Children.Add(view); view.Click+=async(s,e)=>await ShowSlip(view,slip,"#"+J.S(o,"order_no")+" • "+Ui.Money(J.M(o,"amount"),J.S(o,"currency"))); }
     if(st=="review"||st=="pending") {
      var ok=Btn("อนุมัติ",ColorBrush("#1E7A52")); ok.FontSize=12; act.Children.Add(ok);
-     ok.Click+=async(s,e)=>{ if(MessageBox.Show(AppLanguage.T("ยืนยันว่าได้รับเงิน ")+Ui.Money(J.M(o,"amount"),J.S(o,"currency"))+AppLanguage.T(" แล้ว และเปิด VIP ให้ ")+target+"?","PTVgame",MessageBoxButton.YesNo)!=MessageBoxResult.Yes) return; await Act(ok,"อนุมัติแล้ว • เปิด VIP ให้ผู้รับแล้ว",async()=>{ await AccountService.AdminApprove(oid); Render(); }); };
+     ok.Click+=async(s,e)=>{ if(MessageBox.Show(AppLanguage.T("ยืนยันว่าได้รับเงิน ")+Ui.Money(J.M(o,"amount"),J.S(o,"currency"))+AppLanguage.T(" แล้ว และเปิดเกมให้ ")+target+"?","PTVgame",MessageBoxButton.YesNo)!=MessageBoxResult.Yes) return; await Act(ok,"อนุมัติแล้ว • เปิดเกมให้ผู้รับแล้ว",async()=>{ await AccountService.AdminApprove(oid); Render(); }); };
      var no=Btn("ปฏิเสธ",ColorBrush("#5A1E28")); no.FontSize=12; act.Children.Add(no);
      no.Click+=async(s,e)=>{ string reason=Ask("เหตุผลที่ปฏิเสธ (ผู้ซื้อจะเห็นข้อความนี้)","สลิปไม่ถูกต้อง หรือยอดไม่ตรง"); if(reason==null) return; await Act(no,"ปฏิเสธแล้ว",async()=>{ await AccountService.AdminReject(oid,reason); Render(); }); };
     }
@@ -822,6 +789,18 @@ namespace PTVgame {
     var bytes=await AccountService.AdminSlip(path); var w=Ui.Frame("สลิป "+caption,520,760);
     var scroll=new ScrollViewer { Margin=new Thickness(16,0,16,16),VerticalScrollBarVisibility=ScrollBarVisibility.Auto }; scroll.Content=new Image { Source=Ui.Bitmap(bytes),Stretch=Stretch.Uniform }; Ui.SetBody(w,scroll); w.ShowDialog();
    } catch(Exception ex) { status.Text=ex.Message; } finally { b.IsEnabled=true; }
+  }
+  /// <summary>Admin picks a game and a number of days (negative removes days). Null when cancelled.</summary>
+  Tuple<string,int> AskGame(string who,List<Plan> gamePlans,Dictionary<string,object> owned) {
+   var w=Ui.Frame("แอดมิน",460,330); var p=new StackPanel { Margin=new Thickness(24,0,24,20) }; Ui.SetBody(w,p);
+   p.Children.Add(Ui.T(AppLanguage.T("ให้เกมกับ ")+who,15)); Tuple<string,int> answer=null;
+   var pick=new ComboBox { Margin=new Thickness(0,10,0,8) };
+   foreach(var gp in gamePlans) pick.Items.Add(new ComboBoxItem { Content=gp.name+(owned!=null&&owned.ContainsKey(gp.gameId)?AppLanguage.T(" • มีอยู่แล้ว"):""),Tag=gp.gameId });
+   pick.SelectedIndex=gamePlans.Count>0?0:-1; p.Children.Add(pick);
+   p.Children.Add(Ui.T("จำนวนวัน (ใส่ติดลบเพื่อลด เช่น -30)",13,Ui.Muted)); var days=Ui.Input("30"); days.MaxLength=5; p.Children.Add(days);
+   var ok=Ui.Btn("ให้เกม",Ui.B("#268EFF")); ok.IsDefault=true; ok.HorizontalAlignment=HorizontalAlignment.Left; p.Children.Add(ok);
+   ok.Click+=(s,e)=>{ int d; var it=pick.SelectedItem as ComboBoxItem; if(it==null||!int.TryParse(days.Text.Trim(),out d)||d==0||Math.Abs(d)>3650) return; answer=Tuple.Create((string)it.Tag,d); w.Close(); };
+   w.Loaded+=(s,e)=>{ days.Focus(); days.SelectAll(); }; w.ShowDialog(); return answer;
   }
   string Ask(string question,string initial) {
    var w=Ui.Frame("แอดมิน",420,250); var p=new StackPanel { Margin=new Thickness(24,0,24,20) }; Ui.SetBody(w,p);
@@ -836,7 +815,7 @@ namespace PTVgame {
    if(id!=renderId) return; body.Children.Clear();
    var wrap=new WrapPanel(); body.Children.Add(wrap);
    foreach(var plan in plans) {
-    var p=plan; var c=new StackPanel { Width=300 }; c.Children.Add(Ui.Bold(Text((string.IsNullOrEmpty(p.gameId)?"♛ ":"🎮 ")+p.name,17)));
+    var p=plan; var c=new StackPanel { Width=300 }; c.Children.Add(Ui.Bold(Text((string.IsNullOrEmpty(p.gameId)?"(เลิกขายแล้ว) ":"🎮 ")+p.name,17)));
     c.Children.Add(Text("ชื่อที่แสดง",12,muted)); var nameBox=Ui.Input(p.name??""); c.Children.Add(nameBox);
     c.Children.Add(Text("จำนวนวันที่ได้ต่อการซื้อ 1 ครั้ง",12,muted)); var daysBox=Ui.Input(p.days.ToString()); c.Children.Add(daysBox);
     Func<string,decimal,TextBox> field=(label,value)=>{ c.Children.Add(Text(label,12,muted)); var t=Ui.Input(value.ToString("0.00",System.Globalization.CultureInfo.InvariantCulture)); c.Children.Add(t); return t; };

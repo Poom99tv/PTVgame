@@ -1,6 +1,6 @@
 \set ON_ERROR_STOP 1
 insert into auth.users values ('00000000-0000-0000-0000-0000000000d1','v1@x.com','{"name":"V"}','{"provider":"email"}'),('00000000-0000-0000-0000-0000000000d2','f1@x.com','{"name":"F"}','{"provider":"email"}');
-update public.profiles set vip_until = now() + interval '3 days' where id = '00000000-0000-0000-0000-0000000000d1';
+insert into public.game_access(user_id, game_id, until) values ('00000000-0000-0000-0000-0000000000d1', 'zombierush', now() + interval '3 days');
 create function pg_temp.as_user(uid text) returns void language sql as $$ select set_config('request.jwt.claim.sub', uid, false) $$;
 create function pg_temp.expect_error(q text, msg text) returns void language plpgsql as $$
 begin execute q; raise exception 'EXPECTED ERROR: %', msg; exception when others then
