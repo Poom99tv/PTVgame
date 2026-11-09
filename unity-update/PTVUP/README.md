@@ -1,8 +1,8 @@
-# PTVUP 1.0.2
+# PTVUP 1.0.3
 
 Windows x64 Unity game. Product name: PTVUP. Launcher ID and ticket audience: ptvup.
 
-The complete package is published as PTVUP.v1.0.2.zip in the ptvup-v1.0.2 release. ZIP root: PTVUP/. Entry point: PTVUP/PTVUP.exe. Include UnityPlayer.dll, PTVUP_Data, MonoBleedingEdge and the entire production TikTokBridge with runtime/node.exe and node_modules.
+The complete package is published as PTVUP.v1.0.3.zip in the ptvup-v1.0.3 release. ZIP root: PTVUP/. Entry point: PTVUP/PTVUP.exe. Include UnityPlayer.dll, PTVUP_Data, MonoBleedingEdge and the entire production TikTokBridge with runtime/node.exe and node_modules.
 
 ## VIP verification
 
@@ -33,3 +33,11 @@ PTVUPBuildGuard retains the runtime-only shader and enables read/write on meshes
 A separate local development QA build with PTV_RELEASE_QA exercised all eight actual skill paths and both screen orientations. This QA flag only bypasses the ticket gate when DEVELOPMENT_BUILD is also defined. The distributed clean release has neither flag; its compiled Boot method calls the production ticket check and its audit contains no QA automation. Standalone startup was verified with ready=True, shaderUnlit=True and the expected no-ticket lock, without startup exceptions or collision-mesh errors. Source fingerprints are in build-info.json.
 
 Broken 1.0.0 and 1.0.1 releases are retired only after the 1.0.2 archive is verified and the stable manifest points to it.
+
+## 1.0.3: zoom, skill distances, meter size
+
+- Camera zoom: mouse wheel or +/- (0 resets), 0.35x–3x, saved in PlayerPrefs (PVZUP.CamZoom).
+- Settings › ระยะสกิล: metres per use for each of the 8 skills (1–5000 m), saved as PVZUP.SkillMetres.N and applied immediately; labels in the gift tab and notices follow the new values.
+- Settings › ขนาดสกิล: climb-meter size slider 40–300% (PVZUP.MeterScale), previewed live, kept on save, restored on cancel.
+
+Clean build (CleanBuildCache, LZ4HC, no development/QA defines). Standalone startup: `[PTVLicense] locked: no-ticket` and `[PTVUP Player] version=1.0.3 ready=True skills=8 columns=2 tiles=8 legacyActive=False shaderUnlit=True`. Package validated for the required entries and PTVUP/ root before upload. 1.0.2 is kept (not retired).

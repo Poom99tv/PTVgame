@@ -479,6 +479,7 @@ public sealed partial class PTVStartMenu : MonoBehaviour
                 }
             };
         }
+        string distanceError;if(!CommitDistances(out distanceError)){SetComicSettingsTab(4);settingsNotice.text=distanceError;return;}
         bool stalkInvalid;bool stalkChanged=CommitStalk(out stalkInvalid);
         if(stalkInvalid){SetComicSettingsTab(3);settingsNotice.text="ความสูงต้นถั่วต้องอยู่ระหว่าง 100 ถึง 5000 เมตร";return;}
         gifts.settings.slots = slots;

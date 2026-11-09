@@ -1,6 +1,6 @@
 {
   "product": "PTVUP",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "unity": "6000.0.59f2",
   "scene": "Assets/ClimbGame/Scenes/BeanstalkClimb.unity",
   "build": "CleanBuildCache, CompressWithLz4HC; no development mode or QA defines",
@@ -63,7 +63,7 @@
     },
     {
       "path": "Assets/ClimbGame/Scripts/ClimbGame.cs",
-      "sha256": "332607f3456121c93a565646508cb27998b555f32b5ceffacb5fc1277df79f39"
+      "sha256": "ccc41314a37d405c2559707b011e88fca9b367ef8c7d113b3d1c3a4027c75d9b"
     },
     {
       "path": "Assets/ClimbGame/Scripts/CloudSummit.cs",
@@ -175,7 +175,7 @@
     },
     {
       "path": "Assets/PTV/Scripts/PTVComicSettings.cs",
-      "sha256": "9c06351729d5af4131b0d9fa33767083f9a351d1d375a6dbc8d804424c00f9e7"
+      "sha256": "c4b01c84acdbc43c8cf6641950a8ed0f64874922fc98dd454b65cf3296305494"
     },
     {
       "path": "Assets/PTV/Scripts/PTVDrag.cs",
@@ -203,7 +203,7 @@
     },
     {
       "path": "Assets/PTV/Scripts/PTVStartMenu.cs",
-      "sha256": "dc564f8adf4642e880442b243e993fde77c3dd2e581d525c48e9ccb7eec25c6e"
+      "sha256": "504dc587c7d649e7cd91da4b8272fdd9cfd4f28572a4d2a35e3d80f0f99cfb75"
     },
     {
       "path": "Assets/PTV/Scripts/PTVText.cs",
@@ -231,7 +231,7 @@
     },
     {
       "path": "Assets/PTV/Scripts/ZGiftDirector.cs",
-      "sha256": "a16bbfa3e4324103c888c991e5020aa4f79bff579ede29c15376ed08c4fd3373"
+      "sha256": "ced736f618216cfd25531ce5c09d33b51e9172d418208321b6c574ac6e05f742"
     },
     {
       "path": "Assets/PTV/Scripts/ZHud.cs",
@@ -251,7 +251,7 @@
     },
     {
       "path": "ProjectSettings/ProjectSettings.asset",
-      "sha256": "8301794f49702851d709cb8527e3c460bfbf62e63e76620741b6b5c21c9ddcd2"
+      "sha256": "94650fa51e9130d515963d29f96349a78cc4bc77184e4aaac7bcac462c89daac"
     }
   ]
 }
