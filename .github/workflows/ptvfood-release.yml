@@ -1,0 +1,92 @@
+name: Publish verified PTVFOOD build
+on:
+  push:
+    branches: ['ptvfood-build-*']
+    paths: ['.release-input/ptvfood/**']
+permissions:
+  contents: write
+concurrency:
+  group: ptvfood-release
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reassemble and validate the Windows package
+        shell: pwsh
+        run: |
+          $metadata = Get-Content .release-input/ptvfood/metadata.json -Raw | ConvertFrom-Json
+          if ($metadata.version -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid release version' }
+          if ($metadata.filename -ne "PTVFOOD.v$($metadata.version).zip") { throw 'Unexpected archive name' }
+          if ($metadata.targetCommit -notmatch '^[0-9a-f]{40}$') { throw 'Invalid release target' }
+          $parts = @(Get-ChildItem .release-input/ptvfood/part-*.bin | Sort-Object Name)
+          if ($parts.Count -ne $metadata.parts) { throw 'Missing package parts' }
+          New-Item dist -ItemType Directory -Force | Out-Null
+          $output = Join-Path dist $metadata.filename
+          $stream = [IO.File]::Create($output)
+          try { foreach ($part in $parts) { $input = [IO.File]::OpenRead($part.FullName); try { $input.CopyTo($stream) } finally { $input.Dispose() } } } finally { $stream.Dispose() }
+          if ((Get-Item $output).Length -ne $metadata.size) { throw 'Archive size mismatch' }
+          if ((Get-FileHash $output -Algorithm SHA256).Hash.ToLower() -ne $metadata.sha256) { throw 'Archive checksum mismatch' }
+          Add-Type -AssemblyName System.IO.Compression
+          $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $output))
+          try {
+            $required = @('PTVFOOD/PTVFOOD.exe','PTVFOOD/UnityPlayer.dll','PTVFOOD/PTVFOOD_Data/data.unity3d','PTVFOOD/MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll','PTVFOOD/TikTokBridge/runtime/node.exe','PTVFOOD/TikTokBridge/bridge.mjs','PTVFOOD/TikTokBridge/gift-stream.mjs','PTVFOOD/TikTokBridge/node_modules/tiktok-live-connector/package.json')
+            foreach ($entry in $required) { if (!$zip.GetEntry($entry)) { throw "Incomplete package: $entry" } }
+            foreach ($entry in $zip.Entries) { if ($entry.FullName -notlike 'PTVFOOD/*' -or $entry.FullName -match '(^|/)\.\.(/|$)|_DoNotShip') { throw "Unexpected archive entry: $($entry.FullName)" } }
+          } finally { $zip.Dispose() }
+          "$($metadata.sha256)  $($metadata.filename)" | Set-Content dist/SHA256SUMS.txt -Encoding ascii
+          Copy-Item .release-input/ptvfood/ptvfood.png dist/ptvfood.png
+      - name: Upload, verify, and publish the release
+        shell: pwsh
+        run: |
+          $metadata = Get-Content .release-input/ptvfood/metadata.json -Raw | ConvertFrom-Json
+          $tag = "ptvfood-v$($metadata.version)"
+          $existing = gh release view $tag --repo $env:GITHUB_REPOSITORY --json isDraft 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            if (!(($existing | ConvertFrom-Json).isDraft)) { throw 'This version is already published; use a new version' }
+          } else {
+            gh release create $tag --repo $env:GITHUB_REPOSITORY --target $metadata.targetCommit --title "PTVFOOD $($metadata.version)" --notes-file .release-input/ptvfood/release-notes.md --draft --latest=false
+            if ($LASTEXITCODE -ne 0) { throw 'Could not create draft release' }
+          }
+          gh release upload $tag "dist/$($metadata.filename)" dist/SHA256SUMS.txt dist/ptvfood.png --repo $env:GITHUB_REPOSITORY --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Release upload failed' }
+          New-Item dist/verify -ItemType Directory -Force | Out-Null
+          gh release download $tag --repo $env:GITHUB_REPOSITORY --pattern $metadata.filename --dir dist/verify
+          if ($LASTEXITCODE -ne 0) { throw 'Release verification download failed' }
+          $download = Join-Path dist/verify $metadata.filename
+          if ((Get-Item $download).Length -ne $metadata.size -or (Get-FileHash $download -Algorithm SHA256).Hash.ToLower() -ne $metadata.sha256) { throw 'Uploaded archive verification failed' }
+          gh release edit $tag --repo $env:GITHUB_REPOSITORY --draft=false --latest=false
+          if ($LASTEXITCODE -ne 0) { throw 'Could not publish verified release' }
+      - name: Retire broken builds after the stable manifest is updated
+        shell: pwsh
+        run: |
+          $metadata = Get-Content .release-input/ptvfood/metadata.json -Raw | ConvertFrom-Json
+          if (@($metadata.retireVersions).Count -eq 0) { exit 0 }
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 120; $attempt++) {
+            $encoded = (gh api "repos/$env:GITHUB_REPOSITORY/contents/release-manifests/ptvfood.json?ref=main" --jq '.content') -join ''
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot verify stable game manifest' }
+            $manifest = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($encoded)) | ConvertFrom-Json
+            if ($manifest.version -eq $metadata.version -and $manifest.sha256 -eq $metadata.sha256) { $ready = $true; break }
+            Start-Sleep -Seconds 5
+          }
+          if (!$ready) { throw 'Stable manifest still points to an older game; no release was deleted' }
+          foreach ($version in $metadata.retireVersions) {
+            if ($version -notmatch '^\d+\.\d+\.\d+$' -or [Version]$version -ge [Version]$metadata.version) { throw 'Refusing unsafe release removal' }
+            $tag = "ptvfood-v$version"
+            gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              gh release delete $tag --repo $env:GITHUB_REPOSITORY --cleanup-tag --yes
+              if ($LASTEXITCODE -ne 0) { throw "Could not retire $tag" }
+            }
+          }
+      - name: Remove the temporary upload branch
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_NAME -notmatch '^ptvfood-build-\d+\.\d+\.\d+$') { throw 'Unexpected staging branch' }
+          gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/heads/$env:GITHUB_REF_NAME"
+          if ($LASTEXITCODE -ne 0) { Write-Warning 'Release is published; temporary branch cleanup needs retry'; exit 0 }
+
