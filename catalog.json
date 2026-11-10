@@ -1,5 +1,17 @@
 [
   {
+    "id": "ptvfood",
+    "name": "Grilled Squid",
+    "description": "เปิดแผงขายปลาหมึกย่าง ย่างบนเตาถ่าน ตำน้ำจิ้ม และรับความช่วยเหลือจากผู้ชม TikTok LIVE",
+    "descriptionEn": "Run a cute grilled squid stall: grill over charcoal, mix seafood sauce, and let TikTok LIVE viewers help.",
+    "category": "Unity",
+    "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvfood.json",
+    "cover": "assets/ptvfood.png",
+    "access": "vip",
+    "playTicket": true,
+    "newBadge": "assets/new-gold.png"
+  },
+  {
     "description": "เกม PTVCar สำหรับ Windows",
     "category": "Unity",
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvcar.json",
@@ -63,8 +75,7 @@
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvup.json",
     "cover": "assets/ptvup.png",
     "access": "vip",
-    "playTicket": true,
-    "newBadge": "assets/new-gold.png"
+    "playTicket": true
   },
   {
     "id": "ptvrunner",

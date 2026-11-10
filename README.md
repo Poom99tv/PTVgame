@@ -1,3 +1,15 @@
+# Grilled Squid 1.0.0 — Launcher 2.0.9
+
+Grilled Squid is the first game in the launcher, with its own cover and gold NEW badge. PTVUP no longer carries NEW.
+
+- 30-day per-game access: **THB 180 / US$7**. Purchase, renew, agent wallet and codes use the existing account system.
+- Fresh game installations start in **English**. Switching to Thai changes the home screen, settings, gift names, gameplay and shop sign.
+- Cute mint and cream UI with food icons; gift bindings are configured in Settings.
+- Windows package includes TikTok Bridge and its Node runtime. Start through PTVgame Launcher for a signed play ticket.
+- [Game release](https://github.com/Poom99tv/PTVgame/releases/tag/ptvfood-v1.0.0) · [Launcher release](https://github.com/Poom99tv/PTVgame/releases/tag/launcher-v2.0.9) · [Integration source](unity-update/PTVFOOD/)
+
+![Grilled Squid](assets/ptvfood.png)
+
 # PTVgame Launcher 2.0.3 — PTVRunner Game To Earn
 
 PTVRunner (`71880688656931`) now receives raw TikTok LIVE events from Game To Earn. Gift-to-skill mappings, counts and skill behavior are configured inside the game. The Launcher hides its preset selector and preset editor for this map and sends no keyboard input or preset Win actions for it. Other Roblox maps keep their existing presets.
