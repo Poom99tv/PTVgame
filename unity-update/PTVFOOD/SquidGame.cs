@@ -931,8 +931,8 @@ public sealed class SquidGame : MonoBehaviour
     // ------------------------------------------------------------------ lucky wheel (random help or prank)
     readonly Queue<SquidGiftDirector.StallEvent> wheelQueue = new Queue<SquidGiftDirector.StallEvent>();
     RectTransform wheelRoot, wheelDisc; Text wheelTitle, wheelResult; RawImage wheelPic; Text wheelInitial;
-    static readonly SquidAction[] WheelSeg = { SquidAction.GrillSquid, SquidAction.Customer, SquidAction.MakeSauce, SquidAction.Customer,
-                                               SquidAction.HelpSet, SquidAction.Customer, SquidAction.GrillSquid, SquidAction.MakeSauce };
+    static readonly SquidAction[] WheelSeg = { SquidAction.HelpSet, SquidAction.Customer, SquidAction.HelpSet, SquidAction.Customer,
+                                               SquidAction.HelpSet, SquidAction.Customer, SquidAction.HelpSet, SquidAction.HelpSet };
     static Color SegColor(int i)
     {
         switch (WheelSeg[i])
@@ -1013,7 +1013,7 @@ public sealed class SquidGame : MonoBehaviour
             int seg = Random.Range(0, n);
             int amount = Random.Range(Mathf.Max(1, e.min), Mathf.Max(e.min, e.max) + 1);
             string nm = e.sender != null ? e.sender.DisplayName : "?";
-            wheelTitle.text = nm + "  สุ่มช่วย/แกล้ง!";
+            wheelTitle.text = nm + "  สุ่มช่วย/แกล้ง " + SquidGiftDirector.RandomSize(e.slot) + "!";
             wheelResult.text = "";
             wheelPic.enabled = false; wheelInitial.enabled = true;
             wheelInitial.text = string.IsNullOrEmpty(nm) ? "?" : System.Globalization.StringInfo.GetNextTextElement(nm).ToUpperInvariant();

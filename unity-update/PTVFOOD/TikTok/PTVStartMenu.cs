@@ -30,8 +30,8 @@ public sealed class PTVStartMenu : MonoBehaviour
     Button connect, play;
     Text connectLabel, statusText, playHint, liveChip, settingsNotice, pageLabel;
     Image statusDot;
-    static readonly string[] HomeIcons = { "icon_grill", "icon_mortar", "icon_serve", "icon_orders", "icon_grill", "icon_wheel" };
-    static readonly string[] HomeLabels = { "ช่วยย่าง", "ช่วยตำน้ำจิ้ม", "ช่วยทำ (ชุด)", "ลูกค้าสั่ง (ชุด)", "ทำทุกออเดอร์", "สุ่มช่วย/แกล้ง" };
+    static readonly string[] HomeIcons = { "icon_grill", "icon_grill", "icon_grill", "icon_grill", "icon_grill", "icon_wheel" };
+    static readonly string[] HomeLabels = { "ผู้ช่วย 4 ระดับ", "ปลาหมึกพร้อมน้ำจิ้ม", "แกล้ง 5 ระดับ", "กำหนดจำนวนต่อชุด", "ทำทุกออเดอร์", "สุ่ม เล็ก/กลาง/ใหญ่" };
     readonly Image[] chipIcons = new Image[6];
     readonly Text[] chipTexts = new Text[6];
     // settings
@@ -159,7 +159,7 @@ public sealed class PTVStartMenu : MonoBehaviour
         float[] boxX = { 80, 255, 425, 700 };
         for (int i = 0; i < N; i++)
         {
-            int slot = i; float y = 330 - (i % PerPage) * 128;
+            int slot = i; int rowIndex = i < 5 ? i : i < 10 ? i - 5 : i - 10; float y = 330 - rowIndex * 128;
             var row = PTVUI.Img("Row" + i, c, "fr_status_pill", new Vector2(0, y), new Vector2(1640, 118), null, 1.6f);
             if (!row.sprite) row.color = new Color(0.15f, 0.12f, 0.05f, 0.9f);
             var rt = row.transform;
@@ -198,9 +198,9 @@ public sealed class PTVStartMenu : MonoBehaviour
             PTVUI.Txt("LikesUnit", rt, "ครั้ง", new Vector2(650, 0), new Vector2(62, 44), 18, PTVUI.Cream);
         }
         settingsNotice = PTVUI.Txt("Notice", c, "", new Vector2(0, -448), new Vector2(1200, 40), 24, new Color(1f, 0.6f, 0.45f));
-        PTVUI.Btn("SetPrev", c, "fr_button_close", "‹", new Vector2(-150, -395), new Vector2(110, 70), 46, () => SetPage(setPage - 1), 0f);
-        PTVUI.Btn("SetNext", c, "fr_button_close", "›", new Vector2(150, -395), new Vector2(110, 70), 46, () => SetPage(setPage + 1), 0f);
-        setPageLabel = PTVUI.Txt("SetPage", c, "", new Vector2(0, -395), new Vector2(180, 60), 28, PTVUI.Cream);
+        PTVUI.Btn("SetPrev", c, "fr_button_close", "‹", new Vector2(-350, -395), new Vector2(110, 70), 46, () => SetPage(setPage - 1), 0f);
+        PTVUI.Btn("SetNext", c, "fr_button_close", "›", new Vector2(350, -395), new Vector2(110, 70), 46, () => SetPage(setPage + 1), 0f);
+        setPageLabel = PTVUI.Txt("SetPage", c, "", new Vector2(0, -395), new Vector2(500, 60), 28, PTVUI.Cream);
         SetPage(0);
         PTVUI.Btn("HudSettings", c, "fr_button_close", "แถบสกิล", new Vector2(-210, -500), new Vector2(330, 100), 32,
             () => { if (SquidSkillHud.I) SquidSkillHud.I.OpenSettings(); }, 0f);
@@ -361,12 +361,12 @@ public sealed class PTVStartMenu : MonoBehaviour
     const int PerPage = 6;
     readonly GameObject[] rows = new GameObject[N];
     int setPage; Text setPageLabel;
-    int SetPages => (N + PerPage - 1) / PerPage;
+    int SetPages => 3;
     void SetPage(int p)
     {
         setPage = (p % SetPages + SetPages) % SetPages;
-        for (int i = 0; i < N; i++) if (rows[i]) rows[i].SetActive(i / PerPage == setPage);
-        if (setPageLabel) setPageLabel.text = "หน้า " + (setPage + 1) + "/" + SetPages;
+        for (int i = 0; i < N; i++) if (rows[i]) rows[i].SetActive((i < 5 ? 0 : i < 10 ? 1 : 2) == setPage);
+        if (setPageLabel) setPageLabel.text = (setPage == 0 ? "ผู้ช่วย" : setPage == 1 ? "แกล้ง" : "สุ่มช่วย/แกล้ง") + "  " + (setPage + 1) + "/" + SetPages;
     }
 
     public void OpenSettings()

@@ -293,6 +293,18 @@ public static class PTVLang
         Dict["สุ่มช่วย/แกล้ง"] = "Random Help/Prank";
         Dict["ผลในร้าน (จำนวนต่อครั้ง)"] = "Action (amount per trigger)";
         Dict[": จำนวนต้องเป็นเลข 1 ถึง 999"] = ": enter one number from 1 to 999";
+        Dict["ช่วยทำชุด"] = "Prepare Sets";
+        Dict["เพิ่มออเดอร์"] = "Add Orders";
+        Dict["แกล้งเพิ่มออเดอร์"] = "Add Order Sets";
+        Dict["ผู้ช่วย 4 ระดับ"] = "4 Helper Levels";
+        Dict["ปลาหมึกพร้อมน้ำจิ้ม"] = "Squid + Sauce Sets";
+        Dict["แกล้ง 5 ระดับ"] = "5 Prank Levels";
+        Dict["กำหนดจำนวนต่อชุด"] = "Set the Quantity";
+        Dict["สุ่ม เล็ก/กลาง/ใหญ่"] = "Random: S / M / L";
+        Dict["แกล้ง"] = "Pranks";
+        Dict["เล็ก"] = "Small";
+        Dict["กลาง"] = "Medium";
+        Dict["ใหญ่"] = "Large";
         Keys = Dict.Keys.OrderByDescending(k => k.Length).ToArray();
         Matcher = new Regex(string.Join("|", Keys.Select(Regex.Escape)), RegexOptions.CultureInvariant);
     }

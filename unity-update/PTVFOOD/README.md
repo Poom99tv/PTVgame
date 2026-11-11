@@ -1,33 +1,31 @@
 # Grilled Squid 1.0.2 (PTVFOOD)
 
-Windows x64 game. Launcher ID / signed ticket audience: `ptvfood`. Executable: `PTVFOOD/PTVFOOD.exe`.
+Windows x64. Launcher ID / signed ticket audience: ptvfood. Executable: PTVFOOD/PTVFOOD.exe.
 
-## Six skills
+## Thirteen skills
 
-1. Grill Squid — fixed configured number of squid.
-2. Make Sauce — fixed configured number of cups.
-3. Prepare Sets — fixed configured number of squid-and-sauce sets.
-4. Customer Orders — fixed configured number of ordered sets.
-5. Complete All Orders — completes every order currently waiting, with a grilled-squid icon.
-6. Random Help/Prank — randomly chooses a help or prank action; its quantity is the configured single number.
+- Slots 1–4: helper levels 1–4. Each makes the configured number of complete sets: N grilled squid AND N sauce cups.
+- Slot 5: completes all orders waiting at that moment, with no quantity setting.
+- Slots 6–10: prank levels 1–5. Each adds the configured number of order sets.
+- Slots 11–13: Random Help/Prank, Small / Medium / Large. Each randomly chooses combined help or additional order sets; its configured single quantity determines the result size.
 
-Each skill has one gift binding. No levels or min–max ranges appear in the HUD or settings.
-Gift batches multiply the first four fixed quantities; every random spin is retained in the counted queue.
-Skill groups remain draggable, resizable, and saved separately for landscape and portrait.
+Every non-random skill uses the grilled-squid artwork. Only random skills use the wheel.
+The HUD keeps levels in order. Settings has three pages: Helpers + Complete All, Pranks, Random.
+Quantities are single integers. No min–max ranges appear. Gift batches preserve every random spin.
+HUD groups remain draggable, resizable, with separate portrait and landscape positions.
 
-## Existing settings
+## Settings migration
 
-`PTVFOOD.Gifts3` stores the six-skill format. When absent, `PTVFOOD.Gifts2` is read and migrated
-from old indices 0, 4, 8, 12, 16 and 17. The former minimum becomes the fixed amount. The original
-20-slot preferences remain untouched for recovery. Migration reads at startup; saving writes only
-the new key. TikTok username, language and other settings are retained.
+PTVFOOD.Gifts4 stores the 13-skill format. Startup can read older Gifts2 (20 slots) or interim Gifts3 (6 slots).
+The old keys remain untouched. Old helper, complete-all, prank and random bindings are retained by level;
+the former minimum becomes the fixed quantity. The new fifth prank receives an unused default gift.
+For the 20-slot format, the previous four grill bindings become the four combined-set helpers.
+TikTok username and language preferences are retained. Fresh installations default to English.
 
-## Build and access
+## Build
 
-Use the existing PTVFOOD models, scene, fonts and MintUI assets. Run `PTVFOODBuild.Prepare()`
-and build Windows x64, Mono, 1.0.2, with the version-gate scene first and SquidStall second.
-Retail builds reject `PTV_RELEASE_QA`. Ship the complete production TikTokBridge with runtime/node.exe
-and node_modules beside the game executable; exclude logs, tests and `_DoNotShip` folders.
-
-Fresh installs default to English; Thai switches all labels and the shop sign. Existing per-game
-sales remain THB 180 / US$7 for 30 days. The signed play ticket and mandatory version check remain enforced.
+Use the existing project models, scene, fonts and MintUI resources. Run PTVFOODBuild.Prepare(); build
+Windows x64 / Mono / 1.0.2, with the version-gate scene first and SquidStall second.
+Retail builds reject PTV_RELEASE_QA. Package the complete production TikTokBridge with runtime/node.exe
+and node_modules beside the executable, excluding test/log/debug and _DoNotShip files.
+Signed per-game play tickets, mandatory version checks, and the 30-day THB 180 / US$7 plan remain in use.

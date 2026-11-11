@@ -16,34 +16,36 @@ public enum SquidAction
 
 /// <summary>
 /// Turns TikTok gifts / likes / follows into stall actions.
-/// Six skills: one slot per action. Each configured quantity is a fixed number.
+/// Four set helpers, complete-all, five order pranks, and three random set skills.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class SquidGiftDirector : MonoBehaviour
 {
-    public const int SlotCount = 6;
+    public const int SlotCount = 13;
     [Serializable] public sealed class TriggerRule { public bool gift = true, follow, likes, orangeHeart; public int likesRequired = 100; }
     [Serializable] public sealed class Slot { public string gift; public int min = 1, max = 1; public TriggerRule rule = new TriggerRule(); }
     [Serializable] public sealed class Settings
     {
-        public int version = 3;
+        public int version = 4;
         public Slot[] slots = Defaults();
         static Slot S(string g, int min, int max, bool likes = false, bool follow = false)
             => new Slot { gift = g, min = min, max = max, rule = new TriggerRule { gift = true, likes = likes, follow = follow, likesRequired = 100 } };
         public static Slot[] Defaults() => new[]
         {
-            S("Rose", 1, 1, likes: true), S("GG", 1, 1), S("Ice Cream Cone", 1, 1),
-            S("TikTok", 1, 1, follow: true), S("Coconut Juice", 1, 1), S("Thumbs Up", 1, 1),
+            S("Rose", 1, 1, likes: true), S("Finger Heart", 3, 3), S("Doughnut", 5, 5), S("Hand Hearts", 10, 10),
+            S("Coconut Juice", 1, 1),
+            S("TikTok", 1, 1, follow: true), S("Friendship Necklace", 3, 3), S("Rosa", 5, 5), S("Paper Crane", 10, 10), S("Confetti", 20, 20),
+            S("Thumbs Up", 1, 1), S("I love you", 5, 5), S("Super GG", 15, 15),
         };
     }
 
     public static SquidAction SlotAction(int slot)
     {
-        return slot == 0 ? SquidAction.GrillSquid : slot == 1 ? SquidAction.MakeSauce : slot == 2 ? SquidAction.HelpSet
-            : slot == 3 ? SquidAction.Customer : slot == 4 ? SquidAction.ServeAll : SquidAction.Wheel;
+        return slot < 4 ? SquidAction.HelpSet : slot == 4 ? SquidAction.ServeAll : slot < 10 ? SquidAction.Customer : SquidAction.Wheel;
     }
     /// <summary>Level 1..4 (wheel 1..3, serve-all 1).</summary>
-    public static int SlotLevel(int slot) => 1;
+    public static int SlotLevel(int slot) => slot < 4 ? slot + 1 : slot == 4 ? 1 : slot < 10 ? slot - 4 : slot - 9;
+    public static string RandomSize(int slot) => slot == 10 ? "เล็ก" : slot == 11 ? "กลาง" : "ใหญ่";
     public static bool IsHelper(SquidAction a) => a == SquidAction.GrillSquid || a == SquidAction.MakeSauce || a == SquidAction.HelpSet;
     public static bool HasAmount(SquidAction a) => a != SquidAction.ServeAll && a != SquidAction.CloseShop;
 
@@ -54,7 +56,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
             case SquidAction.GrillSquid: return "ช่วยย่าง";
             case SquidAction.MakeSauce: return "ช่วยตำน้ำจิ้ม";
             case SquidAction.HelpSet: return "ช่วยทำ (ชุด)";
-            case SquidAction.Customer: return "ลูกค้าสั่ง (ชุด)";
+            case SquidAction.Customer: return "แกล้งเพิ่มออเดอร์";
             case SquidAction.ServeAll: return "ทำออเดอร์ทั้งหมด";
             case SquidAction.Wheel: return "สุ่มช่วย/แกล้ง";
             default: return "ปิดร้าน";
@@ -64,7 +66,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
     public static string SlotName(int slot)
     {
         var a = SlotAction(slot);
-        return ActionName(a);
+        return a == SquidAction.ServeAll ? ActionName(a) : a == SquidAction.Wheel ? "สุ่มช่วย/แกล้ง " + RandomSize(slot) : ActionName(a) + " ระดับ " + SlotLevel(slot);
     }
 
     /// <summary>Short Thai label of a slot, e.g. "ช่วยย่าง 1 ไม้", "กงล้อ สุ่ม 2-6".</summary>
@@ -98,7 +100,8 @@ public sealed class SquidGiftDirector : MonoBehaviour
 
     public sealed class StallEvent { public PTVTikTokLive.Message sender; public SquidAction action; public int amount; public int slot; public int min, max; public int repeats = 1; }
 
-    public const string PrefsKey = "PTVFOOD.Gifts3";
+    public const string PrefsKey = "PTVFOOD.Gifts4";
+    public const string InterimPrefsKey = "PTVFOOD.Gifts3";
     public const string LegacyPrefsKey = "PTVFOOD.Gifts2";
     public Settings settings = new Settings();
     public string LastText { get; private set; } = "";
@@ -114,6 +117,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
     void Awake()
     {
         var json = PlayerPrefs.GetString(PrefsKey, "");
+        if (string.IsNullOrEmpty(json)) json = PlayerPrefs.GetString(InterimPrefsKey, "");
         if (string.IsNullOrEmpty(json)) json = PlayerPrefs.GetString(LegacyPrefsKey, "");
         if (!string.IsNullOrEmpty(json)) { try { JsonUtility.FromJsonOverwrite(json, settings); } catch { } }
         Validate();
@@ -122,18 +126,26 @@ public sealed class SquidGiftDirector : MonoBehaviour
     public void Validate()
     {
         var def = Settings.Defaults();
-        // Keep the first configured gift of each old action. The original 20-slot
-        // preferences remain untouched under LegacyPrefsKey for recovery.
-        if (settings.slots != null && settings.slots.Length == 20)
+        // Old keys remain untouched. Preserve bindings for the matching levels,
+        // and introduce only the new fifth prank with its default configuration.
+        if (settings.slots != null && (settings.slots.Length == 20 || settings.slots.Length == 6))
         {
-            int[] previous = { 0, 4, 8, 12, 16, 17 };
             var old = settings.slots;
-            settings.slots = new Slot[SlotCount];
+            int[] previous = old.Length == 20 ? new[]{0,1,2,3,16,12,13,14,15,-1,17,18,19} : new[]{2,-1,-1,-1,4,3,-1,-1,-1,-1,5,-1,-1};
+            settings.slots = Settings.Defaults();
             for (int i = 0; i < SlotCount; i++)
-                if (old[previous[i]] != null) settings.slots[i] = JsonUtility.FromJson<Slot>(JsonUtility.ToJson(old[previous[i]]));
+                if (previous[i] >= 0 && old[previous[i]] != null) settings.slots[i] = JsonUtility.FromJson<Slot>(JsonUtility.ToJson(old[previous[i]]));
+            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < SlotCount; i++) if (previous[i] >= 0 && settings.slots[i] != null) used.Add(settings.slots[i].gift);
+            for (int i = 0; i < SlotCount; i++) if (previous[i] < 0)
+            {
+                if (used.Contains(settings.slots[i].gift))
+                    foreach (var candidate in def) if (!used.Contains(candidate.gift)) { settings.slots[i].gift = candidate.gift; break; }
+                used.Add(settings.slots[i].gift);
+            }
         }
         if (settings.slots == null || settings.slots.Length != SlotCount) settings.slots = def;
-        settings.version = 3;
+        settings.version = 4;
         for (int i = 0; i < SlotCount; i++)
         {
             var s = settings.slots[i] ?? (settings.slots[i] = def[i]);
