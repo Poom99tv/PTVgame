@@ -26,10 +26,14 @@ public sealed class PTVFOODBuild : IPreprocessBuildWithReport
     {
         PlayerSettings.productName = "Grilled Squid";
         PlayerSettings.companyName = "PTVgame";
-        PlayerSettings.bundleVersion = "1.0.3";
+        PlayerSettings.bundleVersion = "1.0.4";
         var appIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/PTVFOOD/Branding/AppIcon.png");
         if (!appIcon) throw new BuildFailedException("Missing application icon.");
-        PlayerSettings.SetIcons(NamedBuildTarget.Standalone, new[] { appIcon }, IconKind.Application);
+        var iconSizes = PlayerSettings.GetIconSizes(NamedBuildTarget.Standalone, IconKind.Any);
+        PlayerSettings.SetIcons(NamedBuildTarget.Standalone, iconSizes.Select(size => appIcon).ToArray(), IconKind.Any);
+        PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { appIcon }, IconKind.Any);
+        if (PlayerSettings.GetIcons(NamedBuildTarget.Standalone, IconKind.Any).Any(icon => icon != appIcon))
+            throw new BuildFailedException("Application icon must be assigned at every Windows size.");
         PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Standalone,"com.ptvgame.ptvfood");
         PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);
         PlayerSettings.defaultScreenWidth = 1280; PlayerSettings.defaultScreenHeight = 720;

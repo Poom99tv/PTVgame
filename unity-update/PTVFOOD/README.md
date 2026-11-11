@@ -1,4 +1,4 @@
-# Grilled Squid 1.0.3 (PTVFOOD)
+# Grilled Squid 1.0.4 (PTVFOOD)
 
 Windows x64. Launcher ID / signed ticket audience: ptvfood. Executable: PTVFOOD/PTVFOOD.exe.
 
@@ -25,7 +25,7 @@ TikTok username and language preferences are retained. Fresh installations defau
 ## Build
 
 Use the existing project models, scene, fonts and MintUI resources. Run PTVFOODBuild.Prepare(); build
-Windows x64 / Mono / 1.0.3, with the version-gate scene first and SquidStall second.
+Windows x64 / Mono / 1.0.4, with the version-gate scene first and SquidStall second.
 Copy Branding/AppIcon.png to Assets/PTVFOOD/Branding/AppIcon.png before Prepare;
 the Windows player uses this supplied application icon.
 Retail builds reject PTV_RELEASE_QA. Package the complete production TikTokBridge with runtime/node.exe
