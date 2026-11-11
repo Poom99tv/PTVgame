@@ -43,7 +43,8 @@ public sealed class PTVStartMenu : MonoBehaviour
     readonly List<GameObject> cells = new List<GameObject>();
     RectTransform grid;
     int selecting, page;
-    bool built, startVisible, pausedByMe;
+    bool built, startVisible, pausedByMe, homePaused;
+    float homeTimeScale = 1f;
     float gearSpin;
     GameObject langButton;
     string lastState = "idle";
@@ -254,7 +255,7 @@ public sealed class PTVStartMenu : MonoBehaviour
         UIBlocking = StartScreenOpen || SettingsOpen;
 
         var kb = Keyboard.current;
-        if (SettingsOpen && kb != null && kb.escapeKey.wasPressedThisFrame) { if (picker.activeSelf) picker.SetActive(false); else CloseSettings(); }
+        if (kb != null && kb.escapeKey.wasPressedThisFrame) HandleEscape();
 
         gearButton.SetActive(!SettingsOpen);
         langButton.SetActive(StartScreenOpen || SettingsOpen);
@@ -344,7 +345,31 @@ public sealed class PTVStartMenu : MonoBehaviour
         SessionStarted = true;
         startPanel.SetActive(false); startVisible = false;
         UIBlocking = false;
+        if (homePaused) { Time.timeScale = homeTimeScale; homePaused = false; }
         if (game) game.BeginRound();
+    }
+
+    public void HandleEscape()
+    {
+        if (!built) return;
+        if (SquidSkillHud.I && SquidSkillHud.I.SettingsOpen) { SquidSkillHud.I.CloseSettings(); return; }
+        if (SettingsOpen) { if (picker.activeSelf) picker.SetActive(false); else CloseSettings(); return; }
+        if (!StartScreenOpen) ReturnToStart();
+    }
+
+    public void ReturnToStart()
+    {
+        if (!built || StartScreenOpen) return;
+        if (SettingsOpen) CloseSettings();
+        if (SquidSkillHud.I) SquidSkillHud.I.CloseSettings();
+        SessionStarted = false;
+        if (game) game.SuspendRound();
+        homeTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
+        homePaused = true; Time.timeScale = 0f;
+        startVisible = true; startPanel.SetActive(true); UIBlocking = true;
+        if (live.Connected) account.SetTextWithoutNotify(live.Streamer);
+        if (EventSystem.current) EventSystem.current.SetSelectedGameObject(null);
+        PTVAudio.Sfx("open", 0.5f);
     }
 
     void FillRow(int i, SquidGiftDirector.Slot s)

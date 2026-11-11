@@ -133,6 +133,7 @@ namespace PTVgame {
   Brush accent=new SolidColorBrush(Color.FromRgb(39,137,255));
   string SettingsPath { get { return Path.Combine(Storage.Root,"settings.json"); } }
   public Launcher() {
+   Icon=LauncherBrand.Icon;
    settings=Storage.Read(SettingsPath,new Settings()); if(settings.favorites==null) settings.favorites=new List<string>();
    games=Storage.Read(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"catalog.json"),new List<Game>());
    Title="PTVgame • Game Launcher"; Width=1180; Height=780; MinWidth=860; MinHeight=620; WindowStartupLocation=WindowStartupLocation.CenterScreen;
@@ -205,6 +206,7 @@ namespace PTVgame {
   public static void Run() {
    string root=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"PTV-test-"+Guid.NewGuid().ToString("N")); Directory.CreateDirectory(root);
    try {
+    Assert(LauncherBrand.Icon.PixelWidth>=32 && LauncherBrand.Icon.IsFrozen,"embedded application icon loads and survives its stream");
     Assert(Updater.SafePath(root,"Game/Game.exe").StartsWith(root),"valid path");
     foreach(string bad in new[]{"../escape.exe","/escape.exe","C:\\escape.exe","file.exe:stream"}) { bool blocked=false; try { Updater.SafePath(root,bad); } catch { blocked=true; } Assert(blocked,"block "+bad); }
     var m=new Manifest { version="1.2.0",url="https://example.org/game.zip",sha256=new string('a',64),size=100,executable="Game.exe" }; Updater.Validate(m);

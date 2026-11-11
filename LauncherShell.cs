@@ -13,12 +13,27 @@ using System.Windows.Shapes;
 using System.Windows.Input;
 
 namespace PTVgame {
+ internal static class LauncherBrand {
+  static BitmapSource icon;
+  public static BitmapSource Icon {
+   get {
+    if(icon!=null)return icon;
+    using(var stream=System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("PTVgame.AppIcon.ico")) {
+     if(stream==null)throw new InvalidOperationException("Application icon is missing.");
+     var decoder=new IconBitmapDecoder(stream,BitmapCreateOptions.PreservePixelFormat,BitmapCacheOption.OnLoad);
+     icon=decoder.Frames.OrderByDescending(frame=>frame.PixelWidth).First(); icon.Freeze();
+    }
+    return icon;
+   }
+  }
+ }
  public partial class LauncherShell : Window {
   readonly string settingsPath=System.IO.Path.Combine(Storage.Root,"settings.json");
   Settings settings; List<Game> games; StackPanel sections; Grid root; Border main,header; TextBox search; TextBlock status; ProgressBar progress; Button cancel; Dictionary<string,Button> nav=new Dictionary<string,Button>();
   string page="หน้าแรก",filter=""; bool busy; CancellationTokenSource cancellation; Brush accent,muted; string selected=null;
   Brush ColorBrush(string hex) { return (Brush)new BrushConverter().ConvertFromString(hex); }
   public LauncherShell() {
+   Icon=LauncherBrand.Icon;
    settings=Storage.Read(settingsPath,new Settings()); AppLanguage.Language=AppLanguage.Normalize(settings.language); if(settings.favorites==null) settings.favorites=new List<string>();
    games=Storage.Read(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"catalog.json"),new List<Game>());
    Width=1160; Height=760; MinWidth=920; MinHeight=660; Title="PTVgame"; WindowStyle=WindowStyle.None; ResizeMode=ResizeMode.CanResizeWithGrip; WindowStartupLocation=WindowStartupLocation.CenterScreen;
@@ -35,7 +50,7 @@ namespace PTVgame {
    var frame=new Border { BorderBrush=ColorBrush("#27435C"),BorderThickness=new Thickness(1),CornerRadius=new CornerRadius(15),ClipToBounds=true,Child=root }; Content=frame;
    header=new Border { Background=ColorBrush(frost?"#F4F8FF":"#00101E"),BorderBrush=ColorBrush("#183550"),BorderThickness=new Thickness(0,0,0,1) }; root.Children.Add(header);
    var top=new Grid(); top.ColumnDefinitions.Add(new ColumnDefinition { Width=new GridLength(255) }); top.ColumnDefinitions.Add(new ColumnDefinition()); top.ColumnDefinitions.Add(new ColumnDefinition { Width=new GridLength(190) }); header.Child=top;
-   var brand=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(22,0,0,0),VerticalAlignment=VerticalAlignment.Center }; brand.Children.Add(GameIcon(38,false)); var brandPtv=Text(" PTV",29);brandPtv.FontWeight=FontWeights.Bold;brand.Children.Add(brandPtv); var brandGame=Text("game",29,accent); brandGame.FontWeight=FontWeights.Bold; brand.Children.Add(brandGame); top.Children.Add(brand);
+   var brand=new StackPanel { Orientation=Orientation.Horizontal,Margin=new Thickness(22,0,0,0),VerticalAlignment=VerticalAlignment.Center }; brand.Children.Add(new Image { Source=LauncherBrand.Icon,Width=38,Height=38,Stretch=Stretch.Uniform,VerticalAlignment=VerticalAlignment.Center }); var brandPtv=Text(" PTV",29);brandPtv.FontWeight=FontWeights.Bold;brand.Children.Add(brandPtv); var brandGame=Text("game",29,accent); brandGame.FontWeight=FontWeights.Bold; brand.Children.Add(brandGame); top.Children.Add(brand);
    var searchFrame=new Border { CornerRadius=new CornerRadius(20),BorderBrush=ColorBrush("#22547E"),BorderThickness=new Thickness(1),Background=ColorBrush(frost?"#E6EFF9":"#031A2F"),Height=37,MaxWidth=420,Margin=new Thickness(20,0,35,0),VerticalAlignment=VerticalAlignment.Center };
    var searchGrid=new Grid(); searchGrid.ColumnDefinitions.Add(new ColumnDefinition { Width=new GridLength(38) }); searchGrid.ColumnDefinitions.Add(new ColumnDefinition()); searchGrid.Children.Add(Text("⌕",25,muted));
    search=new TextBox { Text=filter,BorderThickness=new Thickness(0),Background=Brushes.Transparent,Foreground=Foreground,VerticalContentAlignment=VerticalAlignment.Center,FontSize=13,ToolTip=AppLanguage.T("ค้นหาเกม…"),Padding=new Thickness(0,0,10,0) }; Grid.SetColumn(search,1); searchGrid.Children.Add(search);

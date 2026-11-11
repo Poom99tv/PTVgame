@@ -8,7 +8,7 @@
 <meta property="og:title" content="PTVgame — เกมสำหรับไลฟ์ TikTok">
 <meta property="og:description" content="ผู้ชมส่งของขวัญ เกมตอบสนองทันที • ดูว่าใครกำลังไลฟ์ด้วย PTVgame ตอนนี้">
 <meta property="og:image" content="img/ptvrunner.webp">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23268EFF'/%3E%3Cpath d='M18 22h28a8 8 0 0 1 8 8v4a8 8 0 0 1-8 8H18a8 8 0 0 1-8-8v-4a8 8 0 0 1 8-8z' fill='%23fff'/%3E%3Ccircle cx='42' cy='32' r='3.5' fill='%23FE2C55'/%3E%3Cpath d='M20 29h3v-3h3v3h3v3h-3v3h-3v-3h-3z' fill='%2306131F'/%3E%3C/svg%3E">
+<link rel="icon" href="favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
@@ -281,6 +281,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 const SUPABASE_URL="https://ynbnzpejlkodjctqtexs.supabase.co";
 const SUPABASE_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluYm56cGVqbGtvZGpjdHF0ZXhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3MTAwNTcsImV4cCI6MjEwOTI4NjA1N30.wiisZFAkuEhtQiJA2OKxZatTRs7emmUNsEC7eW_YFM8";
 const GAMES=[
+  {name:"Grilled Squid",img:"ptvfood",kind:"PC",desc:"ร้านปลาหมึกย่าง เล่นกับผู้ชมผ่าน TikTok LIVE พร้อมสกิลช่วยและแกล้งเป็นชุด"},
   {name:"PTVRunner",img:"ptvrunner",kind:"Roblox",desc:"วิ่งแข่งข้ามเกาะ 12 กิโลเมตร ผู้ชมส่งของขวัญเร่งหรือแกล้งนักวิ่ง"},
   {name:"PTVUP",img:"ptvup",kind:"PC",desc:"พาซอมบี้ปีนต้นถั่วยักษ์สู่ยอด 1000 เมตร ผู้ชมส่งของขวัญช่วยหรือแกล้ง"},
   {name:"Zombie Rush",img:"zombierush",kind:"PC",desc:"พาซอมบี้ฝ่าสวนไปกินสมอง ผู้ชมส่งของขวัญเพื่อช่วยหรือแกล้งด้วยสกิล"},
@@ -294,14 +295,15 @@ const GAMES=[
   {name:"PTY jump",img:"roblox-pty-jump",kind:"Roblox",desc:"แมพ Roblox กระโดดข้ามด่าน"},
   {name:"Gear Box",img:"roblox-box-2",kind:"Roblox",desc:"แมพ Roblox กล่องสุ่มเฟือง"}
 ];
+const coverExt=id=>id==="ptvfood"?"png":"webp";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const num=n=>Number(n||0).toLocaleString("th-TH");
 
 // showcase rows (duplicated so the loop is seamless)
-function tile(g,hidden){return `<div class="tile"${hidden?' aria-hidden="true"':''}><img src="img/${g.img}.webp" alt="${hidden?'':esc(g.name)}" loading="lazy" width="340" height="191"><i class="${g.kind==='Roblox'?'rbx':''}">${g.kind}</i><span>${esc(g.name)}</span></div>`;}
+function tile(g,hidden){return `<div class="tile"${hidden?' aria-hidden="true"':''}><img src="img/${g.img}.${coverExt(g.img)}" alt="${hidden?'':esc(g.name)}" loading="lazy" width="340" height="191"><i class="${g.kind==='Roblox'?'rbx':''}">${g.kind}</i><span>${esc(g.name)}</span></div>`;}
 const half=Math.ceil(GAMES.length/2), a=GAMES.slice(0,half), b=GAMES.slice(half).concat(GAMES.slice(0,1));
 for(const [id,list] of [["row1",a],["row2",b]]){const el=document.getElementById(id);const set=list.concat(list);el.innerHTML=set.map(g=>tile(g,false)).join("")+set.map(g=>tile(g,true)).join("");}
-document.getElementById("gameList").innerHTML=GAMES.map(g=>`<article class="game"><img src="img/${g.img}.webp" alt="" loading="lazy" width="360" height="203"><h3>${esc(g.name)} <em>${g.kind}</em></h3><p>${esc(g.desc)}</p></article>`).join("");
+document.getElementById("gameList").innerHTML=GAMES.map(g=>`<article class="game"><img src="img/${g.img}.${coverExt(g.img)}" alt="" loading="lazy" width="360" height="203"><h3>${esc(g.name)} <em>${g.kind}</em></h3><p>${esc(g.desc)}</p></article>`).join("");
 
 async function rpc(fn,body){const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:SUPABASE_ANON,Authorization:"Bearer "+SUPABASE_ANON,"Content-Type":"application/json"},body:JSON.stringify(body||{})});if(!r.ok)throw new Error(r.status);return r.json();}
 function since(t){const m=Math.max(1,Math.round((Date.now()-new Date(t))/60000));return m<60?m+" นาที":Math.floor(m/60)+" ชม. "+(m%60)+" นาที";}
@@ -335,12 +337,12 @@ async function loadLive(){
 async function loadPlans(){
   let plans=[];
   try{const r=await fetch(SUPABASE_URL+"/rest/v1/plans?select=code,name,days,price_thb,price_usd,game_id&active=eq.true&order=sort",{headers:{apikey:SUPABASE_ANON,Authorization:"Bearer "+SUPABASE_ANON}});if(r.ok)plans=await r.json();}catch(e){}
-  const IMG={"ptvrunner":"ptvrunner","zombierush":"zombierush","ptvegg":"ptvegg","ptvboat":"ptvboat","paintworld":"paintworld-wide","sumo":"ptvvs","ptvcar":"ptvcar-v2","ptvup":"ptvup","roblox-box-1":"roblox-box-1","roblox-unnamed":"roblox-unnamed","roblox-pty-jump":"roblox-pty-jump","roblox-box-2":"roblox-box-2"};
+  const IMG={"ptvfood":"ptvfood","ptvrunner":"ptvrunner","zombierush":"zombierush","ptvegg":"ptvegg","ptvboat":"ptvboat","paintworld":"paintworld-wide","sumo":"ptvvs","ptvcar":"ptvcar-v2","ptvup":"ptvup","roblox-box-1":"roblox-box-1","roblox-unnamed":"roblox-unnamed","roblox-pty-jump":"roblox-pty-jump","roblox-box-2":"roblox-box-2"};
   const baht=n=>"฿"+Number(n).toLocaleString("th-TH",{maximumFractionDigits:0});
   const usd=n=>"$"+Number(n).toLocaleString("en-US",{maximumFractionDigits:2});
   let html=`<div class="plan free"><h3>ฟรี</h3><div class="price">฿0 <span>/ ตลอดไป</span></div><ul><li>Game To Earn: TikTok LIVE → ปุ่มกดใน Roblox</li><li>Preset ของขวัญ / Like / ติดตาม</li><li>จอ OBS และ TikTok LIVE Studio + แก้วโหล</li><li>ซื้อเฉพาะเกมที่อยากเล่นได้ทีละเกม</li></ul><a class="btn btn-ghost dl" href="#">ดาวน์โหลดฟรี</a></div>`;
   const games=plans.filter(p=>p.game_id);
-  html+=games.map(p=>`<div class="plan game"><img src="img/${IMG[p.game_id]||p.game_id}.webp" alt="" loading="lazy" width="360" height="203"><h3>${esc(p.name)}</h3><div class="price">${baht(p.price_thb)} <span>/ ${p.days} วัน</span></div><p class="usd">หรือ ${usd(p.price_usd)} ผ่าน PayPal / บัตร</p><a class="btn btn-blue" href="app/#/store">ซื้อเลย</a></div>`).join("");
+  html+=games.map(p=>`<div class="plan game"><img src="img/${IMG[p.game_id]||p.game_id}.${coverExt(p.game_id)}" alt="" loading="lazy" width="360" height="203"><h3>${esc(p.name)}</h3><div class="price">${baht(p.price_thb)} <span>/ ${p.days} วัน</span></div><p class="usd">หรือ ${usd(p.price_usd)} ผ่าน PayPal / บัตร</p><a class="btn btn-blue" href="app/#/store">ซื้อเลย</a></div>`).join("");
   if(!games.length) html+=`<div class="plan"><h3>เกมแต่ละเกม</h3><p class="usd">ดูราคาได้ใน<a href="app/#/store">ร้านค้าเกม</a></p></div>`;
   document.getElementById("plans").innerHTML=html; setDownload();
 }

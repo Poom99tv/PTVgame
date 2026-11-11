@@ -1,4 +1,4 @@
-# Grilled Squid 1.0.2 (PTVFOOD)
+# Grilled Squid 1.0.3 (PTVFOOD)
 
 Windows x64. Launcher ID / signed ticket audience: ptvfood. Executable: PTVFOOD/PTVFOOD.exe.
 
@@ -25,7 +25,16 @@ TikTok username and language preferences are retained. Fresh installations defau
 ## Build
 
 Use the existing project models, scene, fonts and MintUI resources. Run PTVFOODBuild.Prepare(); build
-Windows x64 / Mono / 1.0.2, with the version-gate scene first and SquidStall second.
+Windows x64 / Mono / 1.0.3, with the version-gate scene first and SquidStall second.
+Copy Branding/AppIcon.png to Assets/PTVFOOD/Branding/AppIcon.png before Prepare;
+the Windows player uses this supplied application icon.
 Retail builds reject PTV_RELEASE_QA. Package the complete production TikTokBridge with runtime/node.exe
 and node_modules beside the executable, excluding test/log/debug and _DoNotShip files.
 Signed per-game play tickets, mandatory version checks, and the 30-day THB 180 / US$7 plan remain in use.
+
+## Escape key
+
+Escape closes the frontmost HUD settings, gift picker, or gift settings first.
+During gameplay it returns to the TikTok connection screen, pausing the current round.
+Existing stock, orders, username, LIVE connection, and queued gifts are preserved.
+Play resumes the same round and processes queued gifts. Escape on the connection screen stays there.

@@ -112,7 +112,7 @@ async function viewAccount() {
 
 // ───────────────────────── game store (buy each game: PromptPay QR + slip, PayPal / card, agent wallet)
 const COVER = { paintworld: "paintworld-wide", sumo: "ptvvs", ptvcar: "ptvcar-v2" };
-const cover = id => `../img/${COVER[id] || id}.webp`;
+const cover = id => `../img/${COVER[id] || id}.${id === "ptvfood" ? "png" : "webp"}`;
 let payOpts = null;
 async function viewStore() {
   view.innerHTML = `<h1>ร้านค้าเกม</h1><p class="muted">กำลังโหลด…</p>`;

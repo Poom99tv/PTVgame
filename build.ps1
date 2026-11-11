@@ -3,6 +3,10 @@ $ErrorActionPreference = 'Stop'
 $framework = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319'
 $refs = @('System.dll','System.Core.dll','System.Net.Http.dll','System.Web.Extensions.dll','System.IO.Compression.dll','System.IO.Compression.FileSystem.dll','WPF/WindowsBase.dll','WPF/PresentationCore.dll','WPF/PresentationFramework.dll','System.Xaml.dll','System.Security.dll')
 $arguments = @('/nologo','/target:winexe',('/out:' + (Join-Path $PSScriptRoot $OutputName)))
+$appIcon = Join-Path $PSScriptRoot 'assets/app.ico'
+if (!(Test-Path -LiteralPath $appIcon)) { throw 'Missing application icon: assets/app.ico' }
+$arguments += '/win32icon:' + $appIcon
+$arguments += '/resource:' + $appIcon + ',PTVgame.AppIcon.ico'
 foreach ($ref in $refs) { $arguments += '/reference:' + (Join-Path $framework $ref) }
 $arguments += Join-Path $PSScriptRoot 'Launcher.cs'
 $arguments += Join-Path $PSScriptRoot 'LauncherShell.cs'

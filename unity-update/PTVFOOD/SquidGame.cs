@@ -221,6 +221,7 @@ public sealed class SquidGame : MonoBehaviour
     }
 
     public void BeginRound() { IsWaiting = false; }
+    public void SuspendRound() { IsWaiting = true; }
     bool CanPlay => !IsWaiting && RestLeft <= 0f && celebrate <= 0f && !PTVStartMenu.UIBlocking;
 
     // ------------------------------------------------------------------ loop
@@ -228,7 +229,8 @@ public sealed class SquidGame : MonoBehaviour
     {
         FitCamera();
         HandleTestKeys();
-        while (director.events.Count > 0) Apply(director.events.Dequeue());
+        if (!IsWaiting && !PTVStartMenu.UIBlocking)
+            while (director.events.Count > 0) Apply(director.events.Dequeue());
         float dt = Time.deltaTime;
         if (RestLeft > 0f) { RestLeft -= dt; if (RestLeft <= 0f) { RestLeft = 0f; PTVAudio.Sfx("start", 0.5f); } }
         if (celebrate > 0f) { celebrate -= dt; if (celebrate <= 0f) { RefreshTrays(); CheckWin(); } }
