@@ -90,7 +90,9 @@ public sealed class SquidSkillHud : MonoBehaviour
         if(Layout==null)Layout=new Profile();if(Layout.helpers==null)Layout.helpers=new Spot();if(Layout.orders==null)Layout.orders=new Spot();if(Layout.random==null)Layout.random=new Spot();Apply();
     }
     public void Save(){PlayerPrefs.SetString(Key,JsonUtility.ToJson(Layout));PlayerPrefs.Save();}
-    void OnScreenChanged(){bool value=PTVScreenLayout.IsPortrait;if(value!=portrait){Save();portrait=value;Load();}Apply();}
+    // Edits are saved at their action; resizing only reads the other orientation.
+    // It must still reflow when the OS makes preferences read-only.
+    void OnScreenChanged(){bool value=PTVScreenLayout.IsPortrait;if(value!=portrait){portrait=value;Load();}Apply();}
     Vector2 Default(int group)=>portrait?(group==0?new Vector2(.12f,.76f):group==1?new Vector2(.91f,.79f):new Vector2(.91f,.61f)):(group==0?new Vector2(.085f,.49f):group==1?new Vector2(.94f,.72f):new Vector2(.94f,.28f));
     void Apply()
     {
