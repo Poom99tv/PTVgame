@@ -1,12 +1,14 @@
-# Grilled Squid 1.0.0 — Launcher 2.0.9
+# Grilled Squid 1.0.1 — Launcher 2.0.9
 
 Grilled Squid is the first game in the launcher, with its own cover and gold NEW badge. PTVUP no longer carries NEW.
+
+Version 1.0.1 restores cute outlined gameplay text and adds a PVZ-style skill HUD with all 20 gift slots. Drag the Helpers, Orders and Random groups, adjust their sizes in Settings > Skill HUD, and switch between saved portrait and landscape layouts. All three lucky-wheel levels preserve every spin in a gift batch.
 
 - 30-day per-game access: **THB 180 / US$7**. Purchase, renew, agent wallet and codes use the existing account system.
 - Fresh game installations start in **English**. Switching to Thai changes the home screen, settings, gift names, gameplay and shop sign.
 - Cute mint and cream UI with food icons; gift bindings are configured in Settings.
 - Windows package includes TikTok Bridge and its Node runtime. Start through PTVgame Launcher for a signed play ticket.
-- [Game release](https://github.com/Poom99tv/PTVgame/releases/tag/ptvfood-v1.0.0) · [Launcher release](https://github.com/Poom99tv/PTVgame/releases/tag/launcher-v2.0.9) · [Integration source](unity-update/PTVFOOD/)
+- [Game release](https://github.com/Poom99tv/PTVgame/releases/tag/ptvfood-v1.0.1) · [Launcher release](https://github.com/Poom99tv/PTVgame/releases/tag/launcher-v2.0.9) · [Integration source](unity-update/PTVFOOD/)
 
 ![Grilled Squid](assets/ptvfood.png)
 

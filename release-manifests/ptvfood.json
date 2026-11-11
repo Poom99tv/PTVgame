@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0",
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/ptvfood-v1.0.0/PTVFOOD.v1.0.0.zip",
-  "sha256": "e1a102c33100d9266c3b121798fb145edbf9b573604fc61c2b9699ae3a1a4246",
-  "size": 106472847,
+  "version": "1.0.1",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/ptvfood-v1.0.1/PTVFOOD.v1.0.1.zip",
+  "sha256": "bf9d1a40307f1d7955371bf56dcbb5cb12fb9eeadaf953d6f4daaa7dbeb6f6e6",
+  "size": 106471794,
   "executable": "PTVFOOD/PTVFOOD.exe"
 }
