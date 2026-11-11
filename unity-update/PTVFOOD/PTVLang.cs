@@ -290,6 +290,9 @@ public static class PTVLang
         Dict["คืนค่าแถบสกิล"] = "Reset Skill HUD";
         Dict["กรอบสกิล: เปิด"] = "Skill frames: On";
         Dict["กรอบสกิล: ปิด"] = "Skill frames: Off";
+        Dict["สุ่มช่วย/แกล้ง"] = "Random Help/Prank";
+        Dict["ผลในร้าน (จำนวนต่อครั้ง)"] = "Action (amount per trigger)";
+        Dict[": จำนวนต้องเป็นเลข 1 ถึง 999"] = ": enter one number from 1 to 999";
         Keys = Dict.Keys.OrderByDescending(k => k.Length).ToArray();
         Matcher = new Regex(string.Join("|", Keys.Select(Regex.Escape)), RegexOptions.CultureInvariant);
     }

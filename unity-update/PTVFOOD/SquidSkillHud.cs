@@ -9,7 +9,7 @@ public sealed class SquidSkillHud : MonoBehaviour
     [Serializable] public sealed class Spot { public bool moved; public float x,y,scale=1; }
     [Serializable] public sealed class Profile { public Spot helpers=new Spot(),orders=new Spot(),random=new Spot(); public bool frames=true; }
     public static SquidSkillHud I { get; private set; }
-    public const string PrefsPrefix="PTVFOOD.SkillHUD.";
+    public const string PrefsPrefix="PTVFOOD.SkillHUD.Compact.";
     public Profile Layout { get; private set; }
     public bool SettingsOpen => settingsRoot && settingsRoot.activeSelf;
     SquidGiftDirector director; SquidGame game;
@@ -31,9 +31,9 @@ public sealed class SquidSkillHud : MonoBehaviour
         canvas=PTVUI.MakeCanvas("PTV_SkillHUD",120,transform); root=(RectTransform)canvas.transform;
         rounded=rounded?rounded:PTVGiftNotice.MakeRounded(64,14,true);
         glow=glow?glow:MakeGlow();
-        BuildGroup(0,"Helpers","ผู้ช่วย",Mint,300,880);
-        BuildGroup(1,"Orders","ลูกค้า",Coral,148,532);
-        BuildGroup(2,"Random","สกิลสุ่ม",Gold,148,416);
+        BuildGroup(0,"Helpers","ผู้ช่วย",Mint,180,632);
+        BuildGroup(1,"Orders","ลูกค้า",Coral,180,206);
+        BuildGroup(2,"Random","สุ่มช่วย/แกล้ง",Gold,220,206);
         for(int slot=0;slot<SquidGiftDirector.SlotCount;slot++)BuildTile(slot);
         director.SettingsChanged+=Refresh;director.SlotTriggered+=Pulse;
         PTVScreenLayout.Changed+=OnScreenChanged;
@@ -41,9 +41,9 @@ public sealed class SquidSkillHud : MonoBehaviour
     }
     void OnDestroy(){if(I==this)I=null;if(director){director.SettingsChanged-=Refresh;director.SlotTriggered-=Pulse;}if(game)game.WheelResolved-=PulseResult;PTVScreenLayout.Changed-=OnScreenChanged;}
     Spot SpotAt(int group)=>group==0?Layout.helpers:group==1?Layout.orders:Layout.random;
-    static int GroupOf(int slot)=>slot<12||slot==16?0:slot<17?1:2;
-    static string Icon(SquidAction action)=>action==SquidAction.GrillSquid?"icon_grill":action==SquidAction.MakeSauce?"icon_mortar":action==SquidAction.HelpSet?"icon_serve":action==SquidAction.Customer?"icon_orders":action==SquidAction.ServeAll?"icon_orders":"icon_wheel";
-    static string ShortName(SquidAction action)=>action==SquidAction.GrillSquid?"ช่วยย่าง":action==SquidAction.MakeSauce?"ช่วยตำ":action==SquidAction.HelpSet?"ช่วยทำ":action==SquidAction.Customer?"สั่งชุด":action==SquidAction.ServeAll?"ทุกออเดอร์":"สุ่มสกิล";
+    static int GroupOf(int slot)=>slot<3||slot==4?0:slot==3?1:2;
+    static string Icon(SquidAction action)=>action==SquidAction.GrillSquid?"icon_grill":action==SquidAction.MakeSauce?"icon_mortar":action==SquidAction.HelpSet?"icon_serve":action==SquidAction.Customer?"icon_orders":action==SquidAction.ServeAll?"icon_grill":"icon_wheel";
+    static string ShortName(SquidAction action)=>action==SquidAction.GrillSquid?"ช่วยย่าง":action==SquidAction.MakeSauce?"ช่วยตำ":action==SquidAction.HelpSet?"ช่วยทำ":action==SquidAction.Customer?"สั่งชุด":action==SquidAction.ServeAll?"ทำออเดอร์ทั้งหมด":"สุ่มช่วย/แกล้ง";
     void BuildGroup(int index,string name,string title,Color color,float width,float height)
     {
         var group=PTVUI.Rect(name,root,Vector2.zero,new Vector2(width,height));groups[index]=group;
@@ -56,19 +56,17 @@ public sealed class SquidSkillHud : MonoBehaviour
     }
     void BuildTile(int slot)
     {
-        var group=GroupOf(slot);var image=PTVUI.Img("Skill"+slot,groups[group],null,Vector2.zero,new Vector2(138,108),PTVUI.Cream,0,true);
+        var group=GroupOf(slot);var image=PTVUI.Img("Skill"+slot,groups[group],null,Vector2.zero,new Vector2(164,130),PTVUI.Cream,0,true);
         image.sprite=rounded;image.type=UnityEngine.UI.Image.Type.Sliced;frames[slot]=image;
         var rect=image.rectTransform;tiles[slot]=rect;rect.anchorMin=rect.anchorMax=new Vector2(.5f,1);
         var edge=image.gameObject.AddComponent<UnityEngine.UI.Outline>();edge.effectColor=new Color(.37f,.23f,.13f,.55f);edge.effectDistance=new Vector2(2,-3);
         var action=SquidGiftDirector.SlotAction(slot);
-        var effect=PTVUI.Img("Effect",rect,Icon(action),new Vector2(-15,16),new Vector2(86,82));effect.preserveAspect=true;effects[slot]=effect.rectTransform;
-        var glowImage=PTVUI.Img("GiftGlow",rect,null,new Vector2(44,26),new Vector2(72,72));glowImage.sprite=glow;glows[slot]=glowImage;
-        var gift=PTVUI.Img("Gift",rect,null,new Vector2(44,26),new Vector2(46,46));gift.preserveAspect=true;gifts[slot]=gift;
-        var level=PTVUI.Img("Level",rect,null,new Vector2(-48,33),new Vector2(30,28),group==0?Mint:group==1?Coral:Gold);level.sprite=rounded;level.type=UnityEngine.UI.Image.Type.Sliced;
-        PTVUI.Txt("Tier",level.transform,SquidGiftDirector.SlotLevel(slot).ToString(),Vector2.zero,new Vector2(28,26),19,PTVUI.Ink,TextAnchor.MiddleCenter,false);
-        labels[slot]=PTVUI.Txt("Name",rect,ShortName(action),new Vector2(0,-22),new Vector2(134,30),22,PTVUI.Ink,TextAnchor.MiddleCenter,false);
-        labels[slot].resizeTextForBestFit=true;labels[slot].resizeTextMinSize=12;labels[slot].resizeTextMaxSize=22;labels[slot].verticalOverflow=VerticalWrapMode.Truncate;
-        amounts[slot]=PTVUI.Txt("Amount",rect,"",new Vector2(0,-44),new Vector2(132,20),16,PTVUI.Ink,TextAnchor.MiddleCenter,false);
+        var effect=PTVUI.Img("Effect",rect,Icon(action),new Vector2(-15,22),new Vector2(106,96));effect.preserveAspect=true;effects[slot]=effect.rectTransform;
+        var glowImage=PTVUI.Img("GiftGlow",rect,null,new Vector2(51,37),new Vector2(72,72));glowImage.sprite=glow;glows[slot]=glowImage;
+        var gift=PTVUI.Img("Gift",rect,null,new Vector2(51,37),new Vector2(54,54));gift.preserveAspect=true;gifts[slot]=gift;
+        labels[slot]=PTVUI.Txt("Name",rect,ShortName(action),new Vector2(0,-32),new Vector2(158,32),24,PTVUI.Ink,TextAnchor.MiddleCenter,false);
+        labels[slot].resizeTextForBestFit=true;labels[slot].resizeTextMinSize=12;labels[slot].resizeTextMaxSize=24;labels[slot].verticalOverflow=VerticalWrapMode.Truncate;
+        amounts[slot]=PTVUI.Txt("Amount",rect,"",new Vector2(0,-56),new Vector2(158,22),20,PTVUI.Ink,TextAnchor.MiddleCenter,false);
         foreach(var label in new[]{labels[slot],amounts[slot]}){var nameEdge=label.gameObject.AddComponent<UnityEngine.UI.Outline>();nameEdge.effectColor=new Color(1,1,1,.95f);nameEdge.effectDistance=new Vector2(1.5f,-1.5f);nameEdge.enabled=false;}
     }
     public void Refresh()
@@ -76,11 +74,12 @@ public sealed class SquidSkillHud : MonoBehaviour
         if(!director||!canvas)return;director.Validate();
         for(int slot=0;slot<SquidGiftDirector.SlotCount;slot++){
             var config=director.settings.slots[slot];gifts[slot].sprite=PTVGiftCatalog.Icon(config.gift);gifts[slot].enabled=gifts[slot].sprite;glows[slot].enabled=gifts[slot].enabled;
-            amounts[slot].text=slot==16?"ทั้งหมด":(config.min==config.max?"× "+config.min:config.min+"–"+config.max);
+            amounts[slot].text=config.min.ToString();amounts[slot].enabled=slot<4;
+            if(slot>=4){labels[slot].rectTransform.anchoredPosition=new Vector2(0,-42);labels[slot].rectTransform.sizeDelta=new Vector2(158,48);labels[slot].resizeTextMinSize=14;}
         }
         for(int group=0;group<3;group++){
             int index=0;var ordered=Enumerable.Range(0,SquidGiftDirector.SlotCount).Where(s=>GroupOf(s)==group).OrderBy(s=>{int p=PTVGiftCatalog.Price(director.settings.slots[s].gift);return p>0?p:int.MaxValue;}).ThenBy(s=>s);
-            foreach(int slot in ordered){int row=group==0?index/2:index;float x=group==0?(index%2==0?-75:75):0;tiles[slot].anchoredPosition=new Vector2(x,-112-row*116);index++;}
+            foreach(int slot in ordered){int row=index;tiles[slot].anchoredPosition=new Vector2(0,-126-row*142);index++;}
         }
         Apply();
     }
@@ -101,7 +100,7 @@ public sealed class SquidSkillHud : MonoBehaviour
             var spot=SpotAt(i);spot.scale=Mathf.Clamp(spot.scale>0?spot.scale:1,.5f,1.6f);
             var anchor=spot.moved?new Vector2(spot.x,spot.y):Default(i);
             groups[i].anchorMin=groups[i].anchorMax=anchor;groups[i].anchoredPosition=Vector2.zero;
-            groups[i].localScale=Vector3.one*(portrait?(i==0?.65f:.70f):.85f)*spot.scale;Clamp(i);
+            groups[i].localScale=Vector3.one*(portrait?.82f:1f)*spot.scale;Clamp(i);
         }
         for(int s=0;s<frames.Length;s++)if(frames[s]){var c=frames[s].color;c.a=Layout.frames?1:0;frames[s].color=c;var outline=frames[s].GetComponent<UnityEngine.UI.Outline>();if(outline)outline.enabled=Layout.frames;labels[s].GetComponent<UnityEngine.UI.Outline>().enabled=!Layout.frames;amounts[s].GetComponent<UnityEngine.UI.Outline>().enabled=!Layout.frames;}
         RefreshSettings();
@@ -123,14 +122,15 @@ public sealed class SquidSkillHud : MonoBehaviour
     public void SetScale(int group,float value){SpotAt(group).scale=Mathf.Clamp(value,.5f,1.6f);Apply();Save();}
     public void ResetLayout(){Layout=new Profile();Apply();Save();}
     public void Pulse(int slot){if(slot>=0&&slot<pulses.Length)pulses[slot]=1;}
-    void PulseResult(SquidAction action,int amount,int source){int first=action==SquidAction.GrillSquid?0:action==SquidAction.MakeSauce?4:action==SquidAction.HelpSet?8:action==SquidAction.Customer?12:-1;if(first>=0)Pulse(first+Mathf.Clamp(SquidGiftDirector.SlotLevel(source)-1,0,3));}
+    void PulseResult(SquidAction action,int amount,int source){int target=action==SquidAction.GrillSquid?0:action==SquidAction.MakeSauce?1:action==SquidAction.HelpSet?2:action==SquidAction.Customer?3:-1;if(target>=0)Pulse(target);}
+
     void Update()
     {
         if(!canvas)return;if(!game){game=UnityEngine.Object.FindFirstObjectByType<SquidGame>();if(game)game.WheelResolved+=PulseResult;}
         canvas.enabled=game&&!game.IsWaiting&&!PTVStartMenu.UIBlocking&&!SettingsOpen;
         for(int slot=0;slot<tiles.Length;slot++){
             pulses[slot]=Mathf.MoveTowards(pulses[slot],0,Time.unscaledDeltaTime*1.8f);tiles[slot].localScale=Vector3.one*(1+.13f*Mathf.Sin(pulses[slot]*Mathf.PI));
-            float wave=Time.unscaledTime*2+slot*.6f;effects[slot].anchoredPosition=new Vector2(-15,16+2*Mathf.Sin(wave));effects[slot].localRotation=Quaternion.Euler(0,0,2*Mathf.Sin(wave*.8f));
+            float wave=Time.unscaledTime*2+slot*.6f;effects[slot].anchoredPosition=new Vector2(-15,22+2*Mathf.Sin(wave));effects[slot].localRotation=Quaternion.Euler(0,0,2*Mathf.Sin(wave*.8f));
             glows[slot].color=new Color(1f,.81f,.26f,.6f+.2f*Mathf.Sin(wave*1.6f));
         }
         if(SettingsOpen&&(!PTVLive.I||!PTVLive.I.menu||!PTVLive.I.menu.SettingsOpen))CloseSettings();
@@ -148,7 +148,7 @@ public sealed class SquidSkillHud : MonoBehaviour
         var card=PTVUI.Img("Card",settingsRoot.transform,"fr_skill_card",Vector2.zero,new Vector2(1240,870),null,1,true);
         PTVUI.Txt("Title",card.transform,"แถบสกิล",new Vector2(0,330),new Vector2(1050,90),52,PTVUI.Ink,TextAnchor.MiddleCenter,false);
         PTVUI.Txt("Hint",card.transform,"ลากแถบสกิลในหน้าเล่นเพื่อย้าย • แตะสองครั้งเพื่อคืนตำแหน่ง",new Vector2(0,245),new Vector2(1120,85),26,PTVUI.Ink,TextAnchor.MiddleCenter,false);
-        string[] names={"ผู้ช่วย","ลูกค้าสั่ง","สกิลสุ่ม"};
+        string[] names={"ผู้ช่วย","ลูกค้าสั่ง","สุ่มช่วย/แกล้ง"};
         for(int i=0;i<3;i++){
             int index=i;float y=125-i*112;
             PTVUI.Txt("Group"+i,card.transform,names[i],new Vector2(-355,y),new Vector2(420,66),32,PTVUI.Ink,TextAnchor.MiddleLeft,false);

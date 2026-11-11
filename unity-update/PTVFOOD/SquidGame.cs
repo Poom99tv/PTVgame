@@ -1013,7 +1013,7 @@ public sealed class SquidGame : MonoBehaviour
             int seg = Random.Range(0, n);
             int amount = Random.Range(Mathf.Max(1, e.min), Mathf.Max(e.min, e.max) + 1);
             string nm = e.sender != null ? e.sender.DisplayName : "?";
-            wheelTitle.text = nm + "  หมุนกงล้อ ระดับ " + SquidGiftDirector.SlotLevel(e.slot) + "!";
+            wheelTitle.text = nm + "  สุ่มช่วย/แกล้ง!";
             wheelResult.text = "";
             wheelPic.enabled = false; wheelInitial.enabled = true;
             wheelInitial.text = string.IsNullOrEmpty(nm) ? "?" : System.Globalization.StringInfo.GetNextTextElement(nm).ToUpperInvariant();

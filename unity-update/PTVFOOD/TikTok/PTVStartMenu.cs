@@ -30,15 +30,15 @@ public sealed class PTVStartMenu : MonoBehaviour
     Button connect, play;
     Text connectLabel, statusText, playHint, liveChip, settingsNotice, pageLabel;
     Image statusDot;
-    static readonly string[] HomeIcons = { "icon_grill", "icon_mortar", "icon_flavor", "icon_serve", "icon_orders", "icon_wheel" };
-    static readonly string[] HomeLabels = { "ช่วยย่าง", "ช่วยตำน้ำจิ้ม", "เพิ่มรสชาติ", "ช่วยเสิร์ฟ", "ทำทุกออเดอร์", "หมุนวงล้อ" };
+    static readonly string[] HomeIcons = { "icon_grill", "icon_mortar", "icon_serve", "icon_orders", "icon_grill", "icon_wheel" };
+    static readonly string[] HomeLabels = { "ช่วยย่าง", "ช่วยตำน้ำจิ้ม", "ช่วยทำ (ชุด)", "ลูกค้าสั่ง (ชุด)", "ทำทุกออเดอร์", "สุ่มช่วย/แกล้ง" };
     readonly Image[] chipIcons = new Image[6];
     readonly Text[] chipTexts = new Text[6];
     // settings
     readonly string[] draft = new string[N];
     readonly Image[] giftIcons = new Image[N];
     readonly Text[] giftNames = new Text[N], giftPrices = new Text[N];
-    readonly InputField[] minInputs = new InputField[N], maxInputs = new InputField[N], likeInputs = new InputField[N];
+    readonly InputField[] amountInputs = new InputField[N], likeInputs = new InputField[N];
     readonly Toggle[,] triggerChecks = new Toggle[N, 4];
     readonly List<GameObject> cells = new List<GameObject>();
     RectTransform grid;
@@ -152,7 +152,7 @@ public sealed class PTVStartMenu : MonoBehaviour
         ((Image)close.targetGraphic).preserveAspect = true;
 
         PTVUI.Txt("ColGift", c, "รูปของขวัญ (คลิกเพื่อเปลี่ยน)", new Vector2(-560, 420), new Vector2(420, 44), 26, PTVUI.Muted);
-        PTVUI.Txt("ColAction", c, "ผลในร้าน (ต่ำสุด - สูงสุด)", new Vector2(-170, 420), new Vector2(420, 44), 26, PTVUI.Muted);
+        PTVUI.Txt("ColAction", c, "ผลในร้าน (จำนวนต่อครั้ง)", new Vector2(-170, 420), new Vector2(420, 44), 26, PTVUI.Muted);
         PTVUI.Txt("ColTrigger", c, "เงื่อนไข", new Vector2(450, 420), new Vector2(600, 44), 26, PTVUI.Muted);
 
         string[] trig = { "ส่งของขวัญ", "กดติดตาม", "เคาะใจ", "หัวใจสีส้ม" };
@@ -179,14 +179,11 @@ public sealed class PTVStartMenu : MonoBehaviour
                     : act == SquidAction.Wheel ? new Color(1f, 0.85f, 0.35f) : new Color(0.75f, 0.8f, 1f);
             var actionLabel = PTVUI.Txt("Action", rt, name, new Vector2(-305, 0), new Vector2(230, 50), 24, col);
             actionLabel.resizeTextForBestFit = true; actionLabel.resizeTextMinSize = 16; actionLabel.resizeTextMaxSize = 24;
-            minInputs[i] = PTVUI.Input("Min" + i, rt, "", "1", new Vector2(-135, 0), new Vector2(110, 76), 28);
-            minInputs[i].contentType = InputField.ContentType.IntegerNumber; minInputs[i].characterLimit = 3;
-            var dash = PTVUI.Txt("Dash", rt, "-", new Vector2(-65, 0), new Vector2(30, 50), 34, PTVUI.Cream);
-            maxInputs[i] = PTVUI.Input("Max" + i, rt, "", "1", new Vector2(5, 0), new Vector2(110, 76), 28);
-            maxInputs[i].contentType = InputField.ContentType.IntegerNumber; maxInputs[i].characterLimit = 3;
+            amountInputs[i] = PTVUI.Input("Amount" + i, rt, "", "1", new Vector2(-65, 0), new Vector2(180, 76), 28);
+            amountInputs[i].contentType = InputField.ContentType.IntegerNumber; amountInputs[i].characterLimit = 3;
             if (!SquidGiftDirector.HasAmount(act))
             {   // serves every waiting order at that moment - no number to set
-                minInputs[i].gameObject.SetActive(false); maxInputs[i].gameObject.SetActive(false); dash.gameObject.SetActive(false);
+                amountInputs[i].gameObject.SetActive(false);
                 actionLabel.rectTransform.anchoredPosition = new Vector2(-185, 0); actionLabel.rectTransform.sizeDelta = new Vector2(420, 50);
             }
 
@@ -353,8 +350,7 @@ public sealed class PTVStartMenu : MonoBehaviour
     void FillRow(int i, SquidGiftDirector.Slot s)
     {
         draft[i] = s.gift;
-        minInputs[i].SetTextWithoutNotify(s.min.ToString());
-        maxInputs[i].SetTextWithoutNotify(s.max.ToString());
+        amountInputs[i].SetTextWithoutNotify(s.min.ToString());
         likeInputs[i].SetTextWithoutNotify(s.rule.likesRequired.ToString());
         triggerChecks[i, 0].SetIsOnWithoutNotify(s.rule.gift);
         triggerChecks[i, 1].SetIsOnWithoutNotify(s.rule.follow);
@@ -411,13 +407,13 @@ public sealed class PTVStartMenu : MonoBehaviour
         var slots = new SquidGiftDirector.Slot[N];
         for (int i = 0; i < N; i++)
         {
-            if (!int.TryParse(minInputs[i].text, out int min) || !int.TryParse(maxInputs[i].text, out int max) || min < 1 || max < min || max > 999)
-            { settingsNotice.text = "ช่อง " + (i + 1) + ": ตัวเลขต้องเป็น 1 - 999 และต่ำสุด ≤ สูงสุด"; return; }
+            if (!int.TryParse(amountInputs[i].text, out int amount) || amount < 1 || amount > 999)
+            { settingsNotice.text = "ช่อง " + (i + 1) + ": จำนวนต้องเป็นเลข 1 ถึง 999"; return; }
             if (!int.TryParse(likeInputs[i].text, out int likes) || likes < 1)
             { settingsNotice.text = "ช่อง " + (i + 1) + ": จำนวนเคาะใจต้องเป็นเลขจำนวนเต็มบวก"; return; }
             slots[i] = new SquidGiftDirector.Slot
             {
-                gift = draft[i], min = min, max = max,
+                gift = draft[i], min = amount, max = amount,
                 rule = new SquidGiftDirector.TriggerRule
                 {
                     gift = triggerChecks[i, 0].isOn, follow = triggerChecks[i, 1].isOn, likes = triggerChecks[i, 2].isOn,

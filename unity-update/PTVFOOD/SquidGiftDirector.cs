@@ -16,49 +16,34 @@ public enum SquidAction
 
 /// <summary>
 /// Turns TikTok gifts / likes / follows into stall actions.
-/// 20 slots: 4 levels each of ช่วยย่าง / ช่วยตำ / ช่วยทำ / ลูกค้าสั่ง, 1 ทำออเดอร์ทั้งหมด, 3 levels of the lucky wheel.
-/// The action + level of a slot is fixed by its position; the gift / amount range / trigger rules are set in the settings.
+/// Six skills: one slot per action. Each configured quantity is a fixed number.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class SquidGiftDirector : MonoBehaviour
 {
-    public const int SlotCount = 20;
+    public const int SlotCount = 6;
     [Serializable] public sealed class TriggerRule { public bool gift = true, follow, likes, orangeHeart; public int likesRequired = 100; }
     [Serializable] public sealed class Slot { public string gift; public int min = 1, max = 1; public TriggerRule rule = new TriggerRule(); }
     [Serializable] public sealed class Settings
     {
-        public int version = 2;
+        public int version = 3;
         public Slot[] slots = Defaults();
         static Slot S(string g, int min, int max, bool likes = false, bool follow = false)
             => new Slot { gift = g, min = min, max = max, rule = new TriggerRule { gift = true, likes = likes, follow = follow, likesRequired = 100 } };
         public static Slot[] Defaults() => new[]
         {
-            // ช่วยย่าง Lv1-4
-            S("Rose", 1, 1, likes: true), S("Finger Heart", 2, 3), S("Doughnut", 5, 8), S("Hand Hearts", 10, 15),
-            // ช่วยตำ Lv1-4
-            S("GG", 1, 1), S("Name shoutout", 2, 3), S("Perfume", 5, 8), S("Confetti", 10, 15),
-            // ช่วยทำ (ชุด) Lv1-4
-            S("Ice Cream Cone", 1, 1), S("Cheer You Up", 2, 3), S("Little Crown", 5, 8), S("Balloon Crown", 10, 15),
-            // ลูกค้าสั่ง Lv1-4
-            S("TikTok", 1, 3, follow: true), S("Friendship Necklace", 3, 6), S("Rosa", 6, 10), S("Paper Crane", 10, 20),
-            // ทำออเดอร์ทั้งหมด
-            S("Coconut Juice", 1, 1),
-            // กงล้อ Lv1-3
-            S("Thumbs Up", 1, 3), S("I love you", 2, 6), S("Super GG", 5, 15),
+            S("Rose", 1, 1, likes: true), S("GG", 1, 1), S("Ice Cream Cone", 1, 1),
+            S("TikTok", 1, 1, follow: true), S("Coconut Juice", 1, 1), S("Thumbs Up", 1, 1),
         };
     }
 
     public static SquidAction SlotAction(int slot)
     {
-        if (slot < 4) return SquidAction.GrillSquid;
-        if (slot < 8) return SquidAction.MakeSauce;
-        if (slot < 12) return SquidAction.HelpSet;
-        if (slot < 16) return SquidAction.Customer;
-        if (slot == 16) return SquidAction.ServeAll;
-        return SquidAction.Wheel;
+        return slot == 0 ? SquidAction.GrillSquid : slot == 1 ? SquidAction.MakeSauce : slot == 2 ? SquidAction.HelpSet
+            : slot == 3 ? SquidAction.Customer : slot == 4 ? SquidAction.ServeAll : SquidAction.Wheel;
     }
     /// <summary>Level 1..4 (wheel 1..3, serve-all 1).</summary>
-    public static int SlotLevel(int slot) => slot < 16 ? slot % 4 + 1 : slot == 16 ? 1 : slot - 16;
+    public static int SlotLevel(int slot) => 1;
     public static bool IsHelper(SquidAction a) => a == SquidAction.GrillSquid || a == SquidAction.MakeSauce || a == SquidAction.HelpSet;
     public static bool HasAmount(SquidAction a) => a != SquidAction.ServeAll && a != SquidAction.CloseShop;
 
@@ -71,7 +56,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
             case SquidAction.HelpSet: return "ช่วยทำ (ชุด)";
             case SquidAction.Customer: return "ลูกค้าสั่ง (ชุด)";
             case SquidAction.ServeAll: return "ทำออเดอร์ทั้งหมด";
-            case SquidAction.Wheel: return "หมุนกงล้อ";
+            case SquidAction.Wheel: return "สุ่มช่วย/แกล้ง";
             default: return "ปิดร้าน";
         }
     }
@@ -79,13 +64,13 @@ public sealed class SquidGiftDirector : MonoBehaviour
     public static string SlotName(int slot)
     {
         var a = SlotAction(slot);
-        return a == SquidAction.ServeAll ? ActionName(a) : ActionName(a) + " ระดับ " + SlotLevel(slot);
+        return ActionName(a);
     }
 
     /// <summary>Short Thai label of a slot, e.g. "ช่วยย่าง 1 ไม้", "กงล้อ สุ่ม 2-6".</summary>
     public static string SlotLabel(int slot, Slot s)
     {
-        string n = s.min == s.max ? s.min.ToString() : "สุ่ม " + s.min + "-" + s.max;
+        string n = s.min.ToString();
         switch (SlotAction(slot))
         {
             case SquidAction.GrillSquid: return "ช่วยย่าง " + n + " ไม้";
@@ -93,7 +78,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
             case SquidAction.HelpSet: return "ช่วยทำ " + n + " ชุด";
             case SquidAction.Customer: return "ลูกค้าสั่ง " + n + " ชุด";
             case SquidAction.ServeAll: return "ทำออเดอร์ทั้งหมด";
-            case SquidAction.Wheel: return "หมุนกงล้อ " + n;
+            case SquidAction.Wheel: return "สุ่มช่วย/แกล้ง " + n;
             default: return "";
         }
     }
@@ -106,14 +91,15 @@ public sealed class SquidGiftDirector : MonoBehaviour
             case SquidAction.HelpSet: return "ช่วยทำ " + amount + " ชุด";
             case SquidAction.Customer: return "สั่ง " + amount + " ชุด";
             case SquidAction.ServeAll: return "ทำออเดอร์ให้ทั้งหมด!";
-            case SquidAction.Wheel: return "หมุนกงล้อ!";
+            case SquidAction.Wheel: return "สุ่มช่วย/แกล้ง!";
             default: return "";
         }
     }
 
     public sealed class StallEvent { public PTVTikTokLive.Message sender; public SquidAction action; public int amount; public int slot; public int min, max; public int repeats = 1; }
 
-    public const string PrefsKey = "PTVFOOD.Gifts2";
+    public const string PrefsKey = "PTVFOOD.Gifts3";
+    public const string LegacyPrefsKey = "PTVFOOD.Gifts2";
     public Settings settings = new Settings();
     public string LastText { get; private set; } = "";
     /// <summary>True when the last event only helps (green), false when it pranks (red) - for the gift card colour.</summary>
@@ -128,6 +114,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
     void Awake()
     {
         var json = PlayerPrefs.GetString(PrefsKey, "");
+        if (string.IsNullOrEmpty(json)) json = PlayerPrefs.GetString(LegacyPrefsKey, "");
         if (!string.IsNullOrEmpty(json)) { try { JsonUtility.FromJsonOverwrite(json, settings); } catch { } }
         Validate();
     }
@@ -135,13 +122,24 @@ public sealed class SquidGiftDirector : MonoBehaviour
     public void Validate()
     {
         var def = Settings.Defaults();
+        // Keep the first configured gift of each old action. The original 20-slot
+        // preferences remain untouched under LegacyPrefsKey for recovery.
+        if (settings.slots != null && settings.slots.Length == 20)
+        {
+            int[] previous = { 0, 4, 8, 12, 16, 17 };
+            var old = settings.slots;
+            settings.slots = new Slot[SlotCount];
+            for (int i = 0; i < SlotCount; i++)
+                if (old[previous[i]] != null) settings.slots[i] = JsonUtility.FromJson<Slot>(JsonUtility.ToJson(old[previous[i]]));
+        }
         if (settings.slots == null || settings.slots.Length != SlotCount) settings.slots = def;
+        settings.version = 3;
         for (int i = 0; i < SlotCount; i++)
         {
             var s = settings.slots[i] ?? (settings.slots[i] = def[i]);
             if (s.rule == null) s.rule = def[i].rule;
             if (string.IsNullOrEmpty(s.gift)) s.gift = def[i].gift;
-            s.min = Mathf.Clamp(s.min, 1, 999); s.max = Mathf.Clamp(s.max, s.min, 999);
+            s.min = Mathf.Clamp(s.min, 1, 999); s.max = s.min;
             s.rule.likesRequired = Mathf.Max(1, s.rule.likesRequired);
         }
     }
@@ -184,7 +182,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
             {
                 int spins = count;
                 events.Enqueue(new StallEvent { sender = m, action = action, slot = slot, min = s.min, max = s.max, repeats = spins });
-                texts.Add("หมุนกงล้อ ระดับ " + SlotLevel(slot) + (spins > 1 ? " x" + spins : ""));
+                texts.Add("สุ่มช่วย/แกล้ง" + (spins > 1 ? " x" + spins : ""));
             }
             else if (action == SquidAction.ServeAll)
             {
@@ -195,7 +193,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
             {
                 count = Math.Min(count, 999);
                 int amount = 0;
-                for (int k = 0; k < count; k++) amount += UnityEngine.Random.Range(s.min, s.max + 1);
+                amount = count * s.min;
                 events.Enqueue(new StallEvent { sender = m, action = action, amount = amount, slot = slot, min = s.min, max = s.max });
                 texts.Add(Describe(action, amount));
                 if (action == SquidAction.Customer) help = false;
