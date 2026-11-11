@@ -10,6 +10,7 @@ $mock=Join-Path $dist 'LauncherGameToEarn.Mock.cs'
 [IO.File]::WriteAllText($mock,$source.Replace($needle,$replacement))
 $framework=Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319'
 $args=@('/nologo','/target:exe','/main:FeatureCheck',('/out:'+(Join-Path $root 'PTVRunner-FeatureCheck.exe')))
+$args+='/resource:'+(Join-Path $root 'assets/app.ico')+',PTVgame.AppIcon.ico'
 foreach($ref in @('System.dll','System.Core.dll','System.Net.Http.dll','System.Web.Extensions.dll','System.IO.Compression.dll','System.IO.Compression.FileSystem.dll','WPF/WindowsBase.dll','WPF/PresentationCore.dll','WPF/PresentationFramework.dll','System.Xaml.dll','System.Security.dll')){$args+='/reference:'+(Join-Path $framework $ref)}
 foreach($file in Get-ChildItem $root -Filter 'Launcher*.cs'){if($file.Name-ne 'LauncherGameToEarn.cs'){$args+=$file.FullName}}
 $args+=$mock;$args+=Join-Path $PSScriptRoot 'FeatureCheck.cs'
