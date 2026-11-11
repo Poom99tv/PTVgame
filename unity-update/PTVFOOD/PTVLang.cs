@@ -278,6 +278,18 @@ public static class PTVLang
         Dict["ระดับ "] = "Level ";
         Dict["เว้นชื่อบัญชีว่างไว้เพื่อเล่นออฟไลน์  ·  ทดสอบ: กด 1-6"] = "Leave the username empty to play offline  ·  Test: keys 1–6";
         Dict["เชื่อมต่อให้สำเร็จก่อนเปิดร้าน หรือกดทดลองเล่นเพื่อเล่นออฟไลน์"] = "Connect before opening the shop, or choose Try Offline";
+        Dict["แถบสกิล"] = "Skill HUD";
+        Dict["ผู้ช่วย"] = "Helpers";
+        Dict["สกิลสุ่ม"] = "Random";
+        Dict["สุ่มสกิล"] = "Random";
+        Dict["ลูกค้า"] = "Orders";
+        Dict["สั่งชุด"] = "Order Set";
+        Dict["ทั้งหมด"] = "All";
+        Dict["ทุกออเดอร์"] = "Serve All";
+        Dict["ลากแถบสกิลในหน้าเล่นเพื่อย้าย • แตะสองครั้งเพื่อคืนตำแหน่ง"] = "Drag skill groups during gameplay. Double-tap to reset their position.";
+        Dict["คืนค่าแถบสกิล"] = "Reset Skill HUD";
+        Dict["กรอบสกิล: เปิด"] = "Skill frames: On";
+        Dict["กรอบสกิล: ปิด"] = "Skill frames: Off";
         Keys = Dict.Keys.OrderByDescending(k => k.Length).ToArray();
         Matcher = new Regex(string.Join("|", Keys.Select(Regex.Escape)), RegexOptions.CultureInvariant);
     }

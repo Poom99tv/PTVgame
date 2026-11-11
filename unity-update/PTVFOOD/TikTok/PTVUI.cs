@@ -99,7 +99,9 @@ public static class PTVUI
         var parentImage = parent ? parent.GetComponent<UnityEngine.UI.Image>() : null;
         bool wood = parentImage && parentImage.sprite && parentImage.sprite.name == "fr_title_header";
         bool primary = parentImage && parentImage.sprite && parentImage.sprite.name == "fr_button_reset";
-        if (MintTheme)
+        var ownerCanvas = parent ? parent.GetComponentInParent<Canvas>() : null;
+        bool menuText = ownerCanvas && (ownerCanvas.name == "PTV_LiveMenu" || ownerCanvas.name == "PTVLicense");
+        if (MintTheme && menuText)
         {
             if (wood || primary) color = Cream;
             else if (color.r > 0.9f && color.g < 0.7f && color.b < 0.6f) color = new Color(0.67f, 0.22f, 0.12f, color.a);

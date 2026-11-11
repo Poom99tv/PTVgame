@@ -26,7 +26,7 @@ public sealed class PTVFOODBuild : IPreprocessBuildWithReport
     {
         PlayerSettings.productName = "Grilled Squid";
         PlayerSettings.companyName = "PTVgame";
-        PlayerSettings.bundleVersion = "1.0.0";
+        PlayerSettings.bundleVersion = "1.0.1";
         PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Standalone,"com.ptvgame.ptvfood");
         PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);
         PlayerSettings.defaultScreenWidth = 1280; PlayerSettings.defaultScreenHeight = 720;

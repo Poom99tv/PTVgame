@@ -31,6 +31,7 @@ public sealed class PTVLive : MonoBehaviour
         I.notice = go.AddComponent<PTVGiftNotice>();
         go.AddComponent<PTVScreenLayout>();
         I.menu = go.AddComponent<PTVStartMenu>();
+        go.AddComponent<SquidSkillHud>();
         var _ = PTVAudio.I;   // build the sound effects up front
         return I;
     }

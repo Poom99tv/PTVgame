@@ -35,6 +35,7 @@ public sealed class SquidGame : MonoBehaviour
     public int Wins { get; private set; }
     public bool IsWaiting { get; private set; } = true;
     public float RestLeft { get; private set; }
+    public event System.Action<SquidAction,int,int> WheelResolved;
 
     // scene refs (built by SquidModels.BuildStall)
     Transform stall, vendor, armL, armR, vendorHead, pestle, paste, bits, squidItems, sauceItems, iceBox, mortar, ingredients;
@@ -969,6 +970,7 @@ public sealed class SquidGame : MonoBehaviour
         tex.SetPixels(px); tex.Apply();
         wheelRoot = PTVUI.Rect("LuckyWheel", hudRt, new Vector2(0, -40), new Vector2(620, 760));
         wheelRoot.gameObject.SetActive(false);
+        PTVUI.Img("WheelCard", wheelRoot, "fr_skill_card", new Vector2(0, 30), new Vector2(680, 820), null, 1f);
         var shade = PTVUI.Img("Shade", wheelRoot, null, new Vector2(0, -10), new Vector2(640, 640), new Color(0.2f, 0.1f, 0.03f, 0.25f)); shade.sprite = circle;
         wheelDisc = PTVUI.Rect("Disc", wheelRoot, new Vector2(0, -20), new Vector2(560, 560));
         var disc = wheelDisc.gameObject.AddComponent<RawImage>(); disc.texture = tex; disc.raycastTarget = false;
@@ -989,9 +991,13 @@ public sealed class SquidGame : MonoBehaviour
         var po = pointer.gameObject.AddComponent<Outline>(); po.effectColor = Color.white; po.effectDistance = new Vector2(5, -5);
         var tip = PTVUI.Img("PointerTip", wheelRoot, null, new Vector2(0, 285), new Vector2(70, 40), new Color(0.95f, 0.25f, 0.25f)); tip.sprite = pill;
         wheelTitle = PTVUI.Txt("Title", wheelRoot, "", new Vector2(0, 345), new Vector2(1000, 70), 46, Color.white);
-        wheelTitle.horizontalOverflow = HorizontalWrapMode.Overflow;
+        wheelTitle.rectTransform.sizeDelta = new Vector2(620, 80);
+        wheelTitle.resizeTextForBestFit = true; wheelTitle.resizeTextMinSize = 22; wheelTitle.resizeTextMaxSize = 42;
+        wheelTitle.horizontalOverflow = HorizontalWrapMode.Wrap;
         wheelResult = PTVUI.Txt("Result", wheelRoot, "", new Vector2(0, -350), new Vector2(1000, 90), 56, Color.white);
-        wheelResult.horizontalOverflow = HorizontalWrapMode.Overflow;
+        wheelResult.rectTransform.sizeDelta = new Vector2(620, 110);
+        wheelResult.resizeTextForBestFit = true; wheelResult.resizeTextMinSize = 26; wheelResult.resizeTextMaxSize = 44;
+        wheelResult.horizontalOverflow = HorizontalWrapMode.Wrap;
         foreach (var tx in new[] { wheelTitle, wheelResult }) { var o = tx.GetComponent<Outline>(); if (o) { o.effectColor = new Color(0.45f, 0.2f, 0.06f); o.effectDistance = new Vector2(5, -5); } }
     }
 
@@ -1000,7 +1006,8 @@ public sealed class SquidGame : MonoBehaviour
         while (this)
         {
             if (wheelQueue.Count == 0 || IsWaiting) { yield return null; continue; }
-            var e = wheelQueue.Dequeue();
+            var e = wheelQueue.Peek();
+            if (--e.repeats <= 0) wheelQueue.Dequeue();
             if (!wheelRoot) BuildWheel();
             int n = WheelSeg.Length;
             int seg = Random.Range(0, n);
@@ -1047,6 +1054,7 @@ public sealed class SquidGame : MonoBehaviour
             for (float k = 0; k < 1.3f; k += Time.deltaTime) { wheelResult.rectTransform.localScale = Vector3.one * (1f + 0.12f * Mathf.Sin(k * 14f) * Mathf.Exp(-k * 3f)); yield return null; }
             if (help) AddHelper(e.sender, act == SquidAction.MakeSauce ? 0 : amount, act == SquidAction.GrillSquid ? 0 : amount);
             else AddCustomer(e.sender, amount);
+            WheelResolved?.Invoke(act, amount, e.slot);
             for (float k = 0; k < 1f; k += Time.deltaTime / 0.2f) { wheelRoot.localScale = Vector3.one * Mathf.Lerp(0.78f, 0.15f, k); yield return null; }
             wheelRoot.gameObject.SetActive(false);
             if (wheelPic) wheelPic.texture = null;

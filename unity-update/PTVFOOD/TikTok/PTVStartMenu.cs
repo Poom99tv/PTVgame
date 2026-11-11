@@ -205,6 +205,8 @@ public sealed class PTVStartMenu : MonoBehaviour
         PTVUI.Btn("SetNext", c, "fr_button_close", "›", new Vector2(150, -395), new Vector2(110, 70), 46, () => SetPage(setPage + 1), 0f);
         setPageLabel = PTVUI.Txt("SetPage", c, "", new Vector2(0, -395), new Vector2(180, 60), 28, PTVUI.Cream);
         SetPage(0);
+        PTVUI.Btn("HudSettings", c, "fr_button_close", "แถบสกิล", new Vector2(-210, -500), new Vector2(330, 100), 32,
+            () => { if (SquidSkillHud.I) SquidSkillHud.I.OpenSettings(); }, 0f);
         PTVUI.Btn("Defaults", c, "fr_button_close", "ค่าเริ่มต้น", new Vector2(-560, -500), new Vector2(280, 100), 32, LoadDefaults, 0f);
         PTVUI.Btn("Cancel", c, "fr_button_close", "ยกเลิก", new Vector2(150, -500), new Vector2(280, 100), 34, CloseSettings, 0f);
         PTVUI.Btn("Save", c, "fr_button_reset", "บันทึก", new Vector2(510, -500), new Vector2(360, 116), 40, SaveAndClose, 0f);

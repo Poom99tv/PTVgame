@@ -111,7 +111,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
         }
     }
 
-    public sealed class StallEvent { public PTVTikTokLive.Message sender; public SquidAction action; public int amount; public int slot; public int min, max; }
+    public sealed class StallEvent { public PTVTikTokLive.Message sender; public SquidAction action; public int amount; public int slot; public int min, max; public int repeats = 1; }
 
     public const string PrefsKey = "PTVFOOD.Gifts2";
     public Settings settings = new Settings();
@@ -120,6 +120,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
     public bool LastIsHelp { get; private set; } = true;
     public readonly Queue<StallEvent> events = new Queue<StallEvent>();
     public event Action SettingsChanged;
+    public event Action<int> SlotTriggered;
 
     readonly Dictionary<string, int[]> likeProgress = new Dictionary<string, int[]>();
     readonly HashSet<string> followed = new HashSet<string>();
@@ -181,8 +182,8 @@ public sealed class SquidGiftDirector : MonoBehaviour
             var action = SlotAction(slot);
             if (action == SquidAction.Wheel)
             {
-                int spins = Math.Min(count, 5);
-                for (int k = 0; k < spins; k++) events.Enqueue(new StallEvent { sender = m, action = action, slot = slot, min = s.min, max = s.max });
+                int spins = count;
+                events.Enqueue(new StallEvent { sender = m, action = action, slot = slot, min = s.min, max = s.max, repeats = spins });
                 texts.Add("หมุนกงล้อ ระดับ " + SlotLevel(slot) + (spins > 1 ? " x" + spins : ""));
             }
             else if (action == SquidAction.ServeAll)
@@ -200,6 +201,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
                 if (action == SquidAction.Customer) help = false;
             }
             triggered++;
+            SlotTriggered?.Invoke(slot);
         }
         if (triggered > 0) { LastText = string.Join("  ", texts); LastIsHelp = help; }
         return triggered;
