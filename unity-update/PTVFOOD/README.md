@@ -1,4 +1,4 @@
-# Grilled Squid 1.0.4 (PTVFOOD)
+# Grilled Squid 1.0.5 (PTVFOOD)
 
 Windows x64. Launcher ID / signed ticket audience: ptvfood. Executable: PTVFOOD/PTVFOOD.exe.
 
@@ -25,7 +25,7 @@ TikTok username and language preferences are retained. Fresh installations defau
 ## Build
 
 Use the existing project models, scene, fonts and MintUI resources. Run PTVFOODBuild.Prepare(); build
-Windows x64 / Mono / 1.0.4, with the version-gate scene first and SquidStall second.
+Windows x64 / Mono / 1.0.5, with the version-gate scene first and SquidStall second.
 Copy Branding/AppIcon.png to Assets/PTVFOOD/Branding/AppIcon.png before Prepare;
 the Windows player uses this supplied application icon.
 Retail builds reject PTV_RELEASE_QA. Package the complete production TikTokBridge with runtime/node.exe
@@ -38,3 +38,24 @@ Escape closes the frontmost HUD settings, gift picker, or gift settings first.
 During gameplay it returns to the TikTok connection screen, pausing the current round.
 Existing stock, orders, username, LIVE connection, and queued gifts are preserved.
 Play resumes the same round and processes queued gifts. Escape on the connection screen stays there.
+
+## Customer orders and automatic service
+
+One active customer character represents each TikTok viewer. Repeated orders add to that
+viewer's existing squid and sauce counts without changing their place in the queue.
+User IDs take priority over usernames; different users sharing a display name remain separate.
+If a completed customer orders again while walking away, the same character rejoins at the end.
+
+Prepared stock flies automatically from the trays to the first waiting customer, with no tray
+or customer clicks. The next customer waits until the first has received both items, including
+their flight animations. A shortage of either item never lets later customers jump the queue.
+Customers wait for their final delivery before leaving. Screen positions follow queue order,
+including queues longer than the eight visible customer positions.
+
+The mint summary panel always shows remaining order sets, waiting customers, and separate squid
+and sauce totals, including zero. The panel supports English and Thai.
+
+Development verification uses Release/PTVReleaseQA.cs with DEVELOPMENT_BUILD and PTV_RELEASE_QA.
+It covers viewer deduplication, total counts, partial stock and FIFO, returning customers,
+automatic serving, delivery cleanup, overflow queues, Complete All, Esc, and existing skills.
+Remove PTV_RELEASE_QA before building for release; the retail validator rejects it.

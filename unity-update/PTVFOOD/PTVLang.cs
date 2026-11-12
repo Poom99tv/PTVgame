@@ -244,6 +244,9 @@ public static class PTVLang
         Dict["ขายครบ "] = "Completed ";
         Dict[" รอบ!"] = " rounds!";
         Dict["ทำออเดอร์ครบ!"] = "All orders complete!";
+        Dict["ออร์เดอร์ทั้งหมด "] = "Total orders ";
+        Dict[" คน"] = " customers";
+        Dict["กำลังเสิร์ฟ!"] = "Serving!";
         Dict["ไม่มีออเดอร์ค้าง"] = "No waiting orders";
         Dict["ปิดร้านไปพัก!"] = "Taking a break!";
         Dict["ปิดร้านไปพัก"] = "Shop on a break";

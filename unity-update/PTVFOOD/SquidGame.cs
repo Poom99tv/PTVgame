@@ -13,6 +13,7 @@ using UnityEngine.UI;
 ///  SAUCE : click the ingredient tray -> chili, lime and garlic float into the mortar -> click the mortar to stir ("คนๆ!")
 ///          -> when it's done "ตัก!" -> click to scoop cups of sauce onto the teal board (3 cups per batch).
 ///  Goal  : ปลาหมึก 10 + น้ำจิ้ม 10 -> WIN.  Gifts help (add squid / sauce / sets), send customers, or close the shop.
+///  SERVE : ready food flies automatically to waiting customers in first-arrival order.
 ///  Test without a live: keys 1-6 = gift slots.
 /// </summary>
 public sealed class SquidGame : MonoBehaviour
@@ -63,7 +64,7 @@ public sealed class SquidGame : MonoBehaviour
     sealed class Customer
     {
         public GameObject go; public Transform tr; public PTVTikTokLive.Message who;
-        public int needSquid, needSauce, spot = -1; public bool leaving; public float speed, bob;
+        public int needSquid, needSauce, deliveries, spot = -1; public bool leaving; public float speed, bob;
         public RectTransform tag; public Text need; public RawImage pic; public Text initial; public Texture tex; public Image needBg;
         public bool helper; public int station = -1; public float workT; public Transform armL, armR;
     }
@@ -73,7 +74,7 @@ public sealed class SquidGame : MonoBehaviour
     readonly List<Flyer> flyers = new List<Flyer>();
 
     // ---- HUD
-    Canvas hud; RectTransform hudRt, bubbleLayer; Text squidText, sauceText, winText, banner, sub, owedText; float bannerT;
+    Canvas hud; RectTransform hudRt, bubbleLayer; Text squidText, sauceText, winText, banner, sub, owedText, orderItemsText; float bannerT;
     SquidGiftDirector director;
     float celebrate, vendorReach;
     static Sprite pill, circle;
@@ -242,7 +243,7 @@ public sealed class SquidGame : MonoBehaviour
         AnimateVendor(dt);
         UpdateCustomers(dt);
         UpdateHelpers(dt);
-        UpdateSelection(dt);
+        AutoServeOrders(dt);
         UpdateFlyers(dt);
         UpdateHud(dt);
     }
@@ -338,9 +339,6 @@ public sealed class SquidGame : MonoBehaviour
         if (t == iceBox) { ClickIceBox(); return; }
         if (t == ingredients) { ClickIngredients(); return; }
         if (t == mortar) { ClickMortar(); return; }
-        if (t == squidItems.parent) { SelectTray(1); return; }
-        if (t == sauceItems.parent) { SelectTray(2); return; }
-        foreach (var c in customers) if (!c.leaving && c.go && t == c.tr) { ServeCustomer(c); return; }
         for (int i = 0; i < 4; i++) if (grill[i].go && (t == grill[i].go.transform || t.IsChildOf(grill[i].go.transform))) { ClickSquid(i); return; }
     }
 
@@ -745,6 +743,24 @@ public sealed class SquidGame : MonoBehaviour
 
     void AddCustomer(PTVTikTokLive.Message who, int sets)
     {
+        if (sets <= 0) return;
+        Customer existing = null;
+        foreach (var customer in customers)
+            if (customer.go && SameViewer(customer.who, who)) { existing = customer; break; }
+        if (existing != null)
+        {
+            // Reuse a departing character, but a new order after completion joins the end.
+            if (existing.leaving || (existing.needSquid <= 0 && existing.needSauce <= 0 && existing.deliveries == 0))
+            {
+                existing.leaving = false; existing.spot = -1;
+                customers.Remove(existing); customers.Add(existing);
+            }
+            existing.needSquid = (int)System.Math.Min(int.MaxValue, (long)existing.needSquid + sets);
+            existing.needSauce = (int)System.Math.Min(int.MaxValue, (long)existing.needSauce + sets);
+            UpdateTag(existing);
+            Pop("+" + sets + " ชุด", existing.tr.position + Vector3.up * 2.5f, new Color(1f, 0.6f, 0.3f));
+            return;
+        }
         var shirts = new[] { new Color(0.95f, 0.55f, 0.5f), new Color(0.5f, 0.65f, 0.95f), new Color(0.98f, 0.82f, 0.4f), new Color(0.7f, 0.55f, 0.9f), new Color(0.45f, 0.8f, 0.65f), new Color(1f, 0.68f, 0.8f) };
         var hairs = new[] { new Color(0.16f, 0.12f, 0.1f), new Color(0.45f, 0.27f, 0.14f), new Color(0.8f, 0.6f, 0.35f), new Color(0.3f, 0.2f, 0.15f), new Color(0.95f, 0.75f, 0.4f) };
         var go = SquidModels.Person(stall, "Customer", shirts[Random.Range(0, shirts.Length)], hairs[Random.Range(0, hairs.Length)], new Color(1f, Random.Range(0.75f, 0.86f), Random.Range(0.62f, 0.74f)), false, Random.Range(0.92f, 1.0f));
@@ -759,69 +775,71 @@ public sealed class SquidGame : MonoBehaviour
         var col = go.AddComponent<BoxCollider>(); col.center = new Vector3(0, 1.9f, 0); col.size = new Vector3(1.2f, 1.5f, 1.2f);
     }
 
-    // ------------------------------------------------------------------ serving: click a board, then click a customer
-    int selectedTray;   // 0 none, 1 squid, 2 sauce
-    Bubble selBubble; float selPulse;
-
-    void SelectTray(int which)
+    static bool SameViewer(PTVTikTokLive.Message a, PTVTikTokLive.Message b)
     {
-        var tr = which == 1 ? squidItems.parent : sauceItems.parent;
-        StartCoroutine(Squash(tr, 0.05f));
-        if (selectedTray == which) { selectedTray = 0; Hide(ref selBubble); PTVAudio.Sfx("toggle", 0.4f, 0.8f); return; }
-        if ((which == 1 ? Squid : Sauce) <= 0) { PTVAudio.Sfx("deny", 0.4f); Pop(which == 1 ? "ยังไม่มีปลาหมึก!" : "ยังไม่มีน้ำจิ้ม!", tr.position + Vector3.up * 0.7f, new Color(0.6f, 0.62f, 0.75f)); return; }
-        selectedTray = which;
-        Hide(ref selBubble);
-        Show(ref selBubble, which == 1 ? "ปลาหมึก ✓ คลิกลูกค้า" : "น้ำจิ้ม ✓ คลิกลูกค้า", which == 1 ? new Color(1f, 0.6f, 0.3f) : new Color(0.45f, 0.78f, 0.3f));
-        PTVAudio.Sfx("toggle", 0.5f, 1.2f);
+        if (a == null || b == null) return false;
+        if (!string.IsNullOrWhiteSpace(a.userId) && !string.IsNullOrWhiteSpace(b.userId))
+            return string.Equals(a.userId.Trim(), b.userId.Trim(), System.StringComparison.Ordinal);
+        if (!string.IsNullOrWhiteSpace(a.uniqueId) && !string.IsNullOrWhiteSpace(b.uniqueId))
+            return string.Equals(a.uniqueId.Trim().TrimStart('@'), b.uniqueId.Trim().TrimStart('@'), System.StringComparison.OrdinalIgnoreCase);
+        return string.IsNullOrWhiteSpace(a.userId) && string.IsNullOrWhiteSpace(b.userId)
+            && string.IsNullOrWhiteSpace(a.uniqueId) && string.IsNullOrWhiteSpace(b.uniqueId)
+            && !string.IsNullOrWhiteSpace(a.DisplayName)
+            && string.Equals(a.DisplayName, b.DisplayName, System.StringComparison.Ordinal);
     }
 
-    void ServeCustomer(Customer c)
+    public int WaitingCustomerCount { get { int n = 0; foreach (var c in customers) if (!c.leaving && (c.needSquid > 0 || c.needSauce > 0)) n++; return n; } }
+    public long PendingOrderSets { get { long n = 0; foreach (var c in customers) if (!c.leaving) n += Mathf.Max(c.needSquid, c.needSauce); return n; } }
+    public long PendingSquid { get { long n = 0; foreach (var c in customers) if (!c.leaving) n += c.needSquid; return n; } }
+    public long PendingSauce { get { long n = 0; foreach (var c in customers) if (!c.leaving) n += c.needSauce; return n; } }
+
+    // ------------------------------------------------------------------ automatic serving, strictly in arrival order
+    float serveCooldown;
+    void AutoServeOrders(float dt)
     {
-        var head = c.tr.position + Vector3.up * 1.9f;
-        if (selectedTray == 0) { PTVAudio.Sfx("deny", 0.35f); Pop("คลิกถาดก่อนนะ", head, new Color(0.6f, 0.62f, 0.75f)); return; }
-        bool squid = selectedTray == 1;
-        int need = squid ? c.needSquid : c.needSauce, have = squid ? Squid : Sauce;
-        if (need <= 0) { PTVAudio.Sfx("deny", 0.35f); Pop(squid ? "ไม่ได้สั่งปลาหมึก" : "ไม่ได้สั่งน้ำจิ้ม", head, new Color(0.6f, 0.62f, 0.75f)); return; }
-        int n = Mathf.Min(need, have);
-        if (n <= 0) { PTVAudio.Sfx("deny", 0.35f); Pop("ของหมดแล้ว!", head, new Color(0.6f, 0.62f, 0.75f)); selectedTray = 0; Hide(ref selBubble); return; }
-        for (int i = 0; i < Mathf.Min(n, 8); i++) FlyItem(squid, TraySpot(squid, have - 1 - i), head, 0.5f + i * 0.04f);
-        if (squid) { Squid -= n; c.needSquid -= n; } else { Sauce -= n; c.needSauce -= n; }
+        if (!CanPlay || dt <= 0f) return;
+        serveCooldown -= dt;
+        if (serveCooldown > 0f) return;
+        Customer first = null;
+        foreach (var c in customers)
+            if (!c.leaving && c.go && (c.needSquid > 0 || c.needSauce > 0 || c.deliveries > 0)) { first = c; break; }
+        if (first == null || first.spot < 0) return;
+        var position = first.tr.localPosition; position.y = 0f;
+        if (Vector3.Distance(position, spots[first.spot].localPosition) > 0.16f) return;
+        // Never skip a customer waiting for their other item or its flight to finish.
+        bool sent = false;
+        if (first.needSquid > 0 && Squid > 0) { SendFood(first, true); sent = true; }
+        if (first.needSauce > 0 && Sauce > 0) { SendFood(first, false); sent = true; }
+        if (!sent) return;
+        serveCooldown = 0.18f;
         vendorReach = 0.5f;
-        SquidSfx.Play("serve", 0.6f); SquidSfx.Play("cash", 0.45f);
-        Pop("+" + n + (squid ? " ปลาหมึก" : " น้ำจิ้ม"), head + Vector3.up * 0.4f, squid ? new Color(1f, 0.6f, 0.3f) : new Color(0.45f, 0.78f, 0.3f), 0.9f);
-        selectedTray = 0; Hide(ref selBubble);
+        SquidSfx.Play("serve", 0.6f, 1f, 0.12f);
         RefreshTrays();
     }
 
-    void UpdateSelection(float dt)
+    void SendFood(Customer c, bool squid)
     {
-        selPulse += dt;
-        var s = squidItems.parent; var u = sauceItems.parent;
-        float p = 1f + 0.03f * Mathf.Sin(selPulse * 10f);
-        if (selectedTray == 1 && Squid <= 0 || selectedTray == 2 && Sauce <= 0) { selectedTray = 0; Hide(ref selBubble); }
-        if (selectedTray == 1) s.localScale = new Vector3(p, 1f, p); else if (s.localScale != Vector3.one && selectedTray != 1) s.localScale = Vector3.MoveTowards(s.localScale, Vector3.one, dt);
-        if (selectedTray == 2) u.localScale = new Vector3(p, 1f, p); else if (u.localScale != Vector3.one && selectedTray != 2) u.localScale = Vector3.MoveTowards(u.localScale, Vector3.one, dt);
-        if (selBubble != null) selBubble.world = (selectedTray == 1 ? s : u).position + Vector3.up * 0.75f;
+        int have = squid ? Squid : Sauce;
+        if (squid) { Squid--; c.needSquid--; } else { Sauce--; c.needSauce--; }
+        c.deliveries++;
+        FlyItem(squid, TraySpot(squid, have - 1), c.tr.position + Vector3.up * 1.9f, 0.45f,
+            () => { c.deliveries = Mathf.Max(0, c.deliveries - 1); });
+        UpdateTag(c);
     }
+
 
     void UpdateCustomers(float dt)
     {
-        var used = new HashSet<int>();
-        foreach (var c in customers) if (c.spot >= 0) used.Add(c.spot);
+        int nextSpot = 0;
         foreach (var c in customers)
         {
-            if (c.leaving || c.spot >= 0) continue;
-            for (int i = 0; i < spots.Count; i++) if (!used.Contains(i)) { c.spot = i; used.Add(i); break; }
-        }
-        foreach (var c in customers)
-        {
-            if (c.leaving || c.spot < 4) continue;
-            for (int i = 0; i < 4; i++) if (!used.Contains(i)) { used.Remove(c.spot); c.spot = i; used.Add(i); break; }
+            if (!c.leaving && c.needSquid <= 0 && c.needSauce <= 0 && c.deliveries == 0)
+            { c.leaving = true; SquidSfx.Play("cash", 0.6f, 1.1f); }
+            c.spot = c.leaving || nextSpot >= spots.Count ? -1 : nextSpot++;
         }
         for (int k = customers.Count - 1; k >= 0; k--)
         {
             var c = customers[k];
-            if (!c.leaving && c.needSquid <= 0 && c.needSauce <= 0) { c.leaving = true; c.spot = -1; SquidSfx.Play("cash", 0.6f, 1.1f); }
             Vector3 target = c.leaving ? new Vector3(c.tr.localPosition.x < 0 ? -6f : 6f, 0, -2.0f)
                            : c.spot >= 0 ? spots[c.spot].localPosition : new Vector3(c.tr.localPosition.x, 0, -3.2f);
             var p = c.tr.localPosition; p.y = 0;
@@ -1064,14 +1082,15 @@ public sealed class SquidGame : MonoBehaviour
     }
 
     // ------------------------------------------------------------------ flying things
-    void FlyItem(bool squid, Vector3 from, Vector3 to, float dur)
+    void FlyItem(bool squid, Vector3 from, Vector3 to, float dur, System.Action done = null)
     {
-        if (flyers.Count > 60) return;
+        if (flyers.Count > 60) { done?.Invoke(); return; }
         var go = squid ? SquidModels.Squid(null, "Flyer") : SquidModels.SauceCup(null, "Flyer");
         if (squid) { SquidModels.CookSquid(go, 1f, 1f, 0f, mpb); go.transform.localScale = Vector3.one * 0.8f; }
         else go.transform.localScale = Vector3.one * 1.2f;
         go.transform.position = from;
-        flyers.Add(new Flyer { go = go, a = from, b = to, dur = dur * Random.Range(0.85f, 1.15f), arc = Random.Range(0.6f, 1.2f), ra = Random.rotation, rb = Quaternion.identity, t = -Random.Range(0f, 0.25f) });
+        flyers.Add(new Flyer { go = go, a = from, b = to, dur = dur * Random.Range(0.85f, 1.15f), arc = Random.Range(0.6f, 1.2f), ra = Random.rotation, rb = Quaternion.identity, t = -Random.Range(0f, 0.25f),
+            done = done == null ? (System.Action)null : () => { if (go) Destroy(go); done(); } });
     }
 
     void Fly(GameObject go, Vector3 from, Vector3 to, float dur, Quaternion ra, Quaternion rb, System.Action done, bool keep = true, float arc = 0.8f)
@@ -1190,8 +1209,11 @@ public sealed class SquidGame : MonoBehaviour
         bar.anchorMin = bar.anchorMax = new Vector2(0.5f, 1f); bar.anchoredPosition = new Vector2(50, -78);
         squidText = Chip(bar, new Vector2(-150, 0), new Color(1f, 0.6f, 0.3f));
         sauceText = Chip(bar, new Vector2(150, 0), new Color(0.48f, 0.78f, 0.3f));
-        owedText = PTVUI.Txt("Owed", root, "", Vector2.zero, new Vector2(1000, 60), 34, new Color(1f, 0.92f, 0.85f));
-        var orr = owedText.rectTransform; orr.anchorMin = orr.anchorMax = new Vector2(0.5f, 0f); orr.anchoredPosition = new Vector2(0, 60);
+        var summary = PTVUI.Img("OrderSummary", root, "fr_status_pill", Vector2.zero, new Vector2(660, 106), null, 2f);
+        var sr = summary.rectTransform; sr.anchorMin = sr.anchorMax = new Vector2(0.5f, 1f); sr.anchoredPosition = new Vector2(0, -222);
+        owedText = PTVUI.Txt("Owed", sr, "", new Vector2(0, 20), new Vector2(620, 44), 30, PTVUI.Ink, TextAnchor.MiddleCenter, false);
+        orderItemsText = PTVUI.Txt("OrderItems", sr, "", new Vector2(0, -22), new Vector2(620, 40), 27, PTVUI.Ink, TextAnchor.MiddleCenter, false);
+        foreach (var label in new[] { owedText, orderItemsText }) { label.resizeTextMaxSize = label.fontSize; label.resizeTextForBestFit = true; label.resizeTextMinSize = 18; }
 
         banner = PTVUI.Txt("Banner", root, "", new Vector2(0, 120), new Vector2(1060, 170), 120, new Color(1f, 0.85f, 0.3f));
         sub = PTVUI.Txt("BannerSub", root, "", new Vector2(0, 10), new Vector2(1000, 80), 46, Color.white);
@@ -1216,8 +1238,8 @@ public sealed class SquidGame : MonoBehaviour
         hud.enabled = !IsWaiting;
         squidText.text = "ปลาหมึก " + Squid;
         sauceText.text = "น้ำจิ้ม " + Sauce;
-        int os = 0, ou = 0; foreach (var c in customers) if (!c.leaving) { os += c.needSquid; ou += c.needSauce; }
-        owedText.text = os + ou > 0 ? "ลูกค้ารอ  ปลาหมึก " + os + "  ·  น้ำจิ้ม " + ou : "";
+        owedText.text = "ออร์เดอร์ทั้งหมด " + PendingOrderSets.ToString("N0") + " ชุด  ·  " + WaitingCustomerCount + " คน";
+        orderItemsText.text = "ปลาหมึก " + PendingSquid.ToString("N0") + "  ·  น้ำจิ้ม " + PendingSauce.ToString("N0");
 
         if (RestLeft > 0f && bannerT <= 0f) { banner.text = "ปิดร้านไปพัก"; sub.text = "เปิดอีก " + Mathf.CeilToInt(RestLeft) + " วิ"; }
         else if (bannerT > 0f) bannerT -= dt;
@@ -1245,6 +1267,14 @@ public sealed class SquidGame : MonoBehaviour
         c.needBg = PTVUI.Img("NeedBg", tag, null, new Vector2(0, 80), new Vector2(170, 54), new Color(1f, 0.45f, 0.45f)); c.needBg.sprite = pill; c.needBg.type = Image.Type.Sliced;
         var o = c.needBg.gameObject.AddComponent<Outline>(); o.effectColor = Color.white; o.effectDistance = new Vector2(3, -3);
         c.need = PTVUI.Txt("Need", c.needBg.transform, "", new Vector2(0, 2), new Vector2(170, 52), 28, Color.white); c.need.horizontalOverflow = HorizontalWrapMode.Overflow;
+        if (!c.helper)
+        {
+            c.needBg.rectTransform.anchoredPosition = new Vector2(0, 100);
+            c.needBg.rectTransform.sizeDelta = new Vector2(155, 88);
+            c.need.rectTransform.sizeDelta = new Vector2(145, 82);
+            c.need.horizontalOverflow = HorizontalWrapMode.Wrap;
+            c.need.resizeTextMinSize = 16; c.need.resizeTextMaxSize = 26; c.need.resizeTextForBestFit = true;
+        }
         c.tag = tag;
         if (c.who != null) StartCoroutine(LoadPic(c));
     }
@@ -1278,8 +1308,7 @@ public sealed class SquidGame : MonoBehaviour
             c.needBg.color = c.leaving ? new Color(0.45f, 0.8f, 0.4f) : new Color(0.35f, 0.62f, 0.95f);
             return;
         }
-        c.need.text = c.leaving ? "ขอบคุณจ้า!" : (c.needSquid > 0 ? "หมึก " + c.needSquid : "") + (c.needSquid > 0 && c.needSauce > 0 ? " · " : "") + (c.needSauce > 0 ? "จิ้ม " + c.needSauce : "");
-        c.needBg.rectTransform.sizeDelta = new Vector2(Mathf.Max(150, c.need.preferredWidth + 36), 54);
+        c.need.text = c.leaving ? "ขอบคุณจ้า!" : c.needSquid <= 0 && c.needSauce <= 0 ? "กำลังเสิร์ฟ!" : "หมึก " + c.needSquid + "\nจิ้ม " + c.needSauce;
         c.needBg.color = c.leaving ? new Color(0.45f, 0.8f, 0.4f) : new Color(1f, 0.45f, 0.45f);
     }
 
