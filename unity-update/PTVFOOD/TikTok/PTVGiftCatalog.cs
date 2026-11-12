@@ -423,9 +423,17 @@ public static class PTVGiftCatalog
             aliases["donut"] = "doughnut";
             aliases["handheart"] = "handhearts";
             aliases["friendship"] = "friendshipnecklace";
+            aliases["bffnecklace"] = "friendshipnecklace";
+            aliases["littlehippo"] = "babyhippo";
         }
         var key = Token(value);
         return aliases.TryGetValue(key, out var canonical) ? canonical : key;
+    }
+    public static string EventKey(PTVTikTokLive.Message message)
+    {
+        if (message == null) return "";
+        // The bridge verifies the picture before supplying the canonical catalog name.
+        return MatchKey(Contains(message.giftCanonicalName) ? message.giftCanonicalName : message.giftName);
     }
     public static int Price(string name) { var _ = Names; return name != null && entries.TryGetValue(name, out var e) ? e.price : 0; }
     public static string PriceLabel(string name)

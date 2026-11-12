@@ -91,7 +91,8 @@ public sealed class PTVGiftNotice : MonoBehaviour
         actionLabel.text = item.text ?? "";
         var col = item.help ? new Color(0.25f, 0.62f, 0.2f) : new Color(0.9f, 0.3f, 0.25f);
         actionLabel.color = col; ring.color = item.help ? new Color(0.45f, 0.82f, 0.4f) : new Color(1f, 0.5f, 0.45f);
-        gift.sprite = string.IsNullOrEmpty(m.giftName) ? null : PTVGiftCatalog.Icon(m.giftName); gift.enabled = gift.sprite;
+        string recognizedGift = PTVGiftCatalog.Contains(m.giftCanonicalName) ? m.giftCanonicalName : m.giftName;
+        gift.sprite = string.IsNullOrEmpty(recognizedGift) ? null : PTVGiftCatalog.Icon(recognizedGift); gift.enabled = gift.sprite;
         // card width follows the text
         float w = Mathf.Max(senderLabel.preferredWidth, actionLabel.preferredWidth);
         card.sizeDelta = new Vector2(Mathf.Clamp(w + 210 + (gift.enabled ? 70 : 0), 380, 900), 132);

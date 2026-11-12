@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {normalize} from './normalize.mjs';import {compact} from './compact.mjs';
+test('chat selection reaches Unity on first and repeated compact events',()=>{const cache=new Map();for(const word of ['1','2','แดง','น้ำเงิน']){const message=normalize('chat',{user:{uniqueId:'viewer',userId:'42',nickname:'Viewer'},comment:' '+word+' '});assert.equal(compact(message,cache).comment,word);}assert.equal(compact(normalize('share',{user:{uniqueId:'viewer',userId:'42'}}),cache).comment,undefined);});

@@ -79,17 +79,37 @@ public sealed class PTVReleaseQA:MonoBehaviour {
   bool allOrders=g.PendingOrderSets==0&&g.WaitingCustomerCount==0;
   bool orders=merged&&totals&&orderPause&&totalsUI&&thaiUI&&fifoShortage&&waitsForDelivery&&reused&&rejoinFIFO&&served&&noStuckFood&&overflow&&allOrders;
   Debug.Log("PTV_ORDERS_QA "+(orders?"PASS":"FAIL")+" merged="+merged+" totals="+totals+" totalsUI="+totalsUI+" thaiUI="+thaiUI+" pause="+orderPause+" fifoShortage="+fifoShortage+" waitsForDelivery="+waitsForDelivery+" reuse="+reused+" rejoinFIFO="+rejoinFIFO+" served="+served+" noStuckFood="+noStuckFood+" overflow="+overflow+" serveAll="+allOrders);
+  var originalSlots=director.settings.slots;director.settings.slots=SquidGiftDirector.Settings.Defaults();
+  foreach(var slot in director.settings.slots){slot.rule.gift=false;slot.rule.follow=false;slot.rule.likes=false;slot.rule.orangeHeart=false;}
+  director.settings.slots[0].gift="Baby Hippo";director.settings.slots[0].rule.gift=true;
+  director.settings.slots[6].gift="Friendship Necklace";director.settings.slots[6].rule.gift=true;
+  bool hippoAlias=GiftCheck(director,"little hippo",null,0,1,"alias-hippo");
+  bool necklaceAlias=GiftCheck(director,"BFF Necklace",null,6,3,"alias-necklace");
+  bool hippoImage=GiftCheck(director,"unrelated localized name","Baby Hippo",0,1,"image-hippo");
+  bool necklaceImage=GiftCheck(director,"Rose","Friendship Necklace",6,3,"image-necklace");
+  var unmatched=new PTVTikTokLive.Message{@event="gift",eventId="unknown-gift",userId="gift-qa",uniqueId="gift_qa",giftName="unknown picture",giftId="989999",repeatCount=1,repeatEnd=true};
+  bool unknownRejected=!PTVLive.I.live.AcceptJson(JsonUtility.ToJson(unmatched))&&director.events.Count==0;
+  director.settings.slots=originalSlots;
+  bool identity=hippoAlias&&necklaceAlias&&hippoImage&&necklaceImage&&unknownRejected;
+  Debug.Log("PTV_GIFT_IDENTITY_QA "+(identity?"PASS":"FAIL")+" littleHippoAlias="+hippoAlias+" bffNecklaceAlias="+necklaceAlias+" hippoPictureCanonical="+hippoImage+" necklacePictureOverridesWrongName="+necklaceImage+" unknownRejected="+unknownRejected);
   int completed=0;bool ranges=true;
   g.WheelResolved+=(a,n,s)=>{completed++;var config=director.settings.slots[s];ranges&=n==config.min&&n==config.max&&(a==SquidAction.HelpSet||a==SquidAction.Customer);};
   director.Enqueue(new PTVTikTokLive.Message{@event="gift",giftName=director.settings.slots[10].gift,repeatCount=7,userId="qa",uniqueId="qa",nickname="QA"});
   Time.timeScale=20;float deadline=Time.realtimeSinceStartup+20;
   while(completed<7&&Time.realtimeSinceStartup<deadline)yield return null;
   Time.timeScale=1;
-  bool ok=gameplay&&tiles&&english&&escape&&orders&&completed==7&&ranges&&PTVLicense.Allowed;
+  bool ok=gameplay&&tiles&&english&&escape&&orders&&identity&&completed==7&&ranges&&PTVLicense.Allowed;
   Debug.Log("PTV_RELEASE_QA "+(ok?"PASS":"FAIL")+" gameplay="+gameplay+" skillTiles="+tiles+" english="+english+" wheelSpins="+completed+" wheelRanges="+ranges+" screen="+Screen.width+"x"+Screen.height);
   yield return new WaitForSeconds(1);Application.Quit(ok?0:2);
  }
  void Call(SquidGame g,string name,params object[] args){typeof(SquidGame).GetMethod(name,BindingFlags.Instance|BindingFlags.NonPublic).Invoke(g,args);}
+ bool GiftCheck(SquidGiftDirector director,string raw,string canonical,int slot,int amount,string id){
+  director.events.Clear();
+  var gift=new PTVTikTokLive.Message{@event="gift",eventId=id,userId="gift-qa",uniqueId="gift_qa",nickname="Gift QA",giftName=raw,giftCanonicalName=canonical,giftMatchMethod=canonical==null?"name":"image-exact",giftImageUrl="https://p19.tiktokcdn.com/test.png",giftId=id.Contains("hippo")?"123456":"123457",repeatCount=1,repeatEnd=true};
+  bool accepted=PTVLive.I.live.AcceptJson(JsonUtility.ToJson(gift));
+  if(!accepted||director.events.Count!=1){director.events.Clear();return false;}
+  var action=director.events.Dequeue();return action.slot==slot&&action.amount==amount;
+ }
  object Field(object target,string name){return target.GetType().GetField(name,BindingFlags.Instance|BindingFlags.Public).GetValue(target);}
  int Number(object target,string name){return (int)Field(target,name);}
  void PreviewLanguage(SquidGame g,string language){

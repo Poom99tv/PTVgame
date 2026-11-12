@@ -34,6 +34,9 @@ jobs:
           $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $output))
           try {
             $required = @('PTVFOOD/PTVFOOD.exe','PTVFOOD/UnityPlayer.dll','PTVFOOD/PTVFOOD_Data/data.unity3d','PTVFOOD/MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll','PTVFOOD/TikTokBridge/runtime/node.exe','PTVFOOD/TikTokBridge/bridge.mjs','PTVFOOD/TikTokBridge/gift-stream.mjs','PTVFOOD/TikTokBridge/node_modules/tiktok-live-connector/package.json')
+            if ([Version]$metadata.version -ge [Version]'1.0.6') {
+              $required += @('PTVFOOD/TikTokBridge/gift-resolver.mjs','PTVFOOD/TikTokBridge/image-match.mjs','PTVFOOD/TikTokBridge/gift-catalog.json','PTVFOOD/TikTokBridge/node_modules/sharp/package.json','PTVFOOD/TikTokBridge/node_modules/@img/sharp-win32-x64/lib/sharp-win32-x64-0.35.5.node','PTVFOOD/TikTokBridge/node_modules/@img/sharp-win32-x64/lib/libvips-42.dll','PTVFOOD/TikTokBridge/node_modules/@img/sharp-win32-x64/lib/libvips-cpp-8.18.7.dll')
+            }
             foreach ($entry in $required) { if (!$zip.GetEntry($entry)) { throw "Incomplete package: $entry" } }
             foreach ($entry in $zip.Entries) { if ($entry.FullName -notlike 'PTVFOOD/*' -or $entry.FullName -match '(^|/)\.\.(/|$)|_DoNotShip') { throw "Unexpected archive entry: $($entry.FullName)" } }
           } finally { $zip.Dispose() }

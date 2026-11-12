@@ -1,4 +1,4 @@
-# Grilled Squid 1.0.5 (PTVFOOD)
+# Grilled Squid 1.0.6 (PTVFOOD)
 
 Windows x64. Launcher ID / signed ticket audience: ptvfood. Executable: PTVFOOD/PTVFOOD.exe.
 
@@ -25,7 +25,7 @@ TikTok username and language preferences are retained. Fresh installations defau
 ## Build
 
 Use the existing project models, scene, fonts and MintUI resources. Run PTVFOODBuild.Prepare(); build
-Windows x64 / Mono / 1.0.5, with the version-gate scene first and SquidStall second.
+Windows x64 / Mono / 1.0.6, with the version-gate scene first and SquidStall second.
 Copy Branding/AppIcon.png to Assets/PTVFOOD/Branding/AppIcon.png before Prepare;
 the Windows player uses this supplied application icon.
 Retail builds reject PTV_RELEASE_QA. Package the complete production TikTokBridge with runtime/node.exe
@@ -59,3 +59,25 @@ Development verification uses Release/PTVReleaseQA.cs with DEVELOPMENT_BUILD and
 It covers viewer deduplication, total counts, partial stock and FIFO, returning customers,
 automatic serving, delivery cleanup, overflow queues, Complete All, Esc, and existing skills.
 Remove PTV_RELEASE_QA before building for release; the retail validator rejects it.
+
+## Gift picture recognition
+
+PTVFOOD's own bridge now resolves image fingerprints before compacting messages. The bridge
+uses the 375 selectable game gift pictures, with exact PNG and conservative visual matching
+for resized JPEG/WebP images. It remembers numeric gift IDs only after a picture match.
+The raw network name is preserved; giftCanonicalName and giftMatchMethod carry the result
+to Unity, the skill director, and the notification icon. Picture lookup preserves event order
+and existing gift combo deltas. Unknown images are not guessed from coin price.
+
+Confirmed legacy aliases: little hippo -> Baby Hippo; BFF Necklace -> Friendship Necklace.
+These also work without image metadata. Existing saved gift settings are retained.
+
+Copy the TikTokBridge source next to the player and install dependencies with npm ci.
+Include bundled runtime/node.exe, node_modules/sharp, its @img Windows native libraries,
+gift-resolver.mjs, image-match.mjs and gift-catalog.json in every package.
+Regenerate the catalog after changing gift art using:
+node build-gift-catalog.mjs <Assets/PTVFOOD/Resources/PaintGifts path>
+
+Bridge validation: node --test *.test.mjs (46 cases, including the reported two gift pictures,
+JPEG/WebP variants, cached IDs, compact transport, session cancellation, FIFO and combo deltas).
+The TCP test uses --test-mode and never connects to TikTok LIVE.

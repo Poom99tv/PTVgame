@@ -48,9 +48,9 @@ public sealed class PTVTikTokLive : MonoBehaviour
 {
     [Serializable] public sealed class Message
     {
-        public string @event, eventId, userId, uniqueId, nickname, profilePictureUrl, giftName, giftId, state, detail, streamer;
-        public string[] profilePictureUrls;
-        public int repeatCount, giftType, likeCount;
+        public string @event, eventId, userId, uniqueId, nickname, profilePictureUrl, giftName, giftId, giftCanonicalName, giftMatchMethod, giftImageUrl, state, detail, streamer;
+        public string[] profilePictureUrls, giftImageUrls;
+        public int repeatCount, giftType, likeCount, giftDiamondCount;
         public bool repeatEnd, giftDelta, streakEnded; public int giftTotalCount; public string comboId;
         public string DisplayName => string.IsNullOrEmpty(nickname) ? uniqueId : nickname;
     }

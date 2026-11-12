@@ -1,0 +1,13 @@
+{
+  "name": "ptvfood-tiktok-bridge",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node bridge.mjs",
+    "test": "node --test *.test.mjs"
+  },
+  "dependencies": {
+    "tiktok-live-connector": "2.5.0",
+    "sharp": "0.35.5"
+  }
+}

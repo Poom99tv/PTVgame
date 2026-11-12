@@ -178,7 +178,7 @@ public sealed class SquidGiftDirector : MonoBehaviour
         for (int slot = 0; slot < SlotCount; slot++)
         {
             var s = settings.slots[slot]; var rule = s.rule; int count = 0;
-            if (kind == "gift" && ((rule.gift && Key(m.giftName) == Key(s.gift)) || (rule.orangeHeart && Key(m.giftName) == Key("Heart Me"))))
+            if (kind == "gift" && ((rule.gift && PTVGiftCatalog.EventKey(m) == Key(s.gift)) || (rule.orangeHeart && PTVGiftCatalog.EventKey(m) == Key("Heart Me"))))
                 count = Math.Max(1, m.repeatCount);
             else if (kind == "follow" && rule.follow) count = 1;
             else if (kind == "like" && rule.likes && m.likeCount > 0)
