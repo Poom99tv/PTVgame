@@ -99,7 +99,10 @@ public sealed class PTVStartMenu : MonoBehaviour
             chipTexts[k].resizeTextForBestFit = true;
             chipTexts[k].resizeTextMinSize = 24; chipTexts[k].resizeTextMaxSize = 30;
         }
-        play = PTVUI.Btn("Play", c, "fr_button_reset", "เปิดร้าน", new Vector2(0, -265), new Vector2(520, 104), 56, BeginPlay, 0f);
+        var setup = PTVUI.Btn("HomeGiftSettings", c, "fr_button_close", "ตั้งค่าของขวัญ", new Vector2(-270, -265), new Vector2(440, 104), 34, OpenSettings, 0f);
+        var setupText = setup.GetComponentInChildren<Text>();
+        setupText.resizeTextMinSize = 22; setupText.resizeTextMaxSize = 34; setupText.resizeTextForBestFit = true;
+        play = PTVUI.Btn("Play", c, "fr_button_reset", "เปิดร้าน", new Vector2(250, -265), new Vector2(480, 104), 48, BeginPlay, 0f);
         var trial = PTVUI.Btn("TryOffline", c, null, "ทดลองเล่น", new Vector2(0, -335), new Vector2(260, 38), 26, BeginTrial);
         ((Image)trial.targetGraphic).color = Color.clear;
         var trialLabel = trial.GetComponentInChildren<Text>(); trialLabel.color = PTVUI.Ink;

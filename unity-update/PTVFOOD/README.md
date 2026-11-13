@@ -1,6 +1,14 @@
-# Grilled Squid 1.0.6 (PTVFOOD)
+# Grilled Squid 1.0.7 (PTVFOOD)
 
 Windows x64. Launcher ID / signed ticket audience: ptvfood. Executable: PTVFOOD/PTVFOOD.exe.
+
+## Configure gifts before LIVE
+
+The connection home screen has an explicit Gift Settings button beside Open Shop.
+It stays available without a TikTok username or connection, even when Open Shop is disabled.
+Players can pick gifts, edit quantities and trigger rules, then Save and return to the
+connection screen. Saving uses the existing PTVFOOD.Gifts4 preference and does not connect
+to LIVE or start the round. The top-left settings gear remains available during gameplay.
 
 ## Thirteen skills
 
@@ -25,7 +33,7 @@ TikTok username and language preferences are retained. Fresh installations defau
 ## Build
 
 Use the existing project models, scene, fonts and MintUI resources. Run PTVFOODBuild.Prepare(); build
-Windows x64 / Mono / 1.0.6, with the version-gate scene first and SquidStall second.
+Windows x64 / Mono / 1.0.7, with the version-gate scene first and SquidStall second.
 Copy Branding/AppIcon.png to Assets/PTVFOOD/Branding/AppIcon.png before Prepare;
 the Windows player uses this supplied application icon.
 Retail builds reject PTV_RELEASE_QA. Package the complete production TikTokBridge with runtime/node.exe
