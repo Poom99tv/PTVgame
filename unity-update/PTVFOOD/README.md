@@ -1,6 +1,14 @@
-# Grilled Squid 1.0.7 (PTVFOOD)
+# Grilled Squid 1.0.8 (PTVFOOD)
 
 Windows x64. Launcher ID / signed ticket audience: ptvfood. Executable: PTVFOOD/PTVFOOD.exe.
+
+## Complete All cinematic (1.0.8)
+
+The Complete All skill now plays a cinematic (SquidServeAllCutscene.cs): letterbox and camera dolly
+onto the vendor, the gifter card with sunburst and a golden power pillar, a shockwave with slow motion
+and a food storm onto every waiting customer, then the result banner with fireworks as the camera
+returns. Clicks, automatic serving, the random wheel and the skill HUD wait while it plays; several
+Complete All gifts queue and play one after another.
 
 ## Configure gifts before LIVE
 
@@ -33,7 +41,7 @@ TikTok username and language preferences are retained. Fresh installations defau
 ## Build
 
 Use the existing project models, scene, fonts and MintUI resources. Run PTVFOODBuild.Prepare(); build
-Windows x64 / Mono / 1.0.7, with the version-gate scene first and SquidStall second.
+Windows x64 / Mono / 1.0.8, with the version-gate scene first and SquidStall second.
 Copy Branding/AppIcon.png to Assets/PTVFOOD/Branding/AppIcon.png before Prepare;
 the Windows player uses this supplied application icon.
 Retail builds reject PTV_RELEASE_QA. Package the complete production TikTokBridge with runtime/node.exe

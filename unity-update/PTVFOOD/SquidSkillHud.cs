@@ -128,7 +128,7 @@ public sealed class SquidSkillHud : MonoBehaviour
     void Update()
     {
         if(!canvas)return;if(!game){game=UnityEngine.Object.FindFirstObjectByType<SquidGame>();if(game)game.WheelResolved+=PulseResult;}
-        canvas.enabled=game&&!game.IsWaiting&&!PTVStartMenu.UIBlocking&&!SettingsOpen;
+        canvas.enabled=game&&!game.IsWaiting&&!game.CutscenePlaying&&!PTVStartMenu.UIBlocking&&!SettingsOpen;
         for(int slot=0;slot<tiles.Length;slot++){
             pulses[slot]=Mathf.MoveTowards(pulses[slot],0,Time.unscaledDeltaTime*1.8f);tiles[slot].localScale=Vector3.one*(1+.13f*Mathf.Sin(pulses[slot]*Mathf.PI));
             float wave=Time.unscaledTime*2+slot*.6f;effects[slot].anchoredPosition=new Vector2(-15,22+2*Mathf.Sin(wave));effects[slot].localRotation=Quaternion.Euler(0,0,2*Mathf.Sin(wave*.8f));

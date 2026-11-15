@@ -16,7 +16,7 @@ using UnityEngine.UI;
 ///  SERVE : ready food flies automatically to waiting customers in first-arrival order.
 ///  Test without a live: keys 1-6 = gift slots.
 /// </summary>
-public sealed class SquidGame : MonoBehaviour
+public sealed partial class SquidGame : MonoBehaviour
 {
     [Header("Round")]
     public int goal = 10;
@@ -223,7 +223,7 @@ public sealed class SquidGame : MonoBehaviour
 
     public void BeginRound() { IsWaiting = false; }
     public void SuspendRound() { IsWaiting = true; }
-    bool CanPlay => !IsWaiting && RestLeft <= 0f && celebrate <= 0f && !PTVStartMenu.UIBlocking;
+    bool CanPlay => !IsWaiting && RestLeft <= 0f && celebrate <= 0f && !cineActive && !PTVStartMenu.UIBlocking;
 
     // ------------------------------------------------------------------ loop
     void Update()
@@ -250,7 +250,7 @@ public sealed class SquidGame : MonoBehaviour
 
     void FitCamera()
     {
-        if (!cam) cam = Camera.main; if (!cam) return;
+        if (!cam) cam = Camera.main; if (!cam || cineActive) return;
         float aspect = (float)Screen.width / Mathf.Max(1, Screen.height);
         // keep the whole counter width on screen whatever the shape of the window
         float v = 2f * Mathf.Atan(Mathf.Tan(25.5f * Mathf.Deg2Rad) / aspect) * Mathf.Rad2Deg;
@@ -727,10 +727,7 @@ public sealed class SquidGame : MonoBehaviour
             case SquidAction.Wheel: wheelQueue.Enqueue(e); break;
             case SquidAction.ServeAll:
             {
-                int served = 0;
-                foreach (var c in customers) if (!c.leaving && (c.needSquid > 0 || c.needSauce > 0)) { c.needSquid = 0; c.needSauce = 0; served++; }
-                PTVAudio.Sfx("sparkle", 0.7f);
-                Pop(served > 0 ? "ทำออเดอร์ครบ!" : "ไม่มีออเดอร์ค้าง", vendor.position + Vector3.up * 2.6f, new Color(0.4f, 0.8f, 0.4f), 1.4f);
+                QueueServeAll(e);   // cinematic: SquidServeAllCutscene.cs
                 break;
             }
             case SquidAction.CloseShop:
@@ -1025,7 +1022,7 @@ public sealed class SquidGame : MonoBehaviour
     {
         while (this)
         {
-            if (wheelQueue.Count == 0 || IsWaiting) { yield return null; continue; }
+            if (wheelQueue.Count == 0 || IsWaiting || serveAllRunning) { yield return null; continue; }
             var e = wheelQueue.Peek();
             if (--e.repeats <= 0) wheelQueue.Dequeue();
             if (!wheelRoot) BuildWheel();

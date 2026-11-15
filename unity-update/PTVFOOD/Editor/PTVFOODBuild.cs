@@ -26,7 +26,7 @@ public sealed class PTVFOODBuild : IPreprocessBuildWithReport
     {
         PlayerSettings.productName = "Grilled Squid";
         PlayerSettings.companyName = "PTVgame";
-        PlayerSettings.bundleVersion = "1.0.7";
+        PlayerSettings.bundleVersion = "1.0.8";
         var appIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/PTVFOOD/Branding/AppIcon.png");
         if (!appIcon) throw new BuildFailedException("Missing application icon.");
         var iconSizes = PlayerSettings.GetIconSizes(NamedBuildTarget.Standalone, IconKind.Any);
