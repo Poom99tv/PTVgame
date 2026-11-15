@@ -2770,7 +2770,10 @@
   }
   function startWeb() {
     const user = cleanId(qs.get('user') || store.get('muu.user'));
-    const key = store.get('muu.key');
+    // คีย์ส่งมาทางลิงก์ได้ (สำหรับ TikTok LIVE Studio ที่กรอกฟอร์มไม่ได้) แล้วลบออกจากแถบที่อยู่ทันที
+    const qKey = (qs.get('key') || '').trim();
+    if (qKey) { store.set('muu.key', qKey); try { qs.delete('key'); history.replaceState(null, '', location.pathname + '?' + qs.toString().replace(/=(&|$)/g, '$1')); } catch (e) {} }
+    const key = qKey || store.get('muu.key');
     if (!user || !key) { showStatus('ยังไม่ได้ใส่ ID TikTok หรือคีย์ กดย้อนกลับไปหน้าแรกเพื่อใส่'); return; }
     let ws = null, tries = 0, timer = 0, liveShown = false;
     const retry = (sec, text) => {
