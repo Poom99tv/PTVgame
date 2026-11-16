@@ -17,15 +17,19 @@
   })();
 </script>
 <style>
-  /* Layout: a 9:16 stage on the left, a control console on the right; stacks on phones.
-     One deliberate night look (no light theme): every scene is a ceremony at night. */
+  /* หน้าแรก: ฉากตัวอย่างซ้าย แผงตั้งค่าเป็นขั้นตอนขวา (มือถือเรียงลงมา)
+     โหมดไลฟ์ (?live): เหลือแต่ฉากเต็มจอ */
   :root {
-    --deep: #070a1d;
+    --deep: #060819;
+    --ink: #0b1030;
     --panel: #10173a;
-    --panel-2: #172152;
-    --line: #29336a;
+    --panel-2: #161f4d;
+    --line: #262f66;
+    --line-2: #333e80;
     --gold: #f2c46b;
+    --gold-2: #ffe2a1;
     --lotus: #f39ab6;
+    --jade: #6fd6b0;
     --text: #eef0fb;
     --muted: #9aa3cf;
     --display: 'Charm', 'Mitr', Tahoma, serif;
@@ -34,270 +38,311 @@
     color-scheme: dark;
   }
   *, *::before, *::after { box-sizing: border-box; }
-  html, body { background: var(--deep); color: var(--text); }
+  html, body { background: var(--deep); color: var(--text); margin: 0; }
   body {
     font-family: var(--body);
     font-size: 15px;
     line-height: 1.55;
-    padding-left: max(16px, env(safe-area-inset-left, 0px));
-    padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: 20px 36px;
+    min-height: 100vh;
+    padding: 0 max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px));
+    background:
+      radial-gradient(900px 520px at 12% -10%, rgba(242, 196, 107, 0.13), transparent 60%),
+      radial-gradient(800px 600px at 100% 0%, rgba(243, 154, 182, 0.10), transparent 60%),
+      radial-gradient(1000px 700px at 50% 120%, rgba(80, 110, 255, 0.10), transparent 60%),
+      var(--deep);
+    background-attachment: fixed;
   }
-  .app { max-width: 1040px; margin: 0 auto; display: grid; gap: 18px; }
+  .app { max-width: 1000px; margin: 0 auto; }
+
+  /* ---------- หัวเว็บ ---------- */
+  .top { display: flex; align-items: center; gap: 16px; padding: 26px 0 22px; }
+  .emblem { width: 58px; height: 58px; flex: none; filter: drop-shadow(0 6px 18px rgba(242, 196, 107, 0.35)); }
   .top h1 {
     font-family: var(--display);
     font-weight: 700;
-    font-size: 34px;
-    line-height: 1.2;
-    color: var(--gold);
+    font-size: clamp(30px, 5vw, 44px);
+    line-height: 1.1;
     margin: 0;
-    text-wrap: balance;
+    background: linear-gradient(180deg, var(--gold-2), var(--gold) 55%, #c9913a);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .top p { margin: 4px 0 0; color: var(--muted); max-width: 62ch; }
+  .top p { margin: 4px 0 0; color: var(--muted); max-width: 60ch; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip { font: 400 12.5px/1 var(--ui); color: var(--text); background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; }
+  .chip b { color: var(--gold); font-weight: 500; }
 
-  .layout {
-    display: grid;
-    grid-template-columns: auto minmax(0, 400px);
-    gap: 28px;
-    align-items: start;
-    justify-content: center;
-  }
+  /* ---------- โครงหลัก ---------- */
+  .layout { display: grid; grid-template-columns: auto minmax(0, 470px); gap: 30px; align-items: start; justify-content: center; }
+  .stage-wrap { position: sticky; top: 18px; display: grid; gap: 10px; justify-items: center; }
   .stage {
     position: relative;
     aspect-ratio: 9 / 16;
-    width: min(calc((100vh - 130px) * 9 / 16), 500px);
+    width: min(calc((100vh - 90px) * 9 / 16), 480px);
     min-width: 280px;
     max-width: 100%;
-    border-radius: 18px;
+    border-radius: 22px;
     overflow: hidden;
     background: #050716;
-    box-shadow: 0 0 0 1px var(--line), 0 24px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 0 1px rgba(242, 196, 107, 0.35), 0 0 0 7px rgba(242, 196, 107, 0.06), 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 120px rgba(242, 196, 107, 0.10);
   }
   .stage canvas { display: block; width: 100%; height: 100%; }
+  .stage-cap { font: 400 12.5px/1.3 var(--ui); color: var(--muted); display: flex; align-items: center; gap: 7px; }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--lotus); box-shadow: 0 0 0 0 rgba(243, 154, 182, 0.7); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(243, 154, 182, 0); } 100% { box-shadow: 0 0 0 0 rgba(243, 154, 182, 0); } }
 
   .gate {
-    position: absolute;
-    left: 12px;
-    top: 12px;
-    font: 500 14px/1 var(--ui);
-    color: #1b1206;
-    background: var(--gold);
-    border: 0;
-    border-radius: 999px;
-    padding: 10px 14px;
-    cursor: pointer;
+    position: absolute; left: 12px; top: 12px;
+    font: 500 14px/1 var(--ui); color: #1b1206; background: var(--gold);
+    border: 0; border-radius: 999px; padding: 10px 14px; cursor: pointer;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   }
   .status {
-    position: absolute;
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-    text-align: center;
-    font: 400 13px/1.35 var(--ui);
-    color: var(--text);
-    background: rgba(7, 10, 29, 0.82);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 6px 10px;
+    position: absolute; left: 10px; right: 10px; bottom: 10px; text-align: center;
+    font: 400 13px/1.35 var(--ui); color: var(--text);
+    background: rgba(7, 10, 29, 0.86); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px;
   }
 
-  .console {
-    display: grid;
-    gap: 16px;
-    background: var(--panel);
+  /* ---------- การ์ดขั้นตอน ---------- */
+  .console { display: grid; gap: 16px; min-width: 0; }
+  .card {
+    background: linear-gradient(180deg, rgba(22, 31, 77, 0.92), rgba(14, 20, 54, 0.92));
     border: 1px solid var(--line);
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 18px;
-    min-width: 0;
+    display: grid; gap: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
   }
-  .badge {
-    display: inline-block;
-    font: 500 12px/1 var(--ui);
-    letter-spacing: 0.04em;
-    color: var(--deep);
-    background: var(--lotus);
-    border-radius: 999px;
-    padding: 5px 10px;
-  }
-  .c-head p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+  .card-h { display: flex; align-items: center; gap: 10px; }
+  .num { width: 28px; height: 28px; flex: none; border-radius: 50%; display: grid; place-items: center; font: 500 14px/1 var(--ui); color: #1b1206; background: linear-gradient(180deg, var(--gold-2), var(--gold)); }
+  .card-h h2 { font: 500 17px/1.25 var(--ui); margin: 0; }
+  .card-h small { display: block; font: 400 13px/1.3 var(--body); color: var(--muted); margin-top: 2px; }
+
   .field { display: grid; gap: 6px; }
-  .field > label, .lbl { font: 500 13px/1 var(--ui); color: var(--muted); }
-  .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; background: var(--deep); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
-  .tab {
-    font: 500 14px/1.2 var(--ui);
-    color: var(--muted);
-    background: transparent;
-    border: 0;
-    border-radius: 9px;
-    padding: 10px 6px;
-    cursor: pointer;
-  }
-  .tab[aria-selected="true"] { color: #1b1206; background: var(--gold); }
+  .field > label, .lbl { font: 500 13px/1.2 var(--ui); color: var(--muted); }
+  .hint { font-size: 13px; color: var(--muted); margin: 0; }
+  .hint a { color: var(--gold); }
   .row { display: flex; gap: 8px; }
   input[type="text"], input[type="password"] {
-    flex: 1;
-    min-width: 0;
-    font: 400 16px/1 var(--body);
-    color: var(--text);
-    background: var(--deep);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 10px 12px;
+    width: 100%; min-width: 0; flex: 1;
+    font: 400 16px/1 var(--body); color: var(--text);
+    background: var(--ink); border: 1px solid var(--line-2); border-radius: 12px; padding: 12px 13px;
   }
+  input::placeholder { color: #6670a3; }
+  .at { position: relative; }
+  .at::before { content: '@'; position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font: 400 16px/1 var(--body); pointer-events: none; }
+  .at input { padding-left: 30px; }
   button { font-family: var(--ui); }
-  .ghost {
-    font: 400 14px/1 var(--ui);
-    color: var(--text);
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 0 14px;
-    cursor: pointer;
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 13px 16px; border: 0; border-radius: 13px; cursor: pointer;
+    font: 500 16px/1.2 var(--ui); color: #1b1206; text-decoration: none;
+    background: linear-gradient(180deg, var(--gold-2), var(--gold));
+    box-shadow: 0 6px 20px rgba(242, 196, 107, 0.25);
   }
-  .events { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .ev {
-    display: grid;
-    gap: 3px;
-    align-content: start;
-    text-align: left;
-    color: var(--text);
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 11px 12px;
-    cursor: pointer;
+  .btn:active { transform: translateY(1px); }
+  .btn.alt { color: var(--text); background: transparent; border: 1px solid var(--line-2); box-shadow: none; font-size: 15px; }
+  .ghost { font: 400 14px/1 var(--ui); color: var(--text); background: transparent; border: 1px solid var(--line-2); border-radius: 12px; padding: 0 14px; cursor: pointer; white-space: nowrap; }
+
+  /* เลือกฉาก */
+  .scenes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .tab {
+    position: relative; overflow: hidden; text-align: left; cursor: pointer;
+    display: grid; gap: 2px; align-content: end; min-height: 84px;
+    padding: 10px 11px; border-radius: 14px; border: 1px solid var(--line);
+    color: var(--text); background: var(--ink);
     transition: border-color 0.15s, transform 0.1s;
   }
-  .ev b { font: 500 15px/1.3 var(--ui); }
-  .ev small { font: 400 13px/1.35 var(--body); color: var(--muted); }
+  .tab::before { content: ''; position: absolute; inset: 0; background: var(--sw); opacity: 0.55; transition: opacity 0.15s; }
+  .tab > * { position: relative; }
+  .tab b { font: 500 14.5px/1.2 var(--ui); }
+  .tab span { font: 400 11.5px/1.3 var(--body); color: rgba(238, 240, 251, 0.75); }
+  .tab:hover { border-color: var(--line-2); }
+  .tab:hover::before { opacity: 0.75; }
+  .tab[aria-selected="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset, 0 6px 20px rgba(242, 196, 107, 0.18); }
+  .tab[aria-selected="true"]::before { opacity: 0.9; }
+  .tab[aria-selected="true"]::after { content: '✓'; position: absolute; top: 8px; right: 9px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font: 500 12px/1 var(--ui); color: #1b1206; background: var(--gold); }
+
+  /* เลือกวิธีเชื่อมต่อ */
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; background: var(--ink); border: 1px solid var(--line); border-radius: 14px; }
+  .seg button { display: grid; gap: 2px; padding: 9px 8px; border: 0; border-radius: 10px; cursor: pointer; color: var(--muted); background: transparent; text-align: center; }
+  .seg button b { font: 500 14px/1.2 var(--ui); }
+  .seg button span { font: 400 11.5px/1.2 var(--body); }
+  .seg button[aria-pressed="true"] { color: #1b1206; background: linear-gradient(180deg, var(--gold-2), var(--gold)); }
+  .seg button[aria-pressed="true"] span { color: rgba(27, 18, 6, 0.75); }
+  .pane { display: grid; gap: 12px; }
+  .pane[hidden] { display: none; }
+  .steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 8px; }
+  .steps li { counter-increment: s; display: grid; grid-template-columns: 22px 1fr; gap: 8px; font-size: 14px; color: var(--text); }
+  .steps li::before { content: counter(s); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 500 12px/1 var(--ui); color: var(--gold); border: 1px solid rgba(242, 196, 107, 0.5); }
+  .steps a { color: var(--gold); }
+  .steps code, .hint code { font: 12.5px/1.4 ui-monospace, Menlo, Consolas, monospace; color: var(--gold-2); background: var(--ink); border-radius: 6px; padding: 1px 6px; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; font: 400 13px/1.2 var(--ui); padding: 7px 11px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--muted); }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; background: #6670a3; }
+  .pill.ok { color: var(--jade); border-color: rgba(111, 214, 176, 0.5); background: rgba(111, 214, 176, 0.08); }
+  .pill.ok i { background: var(--jade); box-shadow: 0 0 8px var(--jade); }
+  .linkbox { display: flex; gap: 6px; }
+  .linkbox input { font: 13px/1.2 ui-monospace, Menlo, Consolas, monospace; color: var(--gold-2); padding: 11px 12px; }
+  .msg { font: 400 13px/1.35 var(--ui); color: var(--lotus); margin: 0; }
+  .msg.ok { color: var(--jade); }
+
+  /* ทดลอง */
+  details.card > summary { list-style: none; cursor: pointer; }
+  details.card > summary::-webkit-details-marker { display: none; }
+  details.card > summary .card-h::after { content: '▾'; margin-left: auto; color: var(--muted); transition: transform 0.2s; }
+  details.card:not([open]) > summary .card-h::after { transform: rotate(-90deg); }
+  .events { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ev {
+    display: grid; gap: 3px; align-content: start; text-align: left; color: var(--text);
+    background: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .ev b { font: 500 14.5px/1.3 var(--ui); }
+  .ev small { font: 400 12.5px/1.35 var(--body); color: var(--muted); }
   .ev:hover { border-color: var(--gold); }
   .ev:active { transform: scale(0.98); }
   .ev.big { grid-column: 1 / -1; border-color: rgba(242, 196, 107, 0.6); background: linear-gradient(120deg, #2a1f4f, #3a2350); }
   .ev .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: 2px; }
-  button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-
   .toggles { display: flex; flex-wrap: wrap; gap: 8px 16px; }
   .sw { display: flex; align-items: center; gap: 7px; font: 400 14px/1.2 var(--ui); cursor: pointer; }
   .sw input { width: 18px; height: 18px; accent-color: var(--gold); }
+  .foot { margin: 26px auto 0; max-width: 1120px; text-align: center; font-size: 12.5px; color: #6670a3; }
 
-  .howto { border-top: 1px solid var(--line); padding-top: 14px; }
-  .howto h2 { font: 500 15px/1.3 var(--ui); margin: 0 0 6px; color: var(--gold); }
-  .howto ol { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
-  .howto code {
-    font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace;
-    color: var(--text);
-    background: var(--deep);
-    border-radius: 6px;
-    padding: 1px 6px;
-    word-break: break-all;
-  }
-
-  @media (max-width: 820px) {
+  @media (max-width: 880px) {
     .layout { grid-template-columns: minmax(0, 1fr); justify-items: center; }
-    .stage { width: min(100%, 440px); min-width: 0; }
-    .console { width: 100%; max-width: 440px; }
+    .stage-wrap { position: static; }
+    .stage { width: min(100%, 420px); min-width: 0; }
+    .console { width: 100%; max-width: 520px; }
+  }
+  @media (max-width: 420px) {
+    .scenes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .top { padding-top: 18px; }
+    .emblem { width: 46px; height: 46px; }
   }
 
-  /* Live mode: the scene alone, fitted to the window (TikTok LIVE Studio link source / phone full screen) */
+  /* โหมดไลฟ์: ฉากอย่างเดียวพอดีหน้าต่าง (LIVE Studio / มือถือเต็มจอ) */
   html.live, html.live body { height: 100%; }
   html.live body { padding: 0; overflow: hidden; background: #000; }
-  html.live .top { display: none; }
+  html.live .top, html.live .foot, html.live .stage-cap { display: none; }
   html.bare .console { display: none; }
   html.bare .stage {
-    position: fixed;
-    inset: 0;
-    margin: auto;
+    position: fixed; inset: 0; margin: auto;
     width: min(100vw, calc(100vh * 9 / 16));
     height: min(100vh, calc(100vw * 16 / 9));
-    min-width: 0;
-    border-radius: 0;
-    box-shadow: none;
+    min-width: 0; border-radius: 0; box-shadow: none;
   }
   html.live:not(.bare) body { overflow: auto; padding: 12px; }
-  .connect { border: 1px solid var(--gold); border-radius: 14px; padding: 12px 14px 14px; background: rgba(242,196,107,0.06); }
-  .connect h2 { font: 500 15px/1.3 var(--ui); margin: 0; color: var(--gold); }
-  .connect input[type=text], .connect input[type=password] { width: 100%; }
-  .connect .hint { font-size: 13px; color: var(--muted); margin: 4px 0 0; display: block; }
-  .connect .hint a { color: var(--gold); }
-  .connect .go { width: 100%; margin-top: 10px; padding: 12px 14px; border: 0; border-radius: 12px; background: var(--gold); color: #1b1206; font: 500 16px/1.2 var(--ui); cursor: pointer; }
-  .connect .field { margin-top: 10px; }
-  @media (prefers-reduced-motion: reduce) { .ev { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .ev, .tab { transition: none; } .pulse { animation: none; } }
 </style>
 
 <div class="app">
   <header class="top">
-    <h1>ฉากไลฟ์สายมู</h1>
-    <p>เลือกฉาก แล้วกดปุ่มจำลองสิ่งที่คนดูทำในไลฟ์ เพื่อดูว่าฉากตอบสนองอย่างไร</p>
+    <svg class="emblem" viewBox="0 0 64 64" aria-hidden="true">
+      <defs><linearGradient id="eg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe2a1"/><stop offset="1" stop-color="#d79a3c"/></linearGradient></defs>
+      <circle cx="32" cy="32" r="30" fill="#10173a" stroke="url(#eg)" stroke-width="1.5"/>
+      <path d="M32 14c5 6 7 12 7 18s-3 11-7 13c-4-2-7-7-7-13s2-12 7-18z" fill="url(#eg)"/>
+      <path d="M32 45c-6-1-13-6-15-15 6 0 11 3 14 8M32 45c6-1 13-6 15-15-6 0-11 3-14 8" fill="none" stroke="url(#eg)" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M18 49h28" stroke="url(#eg)" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+    </svg>
+    <div>
+      <h1>ฉากไลฟ์สายมู</h1>
+      <p>ฉากสำหรับไลฟ์ TikTok คนดูคอมเมนต์ก็เดินเข้ามาไหว้ ส่งของขวัญก็จุดธูป ลอยกระทง หรือจุดพลุให้เห็นทันที</p>
+      <div class="chips"><span class="chip"><b>6</b> ฉาก</span><span class="chip">รับคอมเมนต์ ของขวัญ กดติดตาม</span><span class="chip">เสียงเรียกชื่อขอบคุณ</span><span class="chip">ใช้ฟรี</span></div>
+    </div>
   </header>
 
   <div class="layout">
-    <div class="stage" id="stage">
-      <canvas id="scene" aria-label="ฉากไลฟ์"></canvas>
-      <button class="gate" id="gate" type="button">แตะเพื่อเปิดเสียง</button>
-      <div class="status" id="status" hidden></div>
+    <div class="stage-wrap">
+      <div class="stage" id="stage">
+        <canvas id="scene" aria-label="ฉากไลฟ์"></canvas>
+        <button class="gate" id="gate" type="button">แตะเพื่อเปิดเสียง</button>
+        <div class="status" id="status" hidden></div>
+      </div>
+      <div class="stage-cap"><span class="pulse"></span>ตัวอย่าง ชื่อในฉากเป็นคนดูสมมุติ ตอนไลฟ์จริงจะเป็นคนดูของคุณ</div>
     </div>
 
     <aside class="console" id="console">
-      <div class="c-head">
-        <span class="badge">โหมดเดโม</span>
-        <p>ชื่อที่เห็นในฉากตอนนี้เป็นข้อมูลตัวอย่าง ตอนไลฟ์จริงจะเป็นชื่อคนดูของคุณ</p>
-      </div>
+      <section class="card">
+        <div class="card-h"><span class="num">1</span><div><h2>เลือกฉาก</h2><small>ฉากตัวอย่างด้านซ้ายจะเปลี่ยนตาม</small></div></div>
+        <div class="scenes" role="tablist" aria-label="ฉาก">
+          <button class="tab" type="button" role="tab" data-scene="loykrathong" style="--sw:linear-gradient(160deg,#1d3f8f,#0b1638 70%)"><b>ลอยกระทง</b><span>กระทง โคมลอย พลุ</span></button>
+          <button class="tab" type="button" role="tab" data-scene="shrine" style="--sw:linear-gradient(160deg,#9b1f2a,#2a0b17 70%)"><b>ศาลเจ้า</b><span>ธูป โคมแดง ประทัด</span></button>
+          <button class="tab" type="button" role="tab" data-scene="ganesha" style="--sw:linear-gradient(160deg,#c46a12,#3a1a0c 70%)"><b>พระพิฆเนศ</b><span>ประทีป ดาวเรือง</span></button>
+          <button class="tab" type="button" role="tab" data-scene="wessuwan" style="--sw:linear-gradient(160deg,#1e7a5e,#0b2720 70%)"><b>ท้าวเวสสุวรรณ</b><span>เทียน ระฆัง ออร่า</span></button>
+          <button class="tab" type="button" role="tab" data-scene="guanyin" style="--sw:linear-gradient(160deg,#c45a86,#2b1238 70%)"><b>เจ้าแม่กวนอิม</b><span>สระบัว น้ำทิพย์</span></button>
+          <button class="tab" type="button" role="tab" data-scene="maenak" style="--sw:linear-gradient(160deg,#5b3fa8,#160d2f 70%)"><b>แม่นาค</b><span>มาลัย ชุดไทย หิ่งห้อย</span></button>
+        </div>
+      </section>
 
-      <div class="connect">
-        <h2>เชื่อมต่อไลฟ์จริง (ใช้มือถือเครื่องเดียวได้)</h2>
-        <div class="field">
-          <label for="ttUser">ID TikTok ของช่อง (ชื่อหลัง @)</label>
-          <input type="text" id="ttUser" placeholder="เช่น mychannel" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <section class="card">
+        <div class="card-h"><span class="num">2</span><div><h2>เชื่อมต่อไลฟ์</h2><small>เลือกตามเครื่องที่ใช้ไลฟ์</small></div></div>
+        <div class="seg" role="group" aria-label="วิธีเชื่อมต่อ">
+          <button type="button" id="modePc" aria-pressed="true"><b>คอม + LIVE Studio</b><span>ไม่ต้องใช้คีย์</span></button>
+          <button type="button" id="modePhone" aria-pressed="false"><b>มือถือเครื่องเดียว</b><span>ใช้คีย์ฟรี</span></button>
         </div>
         <div class="field">
-          <label for="ttKey">คีย์ Euler Stream (ฟรี ใส่ครั้งเดียว เครื่องจะจำไว้)</label>
-          <input type="password" id="ttKey" placeholder="วางคีย์ที่นี่" autocomplete="off" autocapitalize="off" spellcheck="false">
-          <small class="hint">ขอคีย์ฟรีที่ <a href="https://www.eulerstream.com" target="_blank" rel="noopener">eulerstream.com</a> สมัครสมาชิก แล้วคัดลอก API Key จากหน้า Dashboard</small>
+          <label for="ttUser">ID TikTok ของช่อง</label>
+          <div class="at"><input type="text" id="ttUser" placeholder="ชื่อหลัง @ เช่น mychannel" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
         </div>
-        <button class="go" id="goLive" type="button">เริ่มใช้กับไลฟ์ (ฉากที่เลือกอยู่)</button>
-        <p class="hint" id="goMsg" hidden></p>
-        <p class="hint">เปิดฉากแล้ว ไปที่แอป TikTok เลือกไลฟ์แบบแชร์หน้าจอ แล้วสลับกลับมาที่หน้านี้ แตะปุ่มย้อนกลับของเบราว์เซอร์เพื่อกลับมาหน้านี้</p>
-        <p class="hint">มีคอม: เปิดไฟล์ start แล้วใช้ลิงก์ <code>http://localhost:8787/?live</code> ใน TikTok LIVE Studio ได้เหมือนเดิม</p>
-      </div>
-      <div class="field">
-        <span class="lbl" id="sceneLbl">ฉาก</span>
-        <div class="tabs" role="tablist" aria-labelledby="sceneLbl">
-          <button class="tab" id="tab-loykrathong" type="button" role="tab" data-scene="loykrathong">ลอยกระทง</button>
-          <button class="tab" id="tab-shrine" type="button" role="tab" data-scene="shrine">ศาลเจ้า</button>
-          <button class="tab" id="tab-ganesha" type="button" role="tab" data-scene="ganesha">พระพิฆเนศ</button>
-          <button class="tab" id="tab-wessuwan" type="button" role="tab" data-scene="wessuwan">ท้าวเวสสุวรรณ</button>
-          <button class="tab" id="tab-guanyin" type="button" role="tab" data-scene="guanyin">เจ้าแม่กวนอิม</button>
-          <button class="tab" id="tab-maenak" type="button" role="tab" data-scene="maenak">แม่นาค</button>
+
+        <div class="pane" id="panePc">
+          <ol class="steps">
+            <li><span>ดาวน์โหลดโปรแกรมเชื่อมต่อ แตกไฟล์ แล้วเปิด <code>start-windows.bat</code> ทิ้งไว้ตลอดไลฟ์ (ครั้งแรกต้องติดตั้ง <a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a> ก่อน)</span></li>
+            <li><span>คัดลอกลิงก์ด้านล่าง ใน LIVE Studio กด <b>เพิ่มที่มา › ลิงก์</b> แล้ววาง</span></li>
+            <li><span>ตั้งความละเอียดเอง <b>720 × 1280</b> หรือ 1080 × 1920 แล้วเปิดเสียงไว้</span></li>
+          </ol>
+          <a class="btn alt" id="dlZip" href="muu-live.zip" download>ดาวน์โหลดโปรแกรม (Windows / Mac)</a>
+          <div><span class="pill" id="localState"><i></i>กำลังตรวจหาโปรแกรมในคอมนี้…</span></div>
+          <div class="field">
+            <label for="pcLink">ลิงก์สำหรับ LIVE Studio</label>
+            <div class="linkbox"><input type="text" id="pcLink" readonly><button class="ghost" id="copyLink" type="button">คัดลอก</button></div>
+          </div>
+          <button class="btn" id="openPc" type="button">เปิดฉากเต็มจอในเบราว์เซอร์นี้</button>
+          <p class="msg" id="pcMsg" hidden></p>
         </div>
-      </div>
 
-      <div class="field">
-        <label for="who">ชื่อคนดูที่จะจำลอง</label>
-        <div class="row">
-          <input type="text" id="who" value="แพรวา" maxlength="24" autocomplete="off">
-          <button class="ghost" id="dice" type="button">สุ่มชื่อ</button>
+        <div class="pane" id="panePhone" hidden>
+          <div class="field">
+            <label for="ttKey">คีย์ Euler Stream (ใส่ครั้งเดียว เครื่องจะจำไว้)</label>
+            <input type="password" id="ttKey" placeholder="euler_…" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <p class="hint">ขอคีย์ฟรีที่ <a href="https://www.eulerstream.com" target="_blank" rel="noopener">eulerstream.com</a> สมัครแล้วคัดลอก API Key จากหน้า Dashboard</p>
+          </div>
+          <button class="btn" id="goLive" type="button">เปิดฉากเต็มจอ</button>
+          <p class="msg" id="goMsg" hidden></p>
+          <ol class="steps">
+            <li><span>แตะ “แตะเพื่อเปิดเสียง” ในฉาก แล้วเปิดโหมดห้ามรบกวน</span></li>
+            <li><span>ในแอป TikTok เลือกไลฟ์แบบ<b>แชร์หน้าจอ</b> แล้วสลับกลับมาที่หน้านี้</span></li>
+          </ol>
         </div>
-      </div>
+      </section>
 
-      <div class="events">
-        <button class="ev" type="button" data-ev="chat"><b><span class="dot" style="background:#9fd8ff"></span>คอมเมนต์</b><small></small></button>
-        <button class="ev" type="button" data-ev="follow"><b><span class="dot" style="background:#c9a0ff"></span>กดติดตาม</b><small></small></button>
-        <button class="ev" type="button" data-ev="like"><b><span class="dot" style="background:#ffe9a8"></span>กดไลก์</b><small></small></button>
-        <button class="ev" type="button" data-ev="small"><b><span class="dot" style="background:#f39ab6"></span>กุหลาบ · 1 เหรียญ</b><small></small></button>
-        <button class="ev" type="button" data-ev="mid"><b><span class="dot" style="background:#ffb36b"></span>โดนัท · 30 เหรียญ</b><small></small></button>
-        <button class="ev" type="button" data-ev="mid3"><b><span class="dot" style="background:#ffb36b"></span>กุหลาบ x15</b><small></small></button>
-        <button class="ev big" type="button" data-ev="big"><b><span class="dot" style="background:#f2c46b"></span>ของขวัญใหญ่ · 500 เหรียญ</b><small></small></button>
-      </div>
-
-      <div class="toggles">
-        <label class="sw" for="auto"><input type="checkbox" id="auto" checked>จำลองไลฟ์อัตโนมัติ</label>
-        <label class="sw" for="snd"><input type="checkbox" id="snd" checked>เสียงประกอบ</label>
-        <label class="sw" for="tts"><input type="checkbox" id="tts" checked>เสียงเรียกชื่อ</label>
-      </div>
-
+      <details class="card" open>
+        <summary><div class="card-h"><span class="num">3</span><div><h2>ทดลองก่อนไลฟ์</h2><small>กดดูว่าฉากตอบสนองยังไง</small></div></div></summary>
+        <div class="field">
+          <label for="who">ชื่อคนดูสมมุติ</label>
+          <div class="row">
+            <input type="text" id="who" value="แพรวา" maxlength="24" autocomplete="off">
+            <button class="ghost" id="dice" type="button">สุ่มชื่อ</button>
+          </div>
+        </div>
+        <div class="events">
+          <button class="ev" type="button" data-ev="chat"><b><span class="dot" style="background:#9fd8ff"></span>คอมเมนต์</b><small></small></button>
+          <button class="ev" type="button" data-ev="follow"><b><span class="dot" style="background:#c9a0ff"></span>กดติดตาม</b><small></small></button>
+          <button class="ev" type="button" data-ev="like"><b><span class="dot" style="background:#ffe9a8"></span>กดไลก์</b><small></small></button>
+          <button class="ev" type="button" data-ev="small"><b><span class="dot" style="background:#f39ab6"></span>กุหลาบ · 1 เหรียญ</b><small></small></button>
+          <button class="ev" type="button" data-ev="mid"><b><span class="dot" style="background:#ffb36b"></span>โดนัท · 30 เหรียญ</b><small></small></button>
+          <button class="ev" type="button" data-ev="mid3"><b><span class="dot" style="background:#ffb36b"></span>กุหลาบ x15</b><small></small></button>
+          <button class="ev big" type="button" data-ev="big"><b><span class="dot" style="background:#f2c46b"></span>ของขวัญใหญ่ · 500 เหรียญ</b><small></small></button>
+        </div>
+        <div class="toggles">
+          <label class="sw" for="auto"><input type="checkbox" id="auto" checked>จำลองไลฟ์อัตโนมัติ</label>
+          <label class="sw" for="snd"><input type="checkbox" id="snd" checked>เสียงประกอบ</label>
+          <label class="sw" for="tts"><input type="checkbox" id="tts" checked>เสียงเรียกชื่อ</label>
+        </div>
+      </details>
     </aside>
   </div>
+  <p class="foot">ฉากเพื่อความบันเทิงในไลฟ์ ไม่ได้สื่อว่าการส่งของขวัญจะนำโชคหรือสิ่งตอบแทนใดๆ</p>
 </div>
 
 <script>
@@ -307,7 +352,11 @@
   const qs = new URLSearchParams(location.search);
   const LIVE = qs.has('live');
   const DEMO = !LIVE || qs.has('test');
-  const WEB = LIVE && qs.has('web'); // ต่อ TikTok ตรงจากเบราว์เซอร์ ผ่าน Euler Stream (ไม่ต้องมีโปรแกรมบนคอม)
+  const WEB = LIVE && qs.has('web'); // ต่อ TikTok ตรงจากเบราว์เซอร์ ผ่าน Euler Stream (ต้องมีคีย์)
+  const LOCAL = LIVE && qs.has('local'); // รับข้อมูลจากโปรแกรม server.js ที่เปิดอยู่ในคอมเครื่องนี้ (ไม่ต้องมีคีย์)
+  const LOCAL_PORT = Number(qs.get('port')) || 8787;
+  const LOCAL_BASE = 'http://127.0.0.1:' + LOCAL_PORT;
+  let sceneHook = null;
 
   const CFG = {
     title: '', subtitle: '',
@@ -2508,6 +2557,7 @@
     document.querySelectorAll('.ev').forEach((b) => { const sm = b.querySelector('small'); if (sm) sm.textContent = scene.desc[b.dataset.ev] || ''; });
     cv.setAttribute('aria-label', 'ฉากไลฟ์' + scene.title);
     if (cv.width) { layerCv = []; resize(true); }
+    if (sceneHook) sceneHook(scene.id);
   }
 
   // ================= update & render =================
@@ -2720,9 +2770,13 @@
     else if (ev.type === 'like') onLike(u, ev.count);
     else if (ev.type === 'status') showStatus(ev.text, ev.connected);
   }
-  async function startLive() {
+  // base = '' เมื่อหน้านี้มาจาก server.js เอง, หรือ http://127.0.0.1:8787 เมื่อเปิดจากเว็บ (โหมด ?local)
+  async function startLive(base) {
+    base = base || '';
+    const user = LOCAL ? cleanId(qs.get('user')) : '';
+    if (user) { try { await fetch(base + '/set-user?user=' + encodeURIComponent(user), { cache: 'no-store' }); } catch (e) {} }
     try {
-      const r = await fetch('/config.json', { cache: 'no-store' });
+      const r = await fetch(base + '/config.json', { cache: 'no-store' });
       if (r.ok) {
         const c = await r.json();
         if (c.title) CFG.title = c.title;
@@ -2732,13 +2786,15 @@
         if (c.voice) Object.assign(CFG.voice, c.voice);
         if (!qs.get('scene') && c.scene && SCENES[c.scene] && c.scene !== scene.id) setScene(c.scene);
       }
-    } catch (e) {}
+    } catch (e) {
+      if (base) showStatus('ยังไม่พบโปรแกรมในคอม เปิด start-windows.bat ทิ้งไว้ก่อน จะลองเชื่อมใหม่อัตโนมัติ');
+    }
     if (!('EventSource' in window)) { showStatus('เบราว์เซอร์นี้รับข้อมูลไลฟ์ไม่ได้'); return; }
-    const es = new EventSource('/events');
+    const es = new EventSource(base + '/events');
     es.onmessage = (e) => { let ev; try { ev = JSON.parse(e.data); } catch (x) { return; } handleEvent(ev); };
-    es.onerror = () => showStatus('ขาดการเชื่อมต่อกับโปรแกรม กำลังลองใหม่…');
+    es.onerror = () => showStatus(base ? 'ยังไม่พบโปรแกรมในคอม เปิด start-windows.bat ทิ้งไว้ก่อน กำลังลองใหม่…' : 'ขาดการเชื่อมต่อกับโปรแกรม กำลังลองใหม่…');
+    if (user) es.onopen = () => { fetch(base + '/set-user?user=' + encodeURIComponent(user), { cache: 'no-store' }).catch(() => {}); };
   }
-
 
   // ================= web mode: browser connects to TikTok LIVE via Euler Stream =================
   const store = {
@@ -2816,15 +2872,65 @@
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !ws) open(); });
     open();
   }
+  // ================= หน้าแรก: เลือกวิธีเชื่อมต่อ ทำลิงก์ =================
   if (DEMO && !LIVE) {
-    const uEl = document.getElementById('ttUser'), kEl = document.getElementById('ttKey'), msg = document.getElementById('goMsg');
+    const $ = (id) => document.getElementById(id);
+    const uEl = $('ttUser'), kEl = $('ttKey'), msg = $('goMsg'), pcMsg = $('pcMsg'), linkEl = $('pcLink'), stateEl = $('localState');
+    const onLocalServer = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.port === String(LOCAL_PORT);
     uEl.value = store.get('muu.user'); kEl.value = store.get('muu.key');
-    document.getElementById('goLive').addEventListener('click', () => {
+    const saved = store.get('muu.mode');
+    let mode = saved === 'phone' || saved === 'pc' ? saved : (matchMedia('(pointer: coarse)').matches ? 'phone' : 'pc');
+    const setMode = (m) => {
+      mode = m; store.set('muu.mode', m);
+      $('modePc').setAttribute('aria-pressed', String(m === 'pc'));
+      $('modePhone').setAttribute('aria-pressed', String(m === 'phone'));
+      $('panePc').hidden = m !== 'pc'; $('panePhone').hidden = m !== 'phone';
+    };
+    $('modePc').addEventListener('click', () => setMode('pc'));
+    $('modePhone').addEventListener('click', () => setMode('phone'));
+    setMode(mode);
+    const validId = (u) => u && !/[^\w.]/.test(u);
+    const pageUrl = location.origin + location.pathname;
+    function buildLink() {
+      const u = cleanId(uEl.value);
+      const p = ['live', 'local', 'scene=' + (scene ? scene.id : 'loykrathong')];
+      if (validId(u)) p.push('user=' + encodeURIComponent(u));
+      return pageUrl + '?' + p.join('&');
+    }
+    const refresh = () => { linkEl.value = buildLink(); };
+    sceneHook = refresh;
+    uEl.addEventListener('input', () => { refresh(); const u = cleanId(uEl.value); if (validId(u)) store.set('muu.user', u); });
+    refresh();
+    const say = (el, text, ok) => { el.hidden = false; el.textContent = text; el.classList.toggle('ok', !!ok); };
+    $('copyLink').addEventListener('click', async () => {
+      if (!validId(cleanId(uEl.value))) { say(pcMsg, 'ใส่ ID TikTok ก่อน (ตัวอังกฤษ ตัวเลข _ หรือ . เท่านั้น)'); uEl.focus(); return; }
+      try { await navigator.clipboard.writeText(linkEl.value); } catch (e) { linkEl.select(); try { document.execCommand('copy'); } catch (x) {} }
+      say(pcMsg, 'คัดลอกลิงก์แล้ว ไปวางใน LIVE Studio ได้เลย', true);
+    });
+    linkEl.addEventListener('focus', () => linkEl.select());
+    $('openPc').addEventListener('click', () => {
+      if (!validId(cleanId(uEl.value))) { say(pcMsg, 'ใส่ ID TikTok ก่อน'); uEl.focus(); return; }
+      location.href = buildLink();
+    });
+    // ตรวจว่าโปรแกรม server.js เปิดอยู่ในคอมเครื่องนี้ไหม
+    async function probe() {
+      let ok = false;
+      try {
+        const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 1500);
+        const r = await fetch((onLocalServer ? '' : LOCAL_BASE) + '/config.json', { cache: 'no-store', signal: ctl.signal });
+        clearTimeout(t);
+        ok = r.ok && (await r.json()).app === 'muu-live';
+      } catch (e) {}
+      stateEl.classList.toggle('ok', ok);
+      stateEl.lastChild.textContent = ok ? 'พบโปรแกรมในคอมนี้แล้ว พร้อมใช้' : 'ยังไม่พบโปรแกรมในคอมนี้ (เปิด start-windows.bat)';
+    }
+    probe(); setInterval(() => { if (mode === 'pc' && document.visibilityState === 'visible') probe(); }, 5000);
+    $('goLive').addEventListener('click', () => {
       const u = cleanId(uEl.value), k = kEl.value.trim();
-      if (!u || /[^\w.]/.test(u)) { msg.hidden = false; msg.textContent = 'ใส่ ID TikTok ให้ถูก (ตัวอังกฤษ ตัวเลข _ หรือ . เท่านั้น)'; uEl.focus(); return; }
-      if (!k) { msg.hidden = false; msg.textContent = 'ยังไม่ได้วางคีย์ Euler Stream'; kEl.focus(); return; }
+      if (!validId(u)) { say(msg, 'ใส่ ID TikTok ให้ถูก (ตัวอังกฤษ ตัวเลข _ หรือ . เท่านั้น)'); uEl.focus(); return; }
+      if (!k) { say(msg, 'ยังไม่ได้วางคีย์ Euler Stream'); kEl.focus(); return; }
       store.set('muu.user', u); store.set('muu.key', k);
-      location.href = location.pathname + '?live&web&scene=' + encodeURIComponent(scene.id) + '&user=' + encodeURIComponent(u);
+      location.href = pageUrl + '?live&web&scene=' + encodeURIComponent(scene ? scene.id : 'loykrathong') + '&user=' + encodeURIComponent(u);
     });
   }
 
@@ -2832,7 +2938,11 @@
   const startId = qs.get('scene') || (!LIVE && location.hash.slice(1)) || 'loykrathong';
   if (DEMO) seedPeople();
   setScene(SCENES[startId] ? startId : 'loykrathong');
-  if (LIVE) { if (WEB) startWeb(); else startLive(); Snd.init(); setTimeout(updateGate, 400); }
+  if (LIVE) {
+    const onLocalServer = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.port === String(LOCAL_PORT);
+    if (WEB) startWeb(); else startLive(LOCAL && !onLocalServer ? LOCAL_BASE : '');
+    Snd.init(); setTimeout(updateGate, 400);
+  }
   updateGate();
   Promise.all(['700 124px Charm', '400 30px Mitr', '500 30px Mitr', '400 26px Sarabun'].map((f) => document.fonts.load(f).catch(() => {}))).finally(() => { layerCv = []; resize(true); });
   new ResizeObserver(() => resize(false)).observe(cv);
