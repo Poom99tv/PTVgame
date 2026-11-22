@@ -1,7 +1,7 @@
 {
-  "version": "1.4.0",
-  "url": "https://github.com/Poom99tv/PTVgame/releases/download/tabslive-v1.4.0/TABS-Live-Arena.v1.4.0.zip",
-  "sha256": "83fdf3bf3add13eeb7092f3aa0f4b1d55ee10844254f98b60ca4e32a0257dbc6",
-  "size": 1915806877,
+  "version": "1.4.1",
+  "url": "https://github.com/Poom99tv/PTVgame/releases/download/tabslive-v1.4.1/TABS-Live-Arena.v1.4.1.zip",
+  "sha256": "1b5120d54b2cc0f683fae49ac0319ef9f6ea3924521527436cdd6db142db60f5",
+  "size": 1915806710,
   "executable": "TABS-Live-Arena/TotallyAccurateBattleSimulator.exe"
 }

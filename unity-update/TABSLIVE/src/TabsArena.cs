@@ -11,7 +11,7 @@ using Landfall.TABS.GameMode;
 using Landfall.TABS.GameState;
 using UnityEngine;
 
-[BepInPlugin("ptv.tabs.tiktok", "PTV TikTok Arena", "1.4.0")]
+[BepInPlugin("ptv.tabs.tiktok", "PTV TikTok Arena", "1.4.1")]
 public sealed class TabsArena : BaseUnityPlugin
 {
     public static TabsArena I;
@@ -283,7 +283,7 @@ public sealed class TabsGiftDirector : MonoBehaviour
     public void ClearArena()
     {
         if(TabsRoundFlow.I)TabsRoundFlow.I.ResetForClear();
-        foreach(var list in spawned) { foreach(var u in list) if(u) u.DestroyUnit(); list.Clear(); }
+        foreach(var list in spawned) { foreach(var u in list) if(u&&!u.IsInPool) u.DestroyUnit(); list.Clear(); }
         foreach(var q in queues) q.Clear(); awaiting.Clear(); Hint="ล้างสนามและคิวแล้ว";
     }
     void Report()

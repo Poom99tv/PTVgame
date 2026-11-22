@@ -1,6 +1,4 @@
-using Newtonsoft.Json;
 using System;
-using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using Landfall.TABS;
@@ -14,9 +12,7 @@ public sealed class TabsRoundFlow : MonoBehaviour
     public int RedWins,BlueWins,Round=1;
     int[] alive=new int[2];float nextScan,nextTick,nextHide;bool wasBattle,armed;int losing=-1,phase;
     Canvas hud;Text red,blue,banner,redWinsLabel,blueWinsLabel;GameObject redBox,blueBox,battleButton;
-    [Serializable] class Score { public int red,blue,round=1; }
-    string ScorePath { get { return Path.Combine(TabsArena.Root,"TikTokArenaScore.json"); } }
-    void Awake(){I=this;try{if(File.Exists(ScorePath)){var s=JsonConvert.DeserializeObject<Score>(File.ReadAllText(ScorePath));RedWins=s.red;BlueWins=s.blue;Round=s.round;}}catch{}}
+    void Awake(){I=this;RedWins=BlueWins=0;Round=1;}
     void Start() {
         hud=ArenaUI.Canvas("TikTok Battle Score",150);
         hud.gameObject.AddComponent<GraphicRaycaster>();
@@ -58,7 +54,6 @@ public sealed class TabsRoundFlow : MonoBehaviour
             BetweenRounds=true;phase=1;nextTick=Time.unscaledTime+2.5f;
             banner.color=empty==0?new Color(.4f,.7f,1):empty==1?new Color(1,.4f,.4f):Color.white;
             if(empty!=2&&TabsArena.Mode.CurtainController){TabsArena.Mode.CurtainController.PeekCurtains(empty==0?"LABEL_BLUE_VICTORY":"LABEL_RED_VICTORY","");banner.text="";}else banner.text=empty==2?"เสมอ!":empty==0?"น้ำเงินชนะ!":"แดงชนะ!";
-            try{File.WriteAllText(ScorePath,JsonConvert.SerializeObject(new Score{red=RedWins,blue=BlueWins,round=Round+1},Formatting.Indented));}catch{}
         }
     }
     void Scan(){alive[0]=alive[1]=0;if(!TabsArena.I||!TabsArena.I.Director.CanSpawn)return;foreach(var u in FindObjectsOfType<Unit>())if(IsLiving(u))alive[(int)u.Team]++;}
@@ -66,13 +61,17 @@ public sealed class TabsRoundFlow : MonoBehaviour
         if(Time.unscaledTime<nextTick)return;
         if(phase==1){
             if(TabsArena.Mode.CurtainController)TabsArena.Mode.CurtainController.OpenCurtains();
-            foreach(var u in FindObjectsOfType<Unit>())if(u)u.DestroyUnit();
-            Round++;Countdown=3;phase=2;nextTick=Time.unscaledTime+1;
-            banner.color=Color.white;banner.text="แดง  VS  น้ำเงิน\nรอบ "+Round+" · 3";
+            // Let the native transition restore placement state and its original camera first.
+            TabsArena.Mode.GameStateManager.EnterPlacementState();
+            phase=2;nextTick=Time.unscaledTime+.3f;banner.text="";
         }else{
-            Countdown--;
-            if(Countdown>0){banner.text="แดง  VS  น้ำเงิน\nรอบ "+Round+" · "+Countdown;nextTick=Time.unscaledTime+1;}
-            else{BetweenRounds=false;armed=false;losing=-1;Countdown=-1;banner.text="";TabsArena.Mode.MatchOver=false;TabsArena.I.Director.StartBattle();}
+            if(TabsArena.Mode.GameStateManager.GameState!=GameState.PlacementState)return;
+            // Clear restored placement units as well as battle survivors and queued rewards.
+            if(PlacementUI.Instance){PlacementUI.Instance.ClearRed();PlacementUI.Instance.ClearBlue();}
+            foreach(var u in FindObjectsOfType<Unit>())if(u&&!u.IsInPool)u.DestroyUnit();
+            Round++;TabsArena.I.Director.ClearArena();
+            alive[0]=alive[1]=0;TabsArena.Mode.MatchOver=false;
+            var ui=TabsArena.I.GetComponent<TabsArenaUI>();if(ui)ui.SetVisible(false);
         }
     }
     void HideHints(){

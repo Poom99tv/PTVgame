@@ -1,4 +1,4 @@
-# TABS Live Arena 1.4.0
+# TABS Live Arena 1.4.1
 
 Windows arena integration for Totally Accurate Battle Simulator. The catalog entry is `tabslive`, with free access and no play ticket or purchase price.
 
@@ -6,6 +6,8 @@ Windows arena integration for Totally Accurate Battle Simulator. The catalog ent
 - Seven units from the selected native faction are mapped to gifts. Both teams share the roster. Gift matching supports IDs, names and pictures. Configurable likes, follows and Heart Me triggers remain available.
 - Painted character cards, gift badges, plain black profile borders, living-unit counts and round score HUD. Native sword button starts battle.
 - The original native game camera is retained. The experimental automatic framing component has been removed.
+- After the native victory effect, the round returns to placement on the current map and clears restored units, survivors and queued rewards. The next battle starts only when the sword button is pressed.
+- WIN totals last for the current game session only. Restarting the game starts red/blue wins at zero and round one; old score files are not loaded.
 
 The mod leaves the native game camera unchanged. Build with `build.ps1 -GameDir <TABS folder>` after installing BepInEx 5 for that player. The compiler path in the script targets the local Unity installation and can be adjusted for another machine.
 
