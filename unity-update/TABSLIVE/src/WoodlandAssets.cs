@@ -11,8 +11,8 @@ public static class WoodlandAssets
     public static Sprite Get(string name,bool slice=false){
         string key=name+(slice?"-slice":"");Sprite sprite;if(cache.TryGetValue(key,out sprite))return sprite;
         string path=Path.Combine(TabsArena.Root,"TikTokUI",name+".png");if(!File.Exists(path))return null;
-        var tex=new Texture2D(2,2,TextureFormat.RGBA32,false);if(!tex.LoadImage(File.ReadAllBytes(path)))return null;
-        tex.wrapMode=TextureWrapMode.Clamp;tex.filterMode=FilterMode.Bilinear;
+        var tex=new Texture2D(2,2,TextureFormat.RGBA32,true);if(!tex.LoadImage(File.ReadAllBytes(path)))return null;
+        tex.wrapMode=TextureWrapMode.Clamp;tex.filterMode=FilterMode.Trilinear;tex.anisoLevel=4;tex.Apply(true,false);
         var pixels=tex.GetPixels32();int xmin=tex.width,ymin=tex.height,xmax=0,ymax=0;
         for(int y=0;y<tex.height;y++)for(int x=0;x<tex.width;x++)if(pixels[y*tex.width+x].a>80){xmin=Math.Min(xmin,x);xmax=Math.Max(xmax,x);ymin=Math.Min(ymin,y);ymax=Math.Max(ymax,y);}
         if(xmax<=xmin)return null;

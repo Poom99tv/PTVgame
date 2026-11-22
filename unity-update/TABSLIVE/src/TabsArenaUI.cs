@@ -29,7 +29,7 @@ public static class ArenaUI
         var r=(RectTransform)g.transform; r.anchorMin=r.anchorMax=r.pivot=new Vector2(.5f,.5f); r.anchoredPosition=pos; r.sizeDelta=size; return r;
     }
     public static Text Text(Transform parent,string text,Vector2 pos,Vector2 size,int fontSize,Color color) {
-        var t=Rect("Text",parent,pos,size).gameObject.AddComponent<Text>(); t.font=Font;t.fontSize=fontSize;t.color=color;t.text=text;t.alignment=TextAnchor.MiddleCenter;t.raycastTarget=false;t.supportRichText=false;t.verticalOverflow=VerticalWrapMode.Truncate;t.horizontalOverflow=HorizontalWrapMode.Wrap;t.gameObject.AddComponent<PTVThaiShift>();t.gameObject.AddComponent<ArenaTextCenter>();if(!string.IsNullOrEmpty(text)&&text.StartsWith("@loc:"))TabsLanguage.Bind(t,text.Substring(5)); return t;
+        var t=Rect("Text",parent,pos,size).gameObject.AddComponent<TabsCrispText>(); t.font=Font;t.fontSize=fontSize;t.color=color;t.text=text;t.alignment=TextAnchor.MiddleCenter;t.raycastTarget=false;t.supportRichText=false;t.verticalOverflow=VerticalWrapMode.Truncate;t.horizontalOverflow=HorizontalWrapMode.Wrap;t.gameObject.AddComponent<PTVThaiShift>();t.gameObject.AddComponent<ArenaTextCenter>();if(!string.IsNullOrEmpty(text)&&text.StartsWith("@loc:"))TabsLanguage.Bind(t,text.Substring(5)); return t;
     }
     public static Image Image(Transform parent,Vector2 pos,Vector2 size,Color color) {
         var im=Rect("Panel",parent,pos,size).gameObject.AddComponent<Image>(); im.color=color; im.raycastTarget=false; if(size.x>40&&size.y>40&&color.a>.5f)WoodlandAssets.Skin(im,color.r>.7f&&color.g>.5f?"parchment-card":"wood-panel"); return im;
@@ -41,7 +41,7 @@ public static class ArenaUI
     }
     public static Canvas Canvas(string name,int order) {
         var go=new GameObject(name,typeof(RectTransform),typeof(Canvas),typeof(CanvasScaler));
-        UnityEngine.Object.DontDestroyOnLoad(go);var c=go.GetComponent<Canvas>(); c.renderMode=RenderMode.ScreenSpaceOverlay;c.sortingOrder=order;
+        UnityEngine.Object.DontDestroyOnLoad(go);var c=go.GetComponent<Canvas>(); c.renderMode=RenderMode.ScreenSpaceOverlay;c.sortingOrder=order;c.pixelPerfect=true;
         var s=go.GetComponent<CanvasScaler>();s.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;s.referenceResolution=TabsDisplay.Portrait?new Vector2(900,1600):new Vector2(1600,900);s.screenMatchMode=CanvasScaler.ScreenMatchMode.Expand;go.AddComponent<TabsResponsiveCanvas>();return c;
     }
 }
@@ -135,9 +135,9 @@ public sealed class TabsArenaUI : MonoBehaviour
             var card=ArenaUI.Image(r.transform,new Vector2(-33,y),new Vector2(218,40),new Color(.94f,.81f,.59f));WoodlandAssets.Skin(card,"parchment-card");
             var pick=card.gameObject.AddComponent<Button>();card.raycastTarget=true;pick.targetGraphic=card;pick.onClick.AddListener(()=>GetComponent<TabsGiftSettingsUI>().Open());
             giftIcons[i]=ArenaUI.Image(card.transform,new Vector2(-88,0),new Vector2(28,28),Color.white);giftIcons[i].preserveAspect=true;
-            giftNames[i]=ArenaUI.Text(card.transform,"",new Vector2(14,9),new Vector2(158,16),12,WoodlandAssets.Ink);
-            heroLabels[i]=ArenaUI.Text(card.transform,"",new Vector2(14,-8),new Vector2(158,16),12,WoodlandAssets.Ink);
-            foreach(var caption in new[]{giftNames[i],heroLabels[i]}){caption.resizeTextForBestFit=true;caption.resizeTextMinSize=10;caption.resizeTextMaxSize=12;caption.horizontalOverflow=HorizontalWrapMode.Overflow;}
+            giftNames[i]=ArenaUI.Text(card.transform,"",new Vector2(14,10),new Vector2(158,18),15,WoodlandAssets.Ink);
+            heroLabels[i]=ArenaUI.Text(card.transform,"",new Vector2(14,-9),new Vector2(158,18),15,WoodlandAssets.Ink);
+            foreach(var caption in new[]{giftNames[i],heroLabels[i]}){caption.resizeTextForBestFit=true;caption.resizeTextMinSize=13;caption.resizeTextMaxSize=15;caption.fontStyle=FontStyle.Bold;caption.horizontalOverflow=HorizontalWrapMode.Overflow;}
 
             ArenaUI.Button(r.transform,"1",new Vector2(94,y),new Vector2(30,30),red,()=>Demo(slot,0));
             ArenaUI.Button(r.transform,"2",new Vector2(128,y),new Vector2(30,30),blue,()=>Demo(slot,1));
@@ -201,12 +201,12 @@ void Update()
     {
         if(!panel)return;
         bool placement=Arena.Director.CanSpawn&&TabsArena.Mode.GameStateManager.GameState!=Landfall.TABS.GameState.GameState.BattleState;
-        if(dock)dock.SetActive(placement);
         if(Arena.Director.CanSpawn&&Time.unscaledTime>=nextDock){nextDock=Time.unscaledTime+.5f;HideNativeChrome();int count=FindObjectsOfType<FactionButton>().Length;if(count!=lastFactionCount){lastFactionCount=count;DrawFactions();}}
         if(rosterVersion!=Arena.Director.RosterVersion){rosterVersion=Arena.Director.RosterVersion;for(int i=0;i<7;i++){var u=Arena.Director.Hero(i);unitIcons[i].sprite=u?TabsUnitPortraits.Get(u):null;unitIcons[i].enabled=unitIcons[i].sprite;unitIcons[i].color=Color.white;unitLabels[i].text=Arena.Settings.giftRules[i].unit;}}
         for(int i=0;i<7;i++){var preview=TabsUnitPortraits.Get(Arena.Director.Hero(i));if(preview){unitIcons[i].sprite=preview;unitIcons[i].enabled=true;}var rule=Arena.Settings.giftRules[i];unitGifts[i].sprite=TabsGiftCatalog.Icon(rule.gift);unitGifts[i].enabled=unitGifts[i].sprite;giftCaptions[i].text=rule.triggerGift?rule.gift:"";}
         if(Input.GetKeyDown(KeyCode.F8))panel.SetActive(!panel.activeSelf);
         bool menuOpen=panel.activeSelf||(GetComponent<TabsGiftSettingsUI>()&&GetComponent<TabsGiftSettingsUI>().Visible);
+        if(dock)dock.SetActive(placement&&!(TabsDisplay.Portrait&&menuOpen));
         if(menuOpen){
             if(!ownEvents){var go=new GameObject("TikTok Menu Input",typeof(EventSystem),typeof(StandaloneInputModule));DontDestroyOnLoad(go);ownEvents=go.GetComponent<EventSystem>();}
             foreach(var e in FindObjectsOfType<EventSystem>())if(e!=ownEvents&&e.enabled){suspendedEvents.Add(e);e.enabled=false;}
@@ -242,12 +242,19 @@ void Update()
         var menu=(RectTransform)panel.transform;
         if(portrait){menu.anchorMin=menu.anchorMax=menu.pivot=new Vector2(.5f,.5f);menu.anchoredPosition=Vector2.zero;float scale=Mathf.Min(1.7f,Mathf.Min((area.width-36)/320,(area.height-100)/660));menu.localScale=Vector3.one*scale;}
         else{menu.anchorMin=menu.anchorMax=menu.pivot=new Vector2(0,1);menu.anchoredPosition=new Vector2(16,-16);menu.localScale=Vector3.one*Mathf.Min(1,(area.height-250)/660);}
-        var tray=(RectTransform)dock.transform;tray.anchorMin=tray.anchorMax=tray.pivot=new Vector2(.5f,0);tray.anchoredPosition=new Vector2(0,8);tray.sizeDelta=new Vector2(portrait?880:1260,portrait?414:210);
+        var tray=(RectTransform)dock.transform;tray.anchorMin=tray.anchorMax=tray.pivot=new Vector2(.5f,0);tray.anchoredPosition=new Vector2(0,8);tray.sizeDelta=new Vector2(portrait?880:1260,portrait?500:210);
         float trayScale=Mathf.Min(1,(area.width-16)/tray.sizeDelta.x);tray.localScale=Vector3.one*trayScale;
         var strip=(RectTransform)factionStrip;TabsDisplay.Top(strip,new Vector2(0,-12));strip.sizeDelta=new Vector2(portrait?860:1200,portrait?86:42);
         int columns=portrait?7:Mathf.Max(1,factionTiles.Count);float cell=strip.sizeDelta.x/columns;
-        for(int i=0;i<factionTiles.Count;i++){var tab=(RectTransform)factionTiles[i].transform;TabsDisplay.Top(tab,new Vector2(-strip.sizeDelta.x*.5f+cell*(i%columns+.5f),-(i/columns)*42));tab.sizeDelta=new Vector2(cell-1,41);}
-        for(int i=0;i<7;i++){int row=portrait?i/4:0;int count=portrait?(row==0?4:3):7;int col=portrait?i%4:i;float gap=portrait?208:173;TabsDisplay.Top(unitCards[i],new Vector2((col-(count-1)*.5f)*gap,-(portrait?110:58)-row*154));}
+        for(int i=0;i<factionTiles.Count;i++){var tab=(RectTransform)factionTiles[i].transform;TabsDisplay.Top(tab,new Vector2(-strip.sizeDelta.x*.5f+cell*(i%columns+.5f),-(i/columns)*42));tab.sizeDelta=new Vector2(cell-1,41);var caption=tab.GetComponentInChildren<Text>();caption.resizeTextMinSize=portrait?16:9;caption.resizeTextMaxSize=portrait?18:14;caption.fontStyle=portrait?FontStyle.Bold:FontStyle.Normal;}
+        for(int i=0;i<7;i++){
+            int row=portrait?i/4:0;int count=portrait?(row==0?4:3):7;int col=portrait?i%4:i;float gap=portrait?208:173;
+            TabsDisplay.Top(unitCards[i],new Vector2((col-(count-1)*.5f)*gap,-(portrait?110:58)-row*(portrait?188:154)));unitCards[i].sizeDelta=new Vector2(portrait?190:158,portrait?156:126);
+            unitIcons[i].rectTransform.anchoredPosition=new Vector2(0,portrait?30:14);
+            unitLabels[i].rectTransform.anchoredPosition=new Vector2(portrait?-18:-12,portrait?-43:-45);unitLabels[i].rectTransform.sizeDelta=new Vector2(portrait?144:115,portrait?48:24);unitLabels[i].fontSize=portrait?22:17;unitLabels[i].resizeTextMinSize=portrait?18:11;unitLabels[i].resizeTextMaxSize=portrait?22:17;
+            ((RectTransform)unitGifts[i].transform.parent).anchoredPosition=portrait?new Vector2(80,-61):new Vector2(59,-43);
+            giftCaptions[i].rectTransform.anchoredPosition=new Vector2(0,portrait?-92:-72);giftCaptions[i].rectTransform.sizeDelta=new Vector2(portrait?190:159,portrait?22:16);giftCaptions[i].fontSize=portrait?18:10;
+        }
     }
     void LateUpdate(){Layout();if(panel&&(panel.activeSelf||(GetComponent<TabsGiftSettingsUI>()&&GetComponent<TabsGiftSettingsUI>().Visible))){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
     void OnDestroy() { foreach(var pair in nativeGroups)if(pair.Key){pair.Key.alpha=pair.Value;pair.Key.blocksRaycasts=true;}if(canvas)Destroy(canvas.gameObject);if(ownEvents)Destroy(ownEvents.gameObject);foreach(var e in suspendedEvents)if(e)e.enabled=true;foreach(var c in suspendedCameras)if(c)c.enabled=true; }

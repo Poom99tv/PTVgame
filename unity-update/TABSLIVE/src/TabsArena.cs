@@ -11,7 +11,7 @@ using Landfall.TABS.GameMode;
 using Landfall.TABS.GameState;
 using UnityEngine;
 
-[BepInPlugin("ptv.tabs.tiktok", "PTV TikTok Arena", "1.5.0")]
+[BepInPlugin("ptv.tabs.tiktok", "PTV TikTok Arena", "1.5.1")]
 public sealed class TabsArena : BaseUnityPlugin
 {
     public static TabsArena I;
@@ -34,6 +34,7 @@ public sealed class TabsArena : BaseUnityPlugin
         gameObject.AddComponent<TabsRoundFlow>();
         gameObject.AddComponent<TabsGiftSettingsUI>();
         harmony = new Harmony("ptv.tabs.tiktok");
+        harmony.Patch(AccessTools.PropertyGetter(typeof(UnityEngine.UI.Text),"pixelsPerUnit"),postfix:new HarmonyMethod(typeof(TabsCrispText),"FontPixels"));
         harmony.Patch(AccessTools.Method(typeof(BaseGameMode), "DecideWinner"), new HarmonyMethod(typeof(TabsArena), "AllowWinner"));
         harmony.Patch(AccessTools.Method(typeof(PlacementUI), "SideHasUnits"), postfix:new HarmonyMethod(typeof(TabsArena), "HasArenaUnits"));
         harmony.Patch(AccessTools.Method(typeof(PlacementUI), "RedrawFactionUnits"), postfix:new HarmonyMethod(typeof(TabsArena), "FactionChanged"));

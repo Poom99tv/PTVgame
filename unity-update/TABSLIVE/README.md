@@ -1,8 +1,10 @@
-# TABS Live Arena 1.5.0
+# TABS Live Arena 1.5.1
 
 Windows arena integration for Totally Accurate Battle Simulator. The catalog entry is `tabslive`, with free access and no play ticket or purchase price.
 
 ## Languages and window layout
+
+Mod labels use `TabsCrispText`, with a Harmony adjustment limited to that Text subclass. Font pixel density includes scaled parent panels and 2x sampling; Text's own generation and reciprocal mesh conversion remain paired. Changing display scale invalidates glyph geometry. Centering offsets snap to screen pixels. Portrait labels are larger, and opening an editing menu temporarily hides the hero tray. Painted art/frame textures have mipmaps for downsampling.
 
 English is the default for fresh and existing configurations that have no language preference. Use **EN / ไทย** in the LIVE panel or gift settings to switch immediately. `TikTokArena.json` stores `language: "en"` or `"th"`. Locale source files are `Locales/en.json` and `Locales/th.json`; the build embeds both and the player also supports files under `TikTokUI/Locales/`. Viewer identities and gift names remain unchanged.
 

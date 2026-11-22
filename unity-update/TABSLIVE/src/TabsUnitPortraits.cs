@@ -26,8 +26,8 @@ public static class TabsUnitPortraits
         Texture2D texture;
         if(!atlases.TryGetValue(entry.atlas,out texture)){
             string path=Path.Combine(Root,entry.atlas+".png");if(!File.Exists(path))return null;
-            texture=new Texture2D(2,2,TextureFormat.RGBA32,false);if(!texture.LoadImage(File.ReadAllBytes(path)))return null;
-            texture.wrapMode=TextureWrapMode.Clamp;texture.filterMode=FilterMode.Bilinear;atlases[entry.atlas]=texture;
+            texture=new Texture2D(2,2,TextureFormat.RGBA32,true);if(!texture.LoadImage(File.ReadAllBytes(path)))return null;
+            texture.wrapMode=TextureWrapMode.Clamp;texture.filterMode=FilterMode.Trilinear;texture.anisoLevel=4;texture.Apply(true,false);atlases[entry.atlas]=texture;
         }
         float width=texture.width/4f,height=texture.height/2f;
         var rect=new Rect((entry.cell%4)*width,(1-entry.cell/4)*height,width,height);

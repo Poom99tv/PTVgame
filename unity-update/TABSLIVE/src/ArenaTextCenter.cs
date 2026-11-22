@@ -11,6 +11,7 @@ public sealed class ArenaTextCenter : BaseMeshEffect
         float minY=float.MaxValue,maxY=float.MinValue,minX=float.MaxValue,maxX=float.MinValue;
         foreach(var vertex in vertices){minY=Mathf.Min(minY,vertex.position.y);maxY=Mathf.Max(maxY,vertex.position.y);minX=Mathf.Min(minX,vertex.position.x);maxX=Mathf.Max(maxX,vertex.position.x);}
         Vector3 offset=new Vector3(text.rectTransform.rect.center.x-(minX+maxX)*.5f,text.rectTransform.rect.center.y-(minY+maxY)*.5f,0);
+        float scale=TabsCrispText.ScreenScale(text);if(scale>0){offset.x=Mathf.Round(offset.x*scale)/scale;offset.y=Mathf.Round(offset.y*scale)/scale;}
         for(int i=0;i<vertices.Count;i++){var vertex=vertices[i];vertex.position+=offset;vertices[i]=vertex;}mesh.Clear();mesh.AddUIVertexTriangleStream(vertices);vertices.Clear();
     }
 }
