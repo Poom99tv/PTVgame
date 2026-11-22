@@ -1,3 +1,14 @@
+# TABS Live Arena 1.4.0 — Launcher 2.0.11
+
+TABS Live Arena is the first game in the catalog and the only game carrying the gold NEW badge. It opens without a purchase, sign-in or play ticket. Other games retain their existing access rules.
+
+TikTok LIVE viewers choose red or blue with chat `1` / `2`; a first gift assigns an unassigned viewer randomly. Select a faction's seven heroes, configure gifts, likes and follows, and watch the round score and surviving units. The game uses its original native camera controls.
+
+- [Windows game package](https://github.com/Poom99tv/PTVgame/releases/tag/tabslive-v1.4.0)
+- [Launcher 2.0.11](https://github.com/Poom99tv/PTVgame/releases/tag/launcher-v2.0.11)
+- [Integration source and build notes](unity-update/TABSLIVE/README.md)
+
+![TABS Live Arena](assets/tabslive.png)
 # Grilled Squid 1.0.2 — Launcher 2.0.9
 
 Grilled Squid is the first game in the launcher, with its own cover and gold NEW badge. PTVUP no longer carries NEW.

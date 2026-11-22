@@ -252,7 +252,7 @@ namespace PTVgame {
   public static bool CanPlay(Game g) {
    if(!Cfg.Enabled) return true;
    string access=string.IsNullOrWhiteSpace(g.access)?Cfg.defaultAccess:g.access;
-   if(access=="free") return Current!=null;
+   if(access=="free") return true;
    if(Current==null) return false;
    if(Current.IsAdmin) return true;
    if(!Current.Owns(g.id)) return false;
@@ -553,7 +553,7 @@ namespace PTVgame {
     var free=new Game { id="a",access="free" }; var vip=new Game { id="b" };
     AccountConfig.Current=new AccountConfig(); Assert(AccountService.CanPlay(vip),"no account.json keeps every game open");
     AccountConfig.Current=new AccountConfig { supabaseUrl="https://example.supabase.co",anonKey="k" };
-    AccountService.Current=null; Assert(!AccountService.CanPlay(free)&&!AccountService.CanPlay(vip),"signed out cannot play");
+    AccountService.Current=null; Assert(AccountService.CanPlay(free)&&!AccountService.CanPlay(vip),"free games open signed out while paid games stay locked");
     AccountService.Current=new Account { role="user",checkedAt=DateTime.UtcNow }; Assert(AccountService.CanPlay(free)&&!AccountService.CanPlay(vip),"free game open, paid game locked");
     AccountService.Current.vipUntil=DateTime.UtcNow.AddDays(3); Assert(!AccountService.CanPlay(vip),"old VIP field no longer unlocks games");
     AccountService.Current.role="admin"; Assert(AccountService.CanPlay(vip),"admin plays everything");

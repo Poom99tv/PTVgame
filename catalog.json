@@ -1,5 +1,17 @@
 [
   {
+    "id": "tabslive",
+    "name": "TABS Live Arena",
+    "description": "สงครามแดง–น้ำเงินจากของขวัญ TikTok LIVE • ฮีโร่ 14 ชุด • เลือกฝั่งผ่านแชต",
+    "descriptionEn": "Red vs blue TikTok LIVE battles with 14 factions and chat team selection.",
+    "category": "Unity",
+    "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/tabslive.json",
+    "cover": "assets/tabslive.png",
+    "access": "free",
+    "playTicket": false,
+    "newBadge": "assets/new-gold.png"
+  },
+  {
     "id": "ptvfood",
     "name": "Grilled Squid",
     "description": "เปิดแผงขายปลาหมึกย่าง ย่างบนเตาถ่าน ตำน้ำจิ้ม และรับความช่วยเหลือจากผู้ชม TikTok LIVE",
@@ -8,8 +20,7 @@
     "manifestUrl": "https://raw.githubusercontent.com/Poom99tv/PTVgame/main/release-manifests/ptvfood.json",
     "cover": "assets/ptvfood.png",
     "access": "vip",
-    "playTicket": true,
-    "newBadge": "assets/new-gold.png"
+    "playTicket": true
   },
   {
     "description": "เกม PTVCar สำหรับ Windows",
@@ -80,7 +91,6 @@
   {
     "id": "ptvrunner",
     "universeId": "10771728798",
-    "newBadge": "assets/new-gold.png",
     "name": "PTVRunner",
     "description": "วิ่งแข่งข้ามเกาะ 12 กิโลเมตร • เชื่อม Game To Earn จาก Launcher แล้วจับคู่ห้องผ่านรูปเฟือง ตั้งค่าของขวัญและสกิลในเกม",
     "category": "Roblox",
