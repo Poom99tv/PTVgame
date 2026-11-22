@@ -11,18 +11,19 @@ public sealed class TabsRoundFlow : MonoBehaviour
     public int Countdown { get;private set; } = -1;
     public int RedWins,BlueWins,Round=1;
     int[] alive=new int[2];float nextScan,nextTick,nextHide;bool wasBattle,armed;int losing=-1,phase;
-    Canvas hud;Text red,blue,banner,redWinsLabel,blueWinsLabel;GameObject redBox,blueBox,battleButton;
+    Canvas hud;RectTransform scoreRoot;Text red,blue,banner,redWinsLabel,blueWinsLabel;GameObject redBox,blueBox,battleButton;
     void Awake(){I=this;RedWins=BlueWins=0;Round=1;}
     void Start() {
         hud=ArenaUI.Canvas("TikTok Battle Score",150);
         hud.gameObject.AddComponent<GraphicRaycaster>();
-        var r=WoodlandAssets.Art(hud.transform,"red-banner",new Vector2(-194,383),new Vector2(342,104));redBox=r.gameObject;
-        var b=WoodlandAssets.Art(hud.transform,"blue-banner",new Vector2(194,383),new Vector2(342,104));blueBox=b.gameObject;
+        scoreRoot=ArenaUI.Rect("Scoreboard",hud.transform,Vector2.zero,new Vector2(800,0));
+        var r=WoodlandAssets.Art(scoreRoot,"red-banner",new Vector2(-194,-52),new Vector2(342,104));redBox=r.gameObject;
+        var b=WoodlandAssets.Art(scoreRoot,"blue-banner",new Vector2(194,-52),new Vector2(342,104));blueBox=b.gameObject;
         red=ArenaUI.Text(r.transform,"",new Vector2(20,9),new Vector2(250,38),25,WoodlandAssets.Cream);
         blue=ArenaUI.Text(b.transform,"",new Vector2(-20,9),new Vector2(250,38),25,WoodlandAssets.Cream);
         var rw=ArenaUI.Image(r.transform,new Vector2(20,-40),new Vector2(152,30),new Color(.2f,.1f,.03f));WoodlandAssets.Skin(rw,"wood-panel");redWinsLabel=ArenaUI.Text(rw.transform,"",new Vector2(0,2),new Vector2(130,24),16,WoodlandAssets.Cream);
         var bw=ArenaUI.Image(b.transform,new Vector2(-20,-40),new Vector2(152,30),new Color(.2f,.1f,.03f));WoodlandAssets.Skin(bw,"wood-panel");blueWinsLabel=ArenaUI.Text(bw.transform,"",new Vector2(0,2),new Vector2(130,24),16,WoodlandAssets.Cream);
-        var sword=WoodlandAssets.Art(hud.transform,"battle-shield",new Vector2(0,386),new Vector2(102,116));battleButton=sword.gameObject;sword.raycastTarget=true;
+        var sword=WoodlandAssets.Art(scoreRoot,"battle-shield",new Vector2(0,-49),new Vector2(102,116));battleButton=sword.gameObject;sword.raycastTarget=true;
         var click=sword.gameObject.AddComponent<Button>();click.targetGraphic=sword;click.onClick.AddListener(()=>{if(PlacementUI.Instance)PlacementUI.Instance.StartBattle();});
         banner=ArenaUI.Text(hud.transform,"",new Vector2(0,210),new Vector2(900,170),43,WoodlandAssets.Cream);banner.lineSpacing=1.25f;
         var shadow=banner.gameObject.AddComponent<UnityEngine.UI.Shadow>();shadow.effectColor=new Color(.15f,.05f,0,.8f);shadow.effectDistance=new Vector2(1,-2);
@@ -34,7 +35,7 @@ public sealed class TabsRoundFlow : MonoBehaviour
     void Update() {
         if(Time.unscaledTime>=nextScan){nextScan=Time.unscaledTime+.15f;Scan();}
         bool active=TabsArena.I&&TabsArena.I.Director.CanSpawn;
-        if(hud){redBox.SetActive(active&&!(BetweenRounds&&phase==1));blueBox.SetActive(active&&!(BetweenRounds&&phase==1));battleButton.SetActive(active&&!(BetweenRounds&&phase==1));red.text="แดง  "+alive[0]+" คน";blue.text="น้ำเงิน  "+alive[1]+" คน";redWinsLabel.text="ชนะ "+RedWins;blueWinsLabel.text="ชนะ "+BlueWins;}
+        if(hud){redBox.SetActive(active&&!(BetweenRounds&&phase==1));blueBox.SetActive(active&&!(BetweenRounds&&phase==1));battleButton.SetActive(active&&!(BetweenRounds&&phase==1));red.text=TabsLanguage.T("hud.red",alive[0]);blue.text=TabsLanguage.T("hud.blue",alive[1]);redWinsLabel.text=TabsLanguage.T("hud.wins",RedWins);blueWinsLabel.text=TabsLanguage.T("hud.wins",BlueWins);}
         if(!active){ResetFlow();if(banner)banner.text="";return;}
         if(Time.unscaledTime>=nextHide){nextHide=Time.unscaledTime+1;HideHints();}
         bool battle=Battle;
@@ -48,16 +49,18 @@ public sealed class TabsRoundFlow : MonoBehaviour
         if(empty!=losing){losing=empty;Countdown=10;nextTick=Time.unscaledTime+1;}
         if(Time.unscaledTime>=nextTick){Countdown--;nextTick=Time.unscaledTime+(Countdown<=3?1.6f:1);}
         banner.color=Countdown<=3?new Color(1,.78f,.2f):Color.white;
-        banner.text=(empty==2?"ทั้งสองฝั่งหมด":empty==0?"ฝั่งแดงหมด":"ฝั่งน้ำเงินหมด")+"\n"+Math.Max(0,Countdown);
+        banner.text=TabsLanguage.T(empty==2?"round.both_empty":empty==0?"round.red_empty":"round.blue_empty")+"\n"+Math.Max(0,Countdown);
         if(Countdown<=0){
             if(empty==0)BlueWins++;else if(empty==1)RedWins++;
             BetweenRounds=true;phase=1;nextTick=Time.unscaledTime+2.5f;
             banner.color=empty==0?new Color(.4f,.7f,1):empty==1?new Color(1,.4f,.4f):Color.white;
-            if(empty!=2&&TabsArena.Mode.CurtainController){TabsArena.Mode.CurtainController.PeekCurtains(empty==0?"LABEL_BLUE_VICTORY":"LABEL_RED_VICTORY","");banner.text="";}else banner.text=empty==2?"เสมอ!":empty==0?"น้ำเงินชนะ!":"แดงชนะ!";
+            if(empty!=2&&TabsArena.Mode.CurtainController)TabsArena.Mode.CurtainController.PeekCurtains("","");
+            banner.text=TabsLanguage.T(empty==2?"round.draw":empty==0?"round.blue_victory":"round.red_victory");
         }
     }
     void Scan(){alive[0]=alive[1]=0;if(!TabsArena.I||!TabsArena.I.Director.CanSpawn)return;foreach(var u in FindObjectsOfType<Unit>())if(IsLiving(u))alive[(int)u.Team]++;}
     void AdvanceRound(){
+        if(phase==1)banner.text=TabsLanguage.T(losing==2?"round.draw":losing==0?"round.blue_victory":"round.red_victory");
         if(Time.unscaledTime<nextTick)return;
         if(phase==1){
             if(TabsArena.Mode.CurtainController)TabsArena.Mode.CurtainController.OpenCurtains();
@@ -78,6 +81,7 @@ public sealed class TabsRoundFlow : MonoBehaviour
         foreach(var t in FindObjectsOfType<NewTutorial>())if(t.anim)t.anim.gameObject.SetActive(false);
         foreach(var t in FindObjectsOfType<Landfall.TABS_Input.TABSTutorial>())if(t.anim)t.anim.gameObject.SetActive(false);
     }
+    void LateUpdate(){if(!hud)return;var area=((RectTransform)hud.transform).rect;TabsDisplay.Top(scoreRoot,new Vector2(0,TabsDisplay.Portrait?-68:-12));scoreRoot.localScale=Vector3.one*Mathf.Min(1,(area.width-20)/800);var text=banner.rectTransform;text.anchorMin=text.anchorMax=new Vector2(.5f,.68f);text.anchoredPosition=Vector2.zero;text.sizeDelta=new Vector2(Mathf.Min(900,area.width-40),170);}
     void ResetFlow(){BetweenRounds=false;wasBattle=false;armed=false;losing=-1;Countdown=-1;}
     public void ResetForClear(){if(TabsArena.Mode!=null&&TabsArena.Mode.CurtainController)TabsArena.Mode.CurtainController.OpenCurtains();ResetFlow();if(banner)banner.text="";}
     void OnDestroy(){if(hud)Destroy(hud.gameObject);if(I==this)I=null;}

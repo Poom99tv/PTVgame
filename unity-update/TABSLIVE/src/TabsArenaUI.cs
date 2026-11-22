@@ -29,7 +29,7 @@ public static class ArenaUI
         var r=(RectTransform)g.transform; r.anchorMin=r.anchorMax=r.pivot=new Vector2(.5f,.5f); r.anchoredPosition=pos; r.sizeDelta=size; return r;
     }
     public static Text Text(Transform parent,string text,Vector2 pos,Vector2 size,int fontSize,Color color) {
-        var t=Rect("Text",parent,pos,size).gameObject.AddComponent<Text>(); t.font=Font;t.fontSize=fontSize;t.color=color;t.text=text;t.alignment=TextAnchor.MiddleCenter;t.raycastTarget=false;t.supportRichText=false;t.verticalOverflow=VerticalWrapMode.Truncate;t.horizontalOverflow=HorizontalWrapMode.Wrap;t.gameObject.AddComponent<PTVThaiShift>();t.gameObject.AddComponent<ArenaTextCenter>(); return t;
+        var t=Rect("Text",parent,pos,size).gameObject.AddComponent<Text>(); t.font=Font;t.fontSize=fontSize;t.color=color;t.text=text;t.alignment=TextAnchor.MiddleCenter;t.raycastTarget=false;t.supportRichText=false;t.verticalOverflow=VerticalWrapMode.Truncate;t.horizontalOverflow=HorizontalWrapMode.Wrap;t.gameObject.AddComponent<PTVThaiShift>();t.gameObject.AddComponent<ArenaTextCenter>();if(text.StartsWith("@loc:"))TabsLanguage.Bind(t,text.Substring(5)); return t;
     }
     public static Image Image(Transform parent,Vector2 pos,Vector2 size,Color color) {
         var im=Rect("Panel",parent,pos,size).gameObject.AddComponent<Image>(); im.color=color; im.raycastTarget=false; if(size.x>40&&size.y>40&&color.a>.5f)WoodlandAssets.Skin(im,color.r>.7f&&color.g>.5f?"parchment-card":"wood-panel"); return im;
@@ -42,7 +42,7 @@ public static class ArenaUI
     public static Canvas Canvas(string name,int order) {
         var go=new GameObject(name,typeof(RectTransform),typeof(Canvas),typeof(CanvasScaler));
         UnityEngine.Object.DontDestroyOnLoad(go);var c=go.GetComponent<Canvas>(); c.renderMode=RenderMode.ScreenSpaceOverlay;c.sortingOrder=order;
-        var s=go.GetComponent<CanvasScaler>();s.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;s.referenceResolution=new Vector2(1600,900);s.matchWidthOrHeight=.5f;return c;
+        var s=go.GetComponent<CanvasScaler>();s.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;s.referenceResolution=TabsDisplay.Portrait?new Vector2(900,1600):new Vector2(1600,900);s.screenMatchMode=CanvasScaler.ScreenMatchMode.Expand;go.AddComponent<TabsResponsiveCanvas>();return c;
     }
 }
 
@@ -106,6 +106,7 @@ public sealed class TabsArenaUI : MonoBehaviour
     readonly Image[] giftIcons=new Image[7],unitIcons=new Image[7],unitGifts=new Image[7];
     readonly Text[] giftCaptions=new Text[7];
     readonly Text[] unitLabels=new Text[7];
+    readonly RectTransform[] unitCards=new RectTransform[7];
     GameObject dock;Transform factionStrip;int rosterVersion=-1,lastFactionCount=-1;float nextDock;
     readonly Dictionary<CanvasGroup,float> nativeGroups=new Dictionary<CanvasGroup,float>();
     readonly List<GameObject> factionTiles=new List<GameObject>();
@@ -118,15 +119,16 @@ public sealed class TabsArenaUI : MonoBehaviour
         canvas=ArenaUI.Canvas("TABS TikTok Controls",200);canvas.gameObject.AddComponent<GraphicRaycaster>();
         if(!EventSystem.current) { var go=new GameObject("TikTok EventSystem",typeof(EventSystem),typeof(StandaloneInputModule));DontDestroyOnLoad(go); }
         var r=ArenaUI.Image(canvas.transform,new Vector2(-630,92),new Vector2(320,660),dark);panel=r.gameObject;r.raycastTarget=true;
-        ArenaUI.Text(r.transform,"TIKTOK LIVE",new Vector2(-18,295),new Vector2(245,36),24,WoodlandAssets.Cream);
+        ArenaUI.Text(r.transform,"TIKTOK LIVE",new Vector2(-65,295),new Vector2(136,36),19,WoodlandAssets.Cream);
+        ArenaUI.Button(r.transform,"EN / ไทย",new Vector2(54,295),new Vector2(102,32),green,TabsLanguage.Toggle);
         ArenaUI.Button(r.transform,"‹",new Vector2(129,295),new Vector2(32,34),blue,()=>panel.SetActive(false));
         var field=ArenaUI.Image(r.transform,new Vector2(0,250),new Vector2(282,40),new Color(.19f,.09f,.04f));field.raycastTarget=true;
         username=field.gameObject.AddComponent<InputField>();var txt=ArenaUI.Text(field.transform,"",Vector2.zero,new Vector2(260,38),20,WoodlandAssets.Cream);txt.alignment=TextAnchor.MiddleLeft;username.textComponent=txt;
         username.text=Arena.Settings.username;
-        ArenaUI.Button(r.transform,"เชื่อม LIVE",new Vector2(-71,204),new Vector2(140,42),green,()=>Connect(false));
-        ArenaUI.Button(r.transform,"ทดสอบ",new Vector2(74,204),new Vector2(134,42),blue,()=>Connect(true));
+        ArenaUI.Button(r.transform,"@loc:ui.connect",new Vector2(-71,204),new Vector2(140,42),green,()=>Connect(false));
+        ArenaUI.Button(r.transform,"@loc:ui.test",new Vector2(74,204),new Vector2(134,42),blue,()=>Connect(true));
         status=ArenaUI.Text(r.transform,"",new Vector2(0,160),new Vector2(280,39),13,new Color(.65f,1,.45f));
-        ArenaUI.Text(r.transform,"ของขวัญ → ฮีโร่ · ฝั่ง 1 / 2",new Vector2(0,120),new Vector2(288,30),15,WoodlandAssets.Cream);
+        ArenaUI.Text(r.transform,"@loc:ui.gift_hero",new Vector2(0,120),new Vector2(288,30),15,WoodlandAssets.Cream);
         for(int i=0;i<7;i++){
             int slot=i;float y=75-i*42;
             var card=ArenaUI.Image(r.transform,new Vector2(-33,y),new Vector2(218,40),new Color(.94f,.81f,.59f));WoodlandAssets.Skin(card,"parchment-card");
@@ -140,9 +142,10 @@ public sealed class TabsArenaUI : MonoBehaviour
             ArenaUI.Button(r.transform,"2",new Vector2(128,y),new Vector2(30,30),blue,()=>Demo(slot,1));
         }
         hint=ArenaUI.Text(r.transform,"",new Vector2(0,-214),new Vector2(280,35),12,WoodlandAssets.Cream);
-        ArenaUI.Button(r.transform,"ตั้งค่าของขวัญ / ใจ / ติดตาม",new Vector2(0,-253),new Vector2(284,39),green,()=>GetComponent<TabsGiftSettingsUI>().Open());
-        ArenaUI.Button(r.transform,"ล้างสนาม",new Vector2(-73,-294),new Vector2(138,30),red,()=>Arena.Director.ClearArena());
-        ArenaUI.Button(r.transform,"F8 ซ่อน",new Vector2(73,-294),new Vector2(138,30),blue,()=>panel.SetActive(false));
+        ArenaUI.Button(r.transform,"@loc:ui.settings",new Vector2(0,-246),new Vector2(284,34),green,()=>GetComponent<TabsGiftSettingsUI>().Open());
+        ArenaUI.Button(r.transform,"@loc:ui.clear",new Vector2(-73,-282),new Vector2(138,28),red,()=>Arena.Director.ClearArena());
+        ArenaUI.Button(r.transform,"@loc:ui.hide",new Vector2(73,-282),new Vector2(138,28),blue,()=>panel.SetActive(false));
+        ArenaUI.Button(r.transform,"TikTok 9:16",new Vector2(0,-315),new Vector2(284,26),green,TabsDisplay.TikTok);
         var chip=ArenaUI.Button(canvas.transform,"LIVE · F8",Vector2.zero,new Vector2(145,42),blue,()=>panel.SetActive(!panel.activeSelf));
         var cr=(RectTransform)chip.transform;cr.anchorMin=cr.anchorMax=new Vector2(1,1);cr.anchoredPosition=new Vector2(-88,-30);
         BuildDock();
@@ -153,6 +156,7 @@ public sealed class TabsArenaUI : MonoBehaviour
         for(int i=0;i<7;i++){
             int slot=i;float x=-519+i*173;
             var card=ArenaUI.Button(bg.transform,"",new Vector2(x,-18),new Vector2(158,126),new Color(.94f,.81f,.59f),()=>SelectUnit(slot));WoodlandAssets.Skin(card.GetComponent<Image>(),"parchment-card");
+            unitCards[i]=(RectTransform)card.transform;
             unitIcons[i]=ArenaUI.Image(card.transform,new Vector2(0,14),new Vector2(148,96),Color.white);unitIcons[i].type=Image.Type.Simple;unitIcons[i].preserveAspect=true;
             unitLabels[i]=ArenaUI.Text(card.transform,"",new Vector2(-12,-45),new Vector2(115,24),14,WoodlandAssets.Ink);unitLabels[i].font=TabsCardFont.Font;unitLabels[i].fontStyle=FontStyle.Bold;unitLabels[i].fontSize=17;unitLabels[i].resizeTextForBestFit=true;unitLabels[i].resizeTextMinSize=11;unitLabels[i].resizeTextMaxSize=17;
             var giftFrame=ArenaUI.Image(card.transform,new Vector2(59,-43),new Vector2(30,30),new Color(.24f,.11f,.035f));giftFrame.sprite=ArenaUI.Disc;
@@ -175,7 +179,7 @@ public sealed class TabsArenaUI : MonoBehaviour
 
     void SelectUnit(int slot){
         var unit=Arena.Director.Hero(slot);if(!unit||!PlacementUI.Instance)return;
-        Arena.Director.Hint="เลือก "+Arena.Settings.giftRules[slot].unit+" · คลิกพื้นที่ในสนามเพื่อวาง";
+        Arena.Director.SetHint("hint.select_unit",Arena.Settings.giftRules[slot].unit);
         TabsArena.Mode.Brush.SetBrushUnit(unit.Entity.GUID);panel.SetActive(false);
     }
 
@@ -213,7 +217,7 @@ void Update()
         if(!panel.activeSelf)return;
         for(int i=0;i<heroLabels.Length;i++)if(heroLabels[i]){var rule=Arena.Settings.giftRules[i];heroLabels[i].text="→ "+rule.unit;giftNames[i].text=rule.gift;giftIcons[i].sprite=TabsGiftCatalog.Icon(rule.gift);giftIcons[i].enabled=giftIcons[i].sprite;}
         Cursor.visible=true;Cursor.lockState=CursorLockMode.None;
-        var l=Arena.Live;status.text=(l.TestMode?"[ทดสอบ] ":"[LIVE] ")+l.Detail;
+        var l=Arena.Live;status.text=(l.TestMode?TabsLanguage.T("ui.test_prefix"):"[LIVE] ")+l.Detail;
         var d=Arena.Director;
         hint.text=d.Hint;
     }
@@ -227,7 +231,20 @@ void Update()
         }
     }
     void SuspendCamera(Behaviour c){if(c&&c.enabled){suspendedCameras.Add(c);c.enabled=false;}}
-    void LateUpdate(){if(panel&&(panel.activeSelf||(GetComponent<TabsGiftSettingsUI>()&&GetComponent<TabsGiftSettingsUI>().Visible))){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
+    void Layout(){
+        if(!canvas||!dock||!panel)return;
+        var area=((RectTransform)canvas.transform).rect;bool portrait=TabsDisplay.Portrait;
+        var menu=(RectTransform)panel.transform;
+        if(portrait){menu.anchorMin=menu.anchorMax=menu.pivot=new Vector2(.5f,.5f);menu.anchoredPosition=Vector2.zero;float scale=Mathf.Min(1.7f,Mathf.Min((area.width-36)/320,(area.height-100)/660));menu.localScale=Vector3.one*scale;}
+        else{menu.anchorMin=menu.anchorMax=menu.pivot=new Vector2(0,1);menu.anchoredPosition=new Vector2(16,-16);menu.localScale=Vector3.one*Mathf.Min(1,(area.height-250)/660);}
+        var tray=(RectTransform)dock.transform;tray.anchorMin=tray.anchorMax=tray.pivot=new Vector2(.5f,0);tray.anchoredPosition=new Vector2(0,8);tray.sizeDelta=new Vector2(portrait?880:1260,portrait?414:210);
+        float trayScale=Mathf.Min(1,(area.width-16)/tray.sizeDelta.x);tray.localScale=Vector3.one*trayScale;
+        var strip=(RectTransform)factionStrip;TabsDisplay.Top(strip,new Vector2(0,-12));strip.sizeDelta=new Vector2(portrait?860:1200,portrait?86:42);
+        int columns=portrait?7:Mathf.Max(1,factionTiles.Count);float cell=strip.sizeDelta.x/columns;
+        for(int i=0;i<factionTiles.Count;i++){var tab=(RectTransform)factionTiles[i].transform;TabsDisplay.Top(tab,new Vector2(-strip.sizeDelta.x*.5f+cell*(i%columns+.5f),-(i/columns)*42));tab.sizeDelta=new Vector2(cell-1,41);}
+        for(int i=0;i<7;i++){int row=portrait?i/4:0;int count=portrait?(row==0?4:3):7;int col=portrait?i%4:i;float gap=portrait?208:173;TabsDisplay.Top(unitCards[i],new Vector2((col-(count-1)*.5f)*gap,-(portrait?110:58)-row*154));}
+    }
+    void LateUpdate(){Layout();if(panel&&(panel.activeSelf||(GetComponent<TabsGiftSettingsUI>()&&GetComponent<TabsGiftSettingsUI>().Visible))){Cursor.lockState=CursorLockMode.None;Cursor.visible=true;}}
     void OnDestroy() { foreach(var pair in nativeGroups)if(pair.Key){pair.Key.alpha=pair.Value;pair.Key.blocksRaycasts=true;}if(canvas)Destroy(canvas.gameObject);if(ownEvents)Destroy(ownEvents.gameObject);foreach(var e in suspendedEvents)if(e)e.enabled=true;foreach(var c in suspendedCameras)if(c)c.enabled=true; }
 }
 

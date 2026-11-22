@@ -24,7 +24,9 @@ public sealed class PTVTikTokLive : MonoBehaviour
 
     public const string UsernameKey = "TABS.TikTok.Username";
     public string State { get; private set; } = "idle";
-    public string Detail { get; private set; } = "กรอก @ชื่อบัญชี TikTok แล้วกดเชื่อมต่อ";
+    string detailKey="status.prompt";object[] detailArgs=new object[0];
+    public string Detail {get{return TabsLanguage.T(detailKey,detailArgs);}}
+    void SetDetail(string key,params object[] args){detailKey=key;detailArgs=args;}
     public string Streamer { get; private set; } = "";
     /// <summary>Live owner's TikTok nickname and avatar URLs (sent by the bridge when the live connects).</summary>
     public string StreamerNickname { get; private set; } = "";
@@ -55,9 +57,9 @@ public sealed class PTVTikTokLive : MonoBehaviour
     {
         username = (username ?? "").Trim().TrimStart('@');
         if (!System.Text.RegularExpressions.Regex.IsMatch(username, "^[a-zA-Z0-9_.]{1,64}$"))
-        { State = "error"; Detail = "ชื่อบัญชีไม่ถูกต้อง  ใช้ได้เฉพาะ a-z 0-9 _ ."; return; }
+        { State = "error"; SetDetail("status.invalid_username"); return; }
         StreamerNickname = ""; StreamerAvatars = new string[0];
-        Streamer = username; wantsLive = true; State = "connecting"; Detail = "กำลังเชื่อมต่อ @" + username + " ...";
+        Streamer = username; wantsLive = true; State = "connecting"; SetDetail("status.connect_user",username);
         // The packaged player may not have registry access. Keep connection usable in that case.
         try { PlayerPrefs.SetString(UsernameKey, username); PlayerPrefs.Save(); } catch (PlayerPrefsException) { }
         if (cancel == null) { cancel = new CancellationTokenSource(); _ = ReceiveLoop(cancel.Token); }
@@ -70,7 +72,7 @@ public sealed class PTVTikTokLive : MonoBehaviour
         {
             if (ownedBridge != null && !ownedBridge.HasExited) return;
             string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "../TikTokBridge"));
-            if (!File.Exists(Path.Combine(folder, "bridge.mjs"))) throw new FileNotFoundException("ไม่พบโฟลเดอร์ TikTokBridge");
+            if (!File.Exists(Path.Combine(folder, "bridge.mjs"))) throw new FileNotFoundException(TabsLanguage.T("status.bridge_missing"));
             string bundled = Path.Combine(folder, "runtime/node.exe");
             var info = new System.Diagnostics.ProcessStartInfo
             {
@@ -80,7 +82,7 @@ public sealed class PTVTikTokLive : MonoBehaviour
             info.EnvironmentVariables["PAINT_BRIDGE_PORT"] = Port.ToString();
             ownedBridge = System.Diagnostics.Process.Start(info);
         }
-        catch (Exception e) { State = "error"; Detail = "เปิดตัวเชื่อม TikTok ไม่ได้: " + e.Message; }
+        catch (Exception e) { State = "error"; SetDetail("status.bridge_error",e.Message); }
     }
 
     void SendConnect() { outgoing.Enqueue(JsonUtility.ToJson(new Command { command = "connect", username = Streamer })); }
@@ -88,7 +90,7 @@ public sealed class PTVTikTokLive : MonoBehaviour
     public void DisconnectLive()
     {
         wantsLive = false; outgoing.Enqueue(JsonUtility.ToJson(new Command { command = "disconnect" }));
-        State = "idle"; Detail = "ยกเลิกการเชื่อมต่อแล้ว";
+        State = "idle"; SetDetail("status.disconnected");
     }
 
     async Task ReceiveLoop(CancellationToken token)
@@ -144,18 +146,10 @@ public sealed class PTVTikTokLive : MonoBehaviour
 
     void Update() { for (int i = 0; i < 32 && incoming.TryDequeue(out var line); i++) AcceptJson(line); }
 
-    static string ThaiStatus(string state, string detail)
+    void SetStatusDetail(string state, string detail)
     {
-        if (!string.IsNullOrEmpty(detail) && detail != state) return detail;
-        switch (state)
-        {
-            case "connected": return "เชื่อมต่อไลฟ์แล้ว";
-            case "connecting": return "กำลังเชื่อมต่อ...";
-            case "reconnecting": return "กำลังเชื่อมต่อใหม่...";
-            case "ended": return "ไลฟ์จบแล้ว";
-            case "idle": return "ยังไม่ได้เชื่อมต่อ";
-            default: return state;
-        }
+        string key=!string.IsNullOrEmpty(detail)&&TabsLanguage.Has(detail)?detail:"status."+state;
+        SetDetail(TabsLanguage.Has(key)?key:"status.error");
     }
 
     public bool AcceptJson(string json)
@@ -165,19 +159,19 @@ public sealed class PTVTikTokLive : MonoBehaviour
         if (m.@event == "transport")
         {
             if (m.state == "connected" && wantsLive) SendConnect();
-            if (m.state == "disconnected" && wantsLive) { State = "reconnecting"; Detail = "ตัวเชื่อมหลุด กำลังต่อใหม่..."; }
+            if (m.state == "disconnected" && wantsLive) { State = "reconnecting"; SetDetail("status.transport"); }
             return false;
         }
         if (m.@event == "status")
         {
             State = m.state ?? "idle";
-            Detail = ThaiStatus(State, m.detail);
+            SetStatusDetail(State, m.detail);
             bool changedOwner = !string.IsNullOrEmpty(m.streamer) && !string.Equals(Streamer, m.streamer, StringComparison.OrdinalIgnoreCase);
             if (changedOwner || State == "idle") { StreamerNickname = ""; StreamerAvatars = new string[0]; }
             if (!string.IsNullOrEmpty(m.streamer)) Streamer = m.streamer;
             if (!string.IsNullOrWhiteSpace(m.ownerNickname)) StreamerNickname = m.ownerNickname;
             if (m.ownerAvatars != null && m.ownerAvatars.Length > 0) StreamerAvatars = m.ownerAvatars;
-            if (State == "connected" && !string.IsNullOrEmpty(m.streamer) && string.IsNullOrEmpty(m.detail)) Detail = "เชื่อมต่อไลฟ์ @" + m.streamer + " แล้ว";
+            if (State == "connected" && !string.IsNullOrEmpty(m.streamer) && string.IsNullOrEmpty(m.detail)) SetDetail("status.connected_user",m.streamer);
             return false;
         }
         string key = string.IsNullOrEmpty(m.userId) ? m.uniqueId : m.userId;

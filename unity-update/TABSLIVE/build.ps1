@@ -9,5 +9,6 @@ $arguments+=Get-ChildItem -LiteralPath $managed -Filter '*.dll' | ForEach-Object
 $arguments+=('-r:'+(Join-Path $core 'BepInEx.dll'))
 $arguments+=('-r:'+(Join-Path $core '0Harmony.dll'))
 $arguments+=Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -Filter '*.cs' | ForEach-Object FullName
+$arguments+=Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'Locales') -Filter '*.json' | ForEach-Object {'-resource:'+$_.FullName+',TabsLocales.'+$_.Name}
 & $runtime $compiler @arguments
 if($LASTEXITCODE -ne 0){throw 'Mod compilation failed'}

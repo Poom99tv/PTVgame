@@ -11,7 +11,7 @@ using Landfall.TABS.GameMode;
 using Landfall.TABS.GameState;
 using UnityEngine;
 
-[BepInPlugin("ptv.tabs.tiktok", "PTV TikTok Arena", "1.4.1")]
+[BepInPlugin("ptv.tabs.tiktok", "PTV TikTok Arena", "1.5.0")]
 public sealed class TabsArena : BaseUnityPlugin
 {
     public static TabsArena I;
@@ -81,6 +81,7 @@ public sealed class TabsArena : BaseUnityPlugin
 }
 [Serializable] public sealed class ArenaSettings
 {
+    public string language="en";
     public string username="plan.b4383";
     public int maxAlivePerTeam=250;
     public float spawnIntervalSeconds=.25f;
@@ -117,12 +118,12 @@ public sealed class TabsGiftDirector : MonoBehaviour
     public void UseFaction(Faction faction){
         if(!faction)return;
         var units=faction.GetRearrangedUnits().Where(x=>x).Take(7).ToArray();
-        if(units.Length!=7){Hint="เลือกชุดที่มีตัวละครอย่างน้อย 7 ตัว";return;}
+        if(units.Length!=7){SetHint("hint.seven");return;}
         if(SelectedFaction==faction&&blueprints!=null)return;
         SelectedFaction=faction;blueprints=units;RosterVersion++;
         for(int i=0;i<7;i++)TabsArena.I.Settings.giftRules[i].unit=DisplayName(units[i].Entity.Name);
         File.WriteAllText(TabsArena.ConfigPath,JsonConvert.SerializeObject(TabsArena.I.Settings,Formatting.Indented));
-        Hint="เลือกชุด "+FactionName+" · 7 ตัว ใช้เหมือนกันทั้งสองฝั่ง";
+        SetHint("hint.faction",FactionName);
     }
     float nextSpawn, nextReport;
     int turn;
@@ -131,7 +132,9 @@ public sealed class TabsGiftDirector : MonoBehaviour
     public int TotalSpawned { get; private set; }
     public int ProfileCount { get { return FindObjectsOfType<TabsNameplate>().Length; } }
     public string LastLabel { get; private set; }
-    public string Hint="เลือก Sandbox แล้วเปิดแผนที่ก่อนทดสอบ";
+    string hintKey="hint.open_sandbox";object[] hintArgs=new object[0];
+    public string Hint {get{return TabsLanguage.T(hintKey,hintArgs);}}
+    public void SetHint(string key,params object[] args){hintKey=key;hintArgs=args;}
     public int WaitingForTeam { get { return awaiting.Values.Sum(x=>x.Sum(y=>y.count)); } }
     public int Pending(int team) { return queues[team].Sum(x=>x.count); }
     public int Alive(int team) { if(!CanSpawn)return 0;if(TabsRoundFlow.I)return TabsRoundFlow.I.Count(team); spawned[team].RemoveAll(u=>!u || u.dead); return spawned[team].Count; }
@@ -151,7 +154,7 @@ public sealed class TabsGiftDirector : MonoBehaviour
         string text=(m.comment??"").Trim(); if(text!="1"&&text!="2") return;
         string key=Key(m); if(string.IsNullOrEmpty(key)) return;
         int team=text=="1"?0:1; teams[key]=team; SaveTeams();
-        Hint=m.DisplayName+" เลือกฝั่ง "+text;
+        SetHint("hint.team",m.DisplayName,text);
         List<Batch> waiting;
         if(awaiting.TryGetValue(key,out waiting)) {
             foreach(var b in waiting) { b.team=team; queues[team].Enqueue(b); }
@@ -196,7 +199,7 @@ public sealed class TabsGiftDirector : MonoBehaviour
                 foreach(var pending in waiting){pending.team=team;queues[team].Enqueue(pending);}
                 awaiting.Remove(key);
             }
-            Hint=m.DisplayName+" สุ่มเข้าฝั่ง "+(team+1)+" · พิมพ์ 1 หรือ 2 เพื่อเปลี่ยนฝั่ง";
+            SetHint("hint.random",m.DisplayName,team+1);
         }
     }
     void QueueReward(PTVTikTokLive.Message m,int slot,int count)
@@ -206,18 +209,18 @@ public sealed class TabsGiftDirector : MonoBehaviour
         if(teams.TryGetValue(key,out team)) { batch.team=team; queues[team].Enqueue(batch); }
         else {
             List<Batch> list; if(!awaiting.TryGetValue(key,out list)) awaiting[key]=list=new List<Batch>(); list.Add(batch);
-            Hint=m.DisplayName+": รอพิมพ์ 1 หรือ 2 ของขวัญถูกเก็บรอไว้";
+            SetHint("hint.wait",m.DisplayName);
         }
     }
     public void ReloadHeroes() { blueprints=null; TabsArena.I.ReloadSettings(); }
     public void SpawnManual(int slot,int team)
     {
         if(slot<0||slot>=7||team<0||team>1)return;
-        if(!CanSpawn) { Hint="เปิดแผนที่ Sandbox ก่อนลงตัวละคร";return; }
-        var sender=new PTVTikTokLive.Message { userId="manual-"+team,uniqueId="manual-"+team,nickname="ทดสอบฝั่ง "+(team+1) };
+        if(!CanSpawn) { SetHint("hint.open_map");return; }
+        var sender=new PTVTikTokLive.Message { userId="manual-"+team,uniqueId="manual-"+team,nickname=TabsLanguage.T("hint.manual_name",team+1) };
         queues[team].Enqueue(new Batch{sender=sender,team=team,slot=slot,count=1});
         nextSpawn=0;
-        Hint="ลง "+TabsArena.I.Settings.giftRules[slot].unit+" ฝั่ง "+(team+1);
+        SetHint("hint.spawn",TabsArena.I.Settings.giftRules[slot].unit,team+1);
     }
     bool ResolveHeroes()
     {
@@ -233,7 +236,7 @@ public sealed class TabsGiftDirector : MonoBehaviour
             if(wanted=="Viking")wanted="Brawler";
             if(wanted=="King")wanted="TheKing";
             result[i]=all.FirstOrDefault(x=>string.Equals(x.name,wanted,StringComparison.OrdinalIgnoreCase)||string.Equals(x.Entity.Name,wanted,StringComparison.OrdinalIgnoreCase)||string.Equals(x.Entity.Name,"UNIT_"+wanted.ToUpperInvariant(),StringComparison.OrdinalIgnoreCase));
-            if(!result[i]) { Hint="ไม่พบยูนิต "+wanted+" ดูรายชื่อใน TikTokAvailableUnits.txt"; return false; }
+            if(!result[i]) { SetHint("hint.unit_missing",wanted); return false; }
         }
         blueprints=result; return true;
     }
@@ -252,9 +255,9 @@ public sealed class TabsGiftDirector : MonoBehaviour
                 if(!unit) { nextSpawn=Time.unscaledTime+1; return; }
                 spawned[team].Add(unit); TotalSpawned++;
                 if(--batch.count<=0) queues[team].Dequeue();
-                Hint=batch.sender.DisplayName+" → "+TabsArena.I.Settings.giftRules[batch.slot].unit+" / ฝั่ง "+(team+1);
+                SetHint("hint.reward",batch.sender.DisplayName,TabsArena.I.Settings.giftRules[batch.slot].unit,team+1);
                 turn=1-team; nextSpawn=Time.unscaledTime+TabsArena.I.Settings.spawnIntervalSeconds;
-            } catch(Exception e) { Hint="เกิดตัวละครไม่สำเร็จ: "+e.Message; nextSpawn=Time.unscaledTime+3; Debug.LogError("TikTok spawn: "+e); }
+            } catch(Exception e) { SetHint("hint.spawn_error",e.Message); nextSpawn=Time.unscaledTime+3; Debug.LogError("TikTok spawn: "+e); }
             return;
         }
     }
@@ -265,7 +268,7 @@ public sealed class TabsGiftDirector : MonoBehaviour
         float radius=Mathf.Clamp(map.m_mapRadius*.3f,6,18);
         Vector3 point=new Vector3(map.teamBorder+(b.team==0?-1:1)*UnityEngine.Random.Range(4,radius),center.y+80,center.z+UnityEngine.Random.Range(-radius*.6f,radius*.6f));
         RaycastHit hit;
-        if(!Physics.Raycast(point,Vector3.down,out hit,180,~0,QueryTriggerInteraction.Ignore)) { Hint="หาพื้นที่เกิดไม่เจอ รอแผนที่โหลด"; return null; }
+        if(!Physics.Raycast(point,Vector3.down,out hit,180,~0,QueryTriggerInteraction.Ignore)) { SetHint("hint.ground"); return null; }
         point=hit.point+Vector3.up*.2f;
         Unit unit;
         blueprints[b.slot].Spawn(point,Quaternion.Euler(0,b.team==0?90:270,0),(Landfall.TABS.Team)b.team,out unit,1,false,false,0,null);
@@ -275,7 +278,7 @@ public sealed class TabsGiftDirector : MonoBehaviour
     }
     public void StartBattle()
     {
-        if(!CanSpawn) { Hint="เปิดแผนที่ Sandbox ก่อน"; return; }
+        if(!CanSpawn) { SetHint("hint.start_map"); return; }
         TabsArena.Mode.MatchOver=false;
         var state=ServiceLocator.GetService<GameStateManager>();
         if(state.GameState!=GameState.BattleState)state.EnterBattleState();
@@ -284,7 +287,7 @@ public sealed class TabsGiftDirector : MonoBehaviour
     {
         if(TabsRoundFlow.I)TabsRoundFlow.I.ResetForClear();
         foreach(var list in spawned) { foreach(var u in list) if(u&&!u.IsInPool) u.DestroyUnit(); list.Clear(); }
-        foreach(var q in queues) q.Clear(); awaiting.Clear(); Hint="ล้างสนามและคิวแล้ว";
+        foreach(var q in queues) q.Clear(); awaiting.Clear(); SetHint("hint.cleared");
     }
     void Report()
     {
