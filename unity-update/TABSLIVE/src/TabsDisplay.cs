@@ -20,7 +20,8 @@ public sealed class TabsResponsiveCanvas : MonoBehaviour
     void Awake(){scaler=GetComponent<CanvasScaler>();}
     void Update(){
         if(!scaler||scaler.uiScaleMode!=CanvasScaler.ScaleMode.ScaleWithScreenSize)return;
-        scaler.screenMatchMode=CanvasScaler.ScreenMatchMode.Expand;
-        scaler.referenceResolution=TabsDisplay.Portrait?new Vector2(900,1600):new Vector2(1600,900);
+        if(scaler.screenMatchMode!=CanvasScaler.ScreenMatchMode.Expand)scaler.screenMatchMode=CanvasScaler.ScreenMatchMode.Expand;
+        var reference=TabsDisplay.Portrait?new Vector2(900,1600):new Vector2(1600,900);
+        if(scaler.referenceResolution!=reference)scaler.referenceResolution=reference;
     }
 }

@@ -29,7 +29,7 @@ public static class ArenaUI
         var r=(RectTransform)g.transform; r.anchorMin=r.anchorMax=r.pivot=new Vector2(.5f,.5f); r.anchoredPosition=pos; r.sizeDelta=size; return r;
     }
     public static Text Text(Transform parent,string text,Vector2 pos,Vector2 size,int fontSize,Color color) {
-        var t=Rect("Text",parent,pos,size).gameObject.AddComponent<Text>(); t.font=Font;t.fontSize=fontSize;t.color=color;t.text=text;t.alignment=TextAnchor.MiddleCenter;t.raycastTarget=false;t.supportRichText=false;t.verticalOverflow=VerticalWrapMode.Truncate;t.horizontalOverflow=HorizontalWrapMode.Wrap;t.gameObject.AddComponent<PTVThaiShift>();t.gameObject.AddComponent<ArenaTextCenter>();if(text.StartsWith("@loc:"))TabsLanguage.Bind(t,text.Substring(5)); return t;
+        var t=Rect("Text",parent,pos,size).gameObject.AddComponent<Text>(); t.font=Font;t.fontSize=fontSize;t.color=color;t.text=text;t.alignment=TextAnchor.MiddleCenter;t.raycastTarget=false;t.supportRichText=false;t.verticalOverflow=VerticalWrapMode.Truncate;t.horizontalOverflow=HorizontalWrapMode.Wrap;t.gameObject.AddComponent<PTVThaiShift>();t.gameObject.AddComponent<ArenaTextCenter>();if(!string.IsNullOrEmpty(text)&&text.StartsWith("@loc:"))TabsLanguage.Bind(t,text.Substring(5)); return t;
     }
     public static Image Image(Transform parent,Vector2 pos,Vector2 size,Color color) {
         var im=Rect("Panel",parent,pos,size).gameObject.AddComponent<Image>(); im.color=color; im.raycastTarget=false; if(size.x>40&&size.y>40&&color.a>.5f)WoodlandAssets.Skin(im,color.r>.7f&&color.g>.5f?"parchment-card":"wood-panel"); return im;
@@ -107,6 +107,7 @@ public sealed class TabsArenaUI : MonoBehaviour
     readonly Text[] giftCaptions=new Text[7];
     readonly Text[] unitLabels=new Text[7];
     readonly RectTransform[] unitCards=new RectTransform[7];
+    Vector2 lastLayoutSize;bool lastLayoutPortrait,layoutDirty=true;
     GameObject dock;Transform factionStrip;int rosterVersion=-1,lastFactionCount=-1;float nextDock;
     readonly Dictionary<CanvasGroup,float> nativeGroups=new Dictionary<CanvasGroup,float>();
     readonly List<GameObject> factionTiles=new List<GameObject>();
@@ -165,6 +166,7 @@ public sealed class TabsArenaUI : MonoBehaviour
         }
     }
     void DrawFactions(){
+        layoutDirty=true;
         foreach(var go in factionTiles)Destroy(go);factionTiles.Clear();
         var buttons=FindObjectsOfType<FactionButton>().Where(x=>x&&x.faction&&x.faction.Units!=null&&x.faction.Units.Count(u=>u)>=7).OrderBy(x=>x.index).ToArray();
         float totalWidth=1200f;float cell=totalWidth/Math.Max(1,buttons.Length);
@@ -234,6 +236,9 @@ void Update()
     void Layout(){
         if(!canvas||!dock||!panel)return;
         var area=((RectTransform)canvas.transform).rect;bool portrait=TabsDisplay.Portrait;
+        if(area.width<=0||area.height<=0)return;
+        if(!layoutDirty&&area.size==lastLayoutSize&&portrait==lastLayoutPortrait)return;
+        layoutDirty=false;lastLayoutSize=area.size;lastLayoutPortrait=portrait;
         var menu=(RectTransform)panel.transform;
         if(portrait){menu.anchorMin=menu.anchorMax=menu.pivot=new Vector2(.5f,.5f);menu.anchoredPosition=Vector2.zero;float scale=Mathf.Min(1.7f,Mathf.Min((area.width-36)/320,(area.height-100)/660));menu.localScale=Vector3.one*scale;}
         else{menu.anchorMin=menu.anchorMax=menu.pivot=new Vector2(0,1);menu.anchoredPosition=new Vector2(16,-16);menu.localScale=Vector3.one*Mathf.Min(1,(area.height-250)/660);}
