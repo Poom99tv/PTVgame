@@ -1,10 +1,17 @@
 import { normalize } from './normalize.mjs';
 // Retain one instance across reconnects of the same LIVE; reset for a new LIVE.
 export function createEventNormalizer({now=Date.now,maxEntries=16384}={}) {
- const combos=new Map(),seen=new Map(),active=new Map();let serial=0;
+ const combos=new Map(),seen=new Map(),active=new Map(),likes=new Map();let serial=0;
  const put=(map,key,value)=>{map.delete(key);map.set(key,value);while(map.size>maxEntries)map.delete(map.keys().next().value);};
  return (event,data)=>{
-  const message=normalize(event,data);if(!message||event!=='gift')return message;
+  const message=normalize(event,data);if(!message)return null;
+  if(event==='like'){
+   const key=message.eventId+':'+message.userId;
+   const previous=likes.get(key)??0,quantity=Math.max(0,message.likeCount-previous);
+   put(likes,key,Math.max(previous,message.likeCount));if(!quantity)return null;
+   return {...message,likeCount:quantity,eventId:key+':'+message.likeCount};
+  }
+  if(event!=='gift')return message;
   const time=now(),count=message.repeatCount;
   const identity=JSON.stringify([message.userId,message.giftId||message.giftName,String(data.toUser?.id??data.toUser?.userId??'')]);
   const group=String(data.groupId??'').replace(/^0$/,'');

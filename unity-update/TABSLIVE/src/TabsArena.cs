@@ -11,7 +11,7 @@ using Landfall.TABS.GameMode;
 using Landfall.TABS.GameState;
 using UnityEngine;
 
-[BepInPlugin("ptv.tabs.tiktok", "PTV TikTok Arena", "1.5.1")]
+[BepInPlugin("ptv.tabs.tiktok", "PTV TikTok Arena", "1.6.0")]
 public sealed class TabsArena : BaseUnityPlugin
 {
     public static TabsArena I;
@@ -32,6 +32,7 @@ public sealed class TabsArena : BaseUnityPlugin
         Live.TestMode = Environment.GetCommandLineArgs().Contains("--tiktok-test");
         gameObject.AddComponent<TabsArenaUI>();
         gameObject.AddComponent<TabsRoundFlow>();
+        gameObject.AddComponent<TabsTeamRoster>();
         gameObject.AddComponent<TabsGiftSettingsUI>();
         harmony = new Harmony("ptv.tabs.tiktok");
         harmony.Patch(AccessTools.PropertyGetter(typeof(UnityEngine.UI.Text),"pixelsPerUnit"),postfix:new HarmonyMethod(typeof(TabsCrispText),"FontPixels"));
@@ -100,8 +101,14 @@ public sealed class TabsGiftDirector : MonoBehaviour
 {
     sealed class Batch
     { public PTVTikTokLive.Message sender; public int team, slot, count; }
-    [Serializable] sealed class SavedTeams { public List<TeamEntry> entries=new List<TeamEntry>(); }
-    [Serializable] sealed class TeamEntry { public string id; public int team; }
+    public sealed class TeamMember {public string id;public int team;public PTVTikTokLive.Message viewer;}
+    readonly List<TeamMember> members=new List<TeamMember>();
+    readonly Dictionary<string,string> aliases=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
+    public IEnumerable<TeamMember> TeamMembers {get{return members;}}
+    public int TeamSelectionVersion {get;private set;}
+    int teamEpoch,mapId;
+    public long ReceivedLikesRound {get;private set;}
+    public long LikeRewardsRound {get;private set;}
     readonly Dictionary<string,int> teams=new Dictionary<string,int>();
     readonly Dictionary<string,List<Batch>> awaiting=new Dictionary<string,List<Batch>>();
     readonly Queue<Batch>[] queues = {new Queue<Batch>(),new Queue<Batch>()};
@@ -128,7 +135,7 @@ public sealed class TabsGiftDirector : MonoBehaviour
     }
     float nextSpawn, nextReport;
     int turn;
-    readonly Dictionary<string,int[]> likeProgress=new Dictionary<string,int[]>();
+    readonly TabsLikeCounter likeProgress=new TabsLikeCounter();
     readonly HashSet<string> followed=new HashSet<string>();
     public int TotalSpawned { get; private set; }
     public int ProfileCount { get { return FindObjectsOfType<TabsNameplate>().Length; } }
@@ -139,22 +146,28 @@ public sealed class TabsGiftDirector : MonoBehaviour
     public int WaitingForTeam { get { return awaiting.Values.Sum(x=>x.Sum(y=>y.count)); } }
     public int Pending(int team) { return queues[team].Sum(x=>x.count); }
     public int Alive(int team) { if(!CanSpawn)return 0;if(TabsRoundFlow.I)return TabsRoundFlow.I.Count(team); spawned[team].RemoveAll(u=>!u || u.dead); return spawned[team].Count; }
-    string TeamPath { get { return Path.Combine(TabsArena.Root,"TikTokTeams.json"); } }
-    string Key(PTVTikTokLive.Message m) { return string.IsNullOrEmpty(m.userId) ? m.uniqueId : m.userId; }
-    void Start()
-    {
-        try { if (File.Exists(TeamPath)) foreach(var e in JsonConvert.DeserializeObject<SavedTeams>(File.ReadAllText(TeamPath)).entries) if(e.team==0||e.team==1) teams[e.id]=e.team; } catch { }
+    string Key(PTVTikTokLive.Message m){
+        string key=string.IsNullOrEmpty(m.userId)?m.uniqueId:m.userId;
+        if(!string.IsNullOrEmpty(m.uniqueId)){string known;if(aliases.TryGetValue(m.uniqueId,out known))return known;if(!string.IsNullOrEmpty(key))aliases[m.uniqueId]=key;}
+        return key;
     }
-    void SaveTeams()
-    {
-        var saved=new SavedTeams(); foreach(var p in teams) saved.entries.Add(new TeamEntry{id=p.Key,team=p.Value});
-        File.WriteAllText(TeamPath,JsonConvert.SerializeObject(saved,Formatting.Indented));
+    public void ResetTeamSelections(){
+        teamEpoch++;teams.Clear();members.Clear();aliases.Clear();likeProgress.Clear();
+        foreach(var queue in queues)queue.Clear();awaiting.Clear();ReceivedLikesRound=LikeRewardsRound=0;
+        TeamSelectionVersion++;SetHint("hint.choose_again");
+    }
+    void EnsureRoundScope(){
+        int current=CanSpawn?MapSettings.Instance.GetInstanceID():0;if(current==mapId)return;
+        mapId=current;ResetTeamSelections();foreach(var list in spawned)list.Clear();
     }
     public void SelectTeam(PTVTikTokLive.Message m)
     {
+        EnsureRoundScope();if(!CanSpawn||(TabsRoundFlow.I&&TabsRoundFlow.I.BetweenRounds))return;
         string text=(m.comment??"").Trim(); if(text!="1"&&text!="2") return;
         string key=Key(m); if(string.IsNullOrEmpty(key)) return;
-        int team=text=="1"?0:1; teams[key]=team; SaveTeams();
+        int team=text=="1"?0:1;teams[key]=team;
+        var member=members.FirstOrDefault(x=>x.id==key);if(member==null){member=new TeamMember{id=key};members.Add(member);}else if(member.team!=team){members.Remove(member);members.Add(member);}
+        member.team=team;member.viewer=m;TeamSelectionVersion++;
         SetHint("hint.team",m.DisplayName,text);
         List<Batch> waiting;
         if(awaiting.TryGetValue(key,out waiting)) {
@@ -164,13 +177,15 @@ public sealed class TabsGiftDirector : MonoBehaviour
     }
     public int Enqueue(PTVTikTokLive.Message m)
     {
-        if(m.@event=="gift") { AssignGiftTeam(m);StartCoroutine(TabsGiftCatalog.Match(m,(matched)=>ApplyTriggers(m,matched))); return 1; }
+        EnsureRoundScope();if(!CanSpawn||(TabsRoundFlow.I&&TabsRoundFlow.I.BetweenRounds))return 0;
+        if(m.@event=="gift") {int epoch=teamEpoch;StartCoroutine(TabsGiftCatalog.Match(m,(matched)=>{if(epoch==teamEpoch)ApplyTriggers(m,matched);})); return 1; }
         return ApplyTriggers(m,null);
     }
     int ApplyTriggers(PTVTikTokLive.Message m,string matched)
     {
         string key=Key(m); if(string.IsNullOrEmpty(key))return 0;
         if(m.@event=="follow"&&!followed.Add(key))return 0;
+        if(m.@event=="like"&&m.likeCount>0)ReceivedLikesRound+=m.likeCount;
         var rules=TabsArena.I.Settings.giftRules;int total=0;
         for(int slot=0;slot<rules.Length;slot++) {
             var rule=rules[slot];int count=0;
@@ -182,26 +197,11 @@ public sealed class TabsGiftDirector : MonoBehaviour
             }
             if(m.@event=="follow"&&rule.triggerFollow)count=1;
             if(m.@event=="like"&&rule.triggerLikes&&m.likeCount>0) {
-                int[] progress;if(!likeProgress.TryGetValue(key,out progress))likeProgress[key]=progress=new int[7];
-                long sum=(long)progress[slot]+m.likeCount;int threshold=Math.Max(1,rule.likesRequired);
-                count=(int)(sum/threshold);progress[slot]=(int)(sum%threshold);
+                count=likeProgress.Add(key,slot,m.likeCount,rule.likesRequired);LikeRewardsRound+=count;
             }
             if(count>0) { QueueReward(m,slot,count);total+=count; }
         }
         return total;
-    }
-    void AssignGiftTeam(PTVTikTokLive.Message m)
-    {
-        string key=Key(m);int team;if(string.IsNullOrEmpty(key))return;
-        if(!teams.TryGetValue(key,out team)) {
-            team=UnityEngine.Random.Range(0,2);teams[key]=team;SaveTeams();
-            List<Batch> waiting;
-            if(awaiting.TryGetValue(key,out waiting)){
-                foreach(var pending in waiting){pending.team=team;queues[team].Enqueue(pending);}
-                awaiting.Remove(key);
-            }
-            SetHint("hint.random",m.DisplayName,team+1);
-        }
     }
     void QueueReward(PTVTikTokLive.Message m,int slot,int count)
     {
@@ -244,6 +244,7 @@ public sealed class TabsGiftDirector : MonoBehaviour
     public bool CanSpawn { get { return TabsArena.Mode is SandboxGameMode && MapSettings.Instance && PlacementUI.Instance; } }
     void Update()
     {
+        EnsureRoundScope();
         if(Time.unscaledTime>=nextReport) { nextReport=Time.unscaledTime+2; Report(); }
         if(!TabsArena.I.ArenaEnabled||!CanSpawn||Time.unscaledTime<nextSpawn||(TabsRoundFlow.I&&TabsRoundFlow.I.BetweenRounds)) return;
         if(!ResolveHeroes()) { nextSpawn=Time.unscaledTime+3; return; }
@@ -288,7 +289,7 @@ public sealed class TabsGiftDirector : MonoBehaviour
     {
         if(TabsRoundFlow.I)TabsRoundFlow.I.ResetForClear();
         foreach(var list in spawned) { foreach(var u in list) if(u&&!u.IsInPool) u.DestroyUnit(); list.Clear(); }
-        foreach(var q in queues) q.Clear(); awaiting.Clear(); SetHint("hint.cleared");
+        ResetTeamSelections();SetHint("hint.choose_again");
     }
     void Report()
     {

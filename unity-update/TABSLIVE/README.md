@@ -1,4 +1,4 @@
-# TABS Live Arena 1.5.1
+# TABS Live Arena 1.6.0
 
 Windows arena integration for Totally Accurate Battle Simulator. The catalog entry is `tabslive`, with free access and no play ticket or purchase price.
 
@@ -10,7 +10,9 @@ English is the default for fresh and existing configurations that have no langua
 
 The canvas uses a fit-safe reference size for landscape and portrait. The scoreboard anchors to the top, the hero tray anchors to the bottom, and the control panel fits within the available canvas. Portrait mode has two faction rows, a 4 + 3 hero grid, taller gift settings and a three-column gift picker. **TikTok 9:16** chooses an exact 9:16 windowed client area that fits the current display, with title-bar space reserved.
 
-- TikTok LIVE chat `1` / `2` selects red / blue. A first gift assigns an unassigned viewer randomly and persists the team; later chat can override it.
+- TikTok LIVE chat `1` / `2` selects red / blue. Choices reset on every new round/map and arena clear. Rewards wait until a viewer chooses; no previous-round team files are read and first gifts no longer assign randomly.
+- Square profile photos without names confirm choices in scrollable side lists. A viewer has one entry; switching sides moves it. Round/map resets clear the lists.
+- Like packets retain per-viewer batch deltas, handle zero-default fallback fields and merge safely under socket backpressure. F8 shows round likes received and like rewards. `TabsLikeCounter` is the production arithmetic helper, with per-viewer/hero remainders cleared each round. Never infer personal taps from room-wide totals.
 - Seven units from the selected native faction are mapped to gifts. Both teams share the roster. Gift matching supports IDs, names and pictures. Configurable likes, follows and Heart Me triggers remain available.
 - Painted character cards, gift badges, plain black profile borders, living-unit counts and round score HUD. Native sword button starts battle.
 - The original native game camera is retained. The experimental automatic framing component has been removed.

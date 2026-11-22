@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalize } from './normalize.mjs';
+test('zero count default does not hide positive legacy likeCount',()=>{assert.equal(normalize('like',{user:{uniqueId:'alice'},count:0,likeCount:100,total:999999}).likeCount,100);});
+test('like batches are not capped at ten thousand or inferred from room totals',()=>{assert.equal(normalize('like',{user:{uniqueId:'alice'},count:12000}).likeCount,12000);assert.equal(normalize('like',{user:{uniqueId:'alice'},total:400}).likeCount,0);});
 test('four viewer actions retain identity and unique message id',()=>{for(const event of ['follow','share','gift','chat']){const result=normalize(event,{user:{uniqueId:'viewer',nickname:'ผู้ชม'},common:{msgId:'42'},repeatEnd:true});assert.equal(result.event,event);assert.equal(result.uniqueId,'viewer');assert.equal(result.nickname,'ผู้ชม');assert.equal(result.eventId,`${event}:42`);}});
 test('unsupported and nameless events rejected',()=>{assert.equal(normalize('member',{uniqueId:'a'}),null);assert.equal(normalize('chat',{}),null);});
 test('profile picture and stable TikTok ID forwarded',()=>{const event=normalize('chat',{user:{userId:'1234567890123456789',uniqueId:'alice',profilePicture:{urlList:['https://example.com/photo.png']}}});assert.equal(event.userId,'1234567890123456789');assert.equal(event.profilePictureUrl,'https://example.com/photo.png');});

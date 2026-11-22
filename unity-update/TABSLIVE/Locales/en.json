@@ -1,13 +1,13 @@
 {
   "ui.connect": "Connect LIVE",
   "ui.test": "Test",
-  "ui.gift_hero": "Gifts → Heroes · Team 1 / 2",
+  "ui.gift_hero": "Gifts → Heroes · Chat 1 / 2 each round",
   "ui.settings": "Gifts / Likes / Follows",
   "ui.clear": "Clear arena",
   "ui.hide": "F8 Hide",
   "ui.test_prefix": "[TEST] ",
   "settings.title": "Heroes & Triggers",
-  "settings.help": "Choose a gift picture · Match by ID / image / name · Chat 1 / 2 chooses a team; first gift assigns one if needed",
+  "settings.help": "Choose a gift picture · Match by ID / image / name · Chat 1 / 2 to choose again each round; rewards wait for a team",
   "settings.gift": "Gift",
   "settings.likes": "Likes",
   "settings.follow": "Follow",
@@ -64,5 +64,7 @@
   "status.offline": "This account is not LIVE",
   "status.rate_limit": "Too many requests. Wait a moment and reconnect.",
   "status.error": "Could not connect to TikTok. Please try again.",
-  "status.invalid_message": "Invalid bridge message"
+  "status.invalid_message": "Invalid bridge message",
+  "hint.choose_again": "New round / map · Chat 1 or 2 to choose your team again",
+  "ui.like_stats": "Likes received {0} · Rewards {1}"
 }

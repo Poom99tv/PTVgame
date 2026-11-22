@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createEventNormalizer} from './gift-stream.mjs';
 import {compact} from './compact.mjs';
+test('four mixed like payloads deliver all 400 likes',()=>{const parse=createEventNormalizer();const messages=[{count:100},{count:0,likeCount:100},{likeCount:100},{count:'100'}].map((fields,i)=>parse('like',{...fields,common:{msgId:String(i+1)},user:{id:'55',displayId:'alice'}}));assert.equal(messages.reduce((sum,m)=>sum+compact(m,new Map()).likeCount,0),400);});
+test('like frame revisions grant only additional count and duplicate packets grant nothing',()=>{const parse=createEventNormalizer();const frame=n=>({common:{msgId:'1'},count:n,user:{id:'55',displayId:'alice'}});assert.equal(parse('like',frame(100)).likeCount,100);assert.equal(parse('like',frame(100)),null);assert.equal(parse('like',frame(150)).likeCount,50);assert.equal(parse('like',frame(100)),null);});
+test('shared like message IDs never merge different viewers',()=>{const parse=createEventNormalizer();const frame=id=>({common:{msgId:'1'},count:100,user:{id,displayId:'viewer'+id}});assert.equal(parse('like',frame('55')).likeCount,100);assert.equal(parse('like',frame('66')).likeCount,100);});
 const gift=(n,end=false,extra={})=>({user:{id:'123',displayId:'alice'},gift:{id:'5655',name:'Rose',type:1},groupId:'combo-A',repeatCount:n,repeatEnd:end,common:{msgId:'msg-'+n+'-'+end},...extra});
 test('first tray event is immediate and never waits for chat/final frame',()=>{const parse=createEventNormalizer();const m=parse('gift',gift(1));assert.equal(m.repeatCount,1);assert.equal(m.streakEnded,false);assert.equal(m.giftDelta,true);});
 test('1 -> 3 -> 5 + final 5 grants exactly 1 + 2 + 2',()=>{const parse=createEventNormalizer();assert.deepEqual([gift(1),gift(3),gift(5),gift(5,true)].map(x=>parse('gift',x)?.repeatCount??0),[1,2,2,0]);});
@@ -19,6 +22,11 @@ test('zero/string end flags and current/legacy gift payloads',()=>{for(const sha
 test('fallback out-of-order first frame cannot restart an active combo',()=>{const parse=createEventNormalizer();assert.equal(parse('gift',gift(5,false,{groupId:''})).repeatCount,5);assert.equal(parse('gift',gift(1,false,{groupId:''})),null);});
 test('rotating group IDs on incremental tray frames do not inflate quantities',()=>{const parse=createEventNormalizer();assert.deepEqual([gift(1,false,{groupId:'step1'}),gift(3,false,{groupId:'step3'}),gift(5,false,{groupId:'step5'}),gift(5,true,{groupId:'step-end'})].map(x=>parse('gift',x)?.repeatCount??0),[1,2,2,0]);});
 import {send,flush} from './transport.mjs';
+test('socket backpressure coalesces like batches without losing any of 400 likes',()=>{
+ const writes=[];const client={destroyed:false,write(line){writes.push(JSON.parse(line));return writes.length>1;}};const parse=createEventNormalizer();
+ for(let i=0;i<4;i++)send(client,parse('like',{common:{msgId:String(i+1)},count:100,user:{id:'55',displayId:'alice'}}));
+ assert.equal(client.pendingOutbound.length,1);assert.equal(client.pendingOutbound[0].likeCount,300);flush(client);assert.equal(writes.reduce((sum,m)=>sum+m.likeCount,0),400);
+});
 test('socket backpressure keeps every gift and merges only the same combo',()=>{
  const received=[];const client={destroyed:false,write(line){received.push(JSON.parse(line));return received.length!==1;}};
  const parse=createEventNormalizer();

@@ -99,7 +99,7 @@ public sealed class TabsNameplate : MonoBehaviour
 [DefaultExecutionOrder(32000)]
 public sealed class TabsArenaUI : MonoBehaviour
 {
-    Canvas canvas;GameObject panel;Text status,hint;InputField username;
+    Canvas canvas;GameObject panel;Text status,hint,likeStats;InputField username;
     EventSystem ownEvents;readonly List<EventSystem> suspendedEvents=new List<EventSystem>();
     readonly List<Behaviour> suspendedCameras=new List<Behaviour>();
     readonly Text[] heroLabels=new Text[7],giftNames=new Text[7];
@@ -129,7 +129,8 @@ public sealed class TabsArenaUI : MonoBehaviour
         ArenaUI.Button(r.transform,"@loc:ui.connect",new Vector2(-71,204),new Vector2(140,42),green,()=>Connect(false));
         ArenaUI.Button(r.transform,"@loc:ui.test",new Vector2(74,204),new Vector2(134,42),blue,()=>Connect(true));
         status=ArenaUI.Text(r.transform,"",new Vector2(0,160),new Vector2(280,39),13,new Color(.65f,1,.45f));
-        ArenaUI.Text(r.transform,"@loc:ui.gift_hero",new Vector2(0,120),new Vector2(288,30),15,WoodlandAssets.Cream);
+        ArenaUI.Text(r.transform,"@loc:ui.gift_hero",new Vector2(0,126),new Vector2(288,30),15,WoodlandAssets.Cream);
+        likeStats=ArenaUI.Text(r.transform,"",new Vector2(0,106),new Vector2(282,18),12,WoodlandAssets.Cream);
         for(int i=0;i<7;i++){
             int slot=i;float y=75-i*42;
             var card=ArenaUI.Image(r.transform,new Vector2(-33,y),new Vector2(218,40),new Color(.94f,.81f,.59f));WoodlandAssets.Skin(card,"parchment-card");
@@ -222,6 +223,7 @@ void Update()
         var l=Arena.Live;status.text=(l.TestMode?TabsLanguage.T("ui.test_prefix"):"[LIVE] ")+l.Detail;
         var d=Arena.Director;
         hint.text=d.Hint;
+        likeStats.text=TabsLanguage.T("ui.like_stats",d.ReceivedLikesRound,d.LikeRewardsRound);
     }
     void HideNativeChrome(){
         var native=PlacementUI.Instance;if(!native)return;

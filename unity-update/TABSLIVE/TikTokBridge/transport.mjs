@@ -8,6 +8,8 @@ export function send(client,data){
   if(message.event==='gift'&&last?.event==='gift'&&message.comboId&&message.comboId===last.comboId&&message.userId===last.userId&&message.giftId===last.giftId){
    const count=last.repeatCount+message.repeatCount;
    Object.assign(last,message,{repeatCount:count,eventId:message.eventId+':batch'});
+  }else if(message.event==='like'&&last?.event==='like'&&message.userId===last.userId&&last.likeCount+message.likeCount<=2147483647){
+   const likeCount=last.likeCount+message.likeCount;Object.assign(last,message,{likeCount,eventId:message.eventId+':batch'});
   }else queue.push(message);
   return;
  }

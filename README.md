@@ -1,10 +1,10 @@
-# TABS Live Arena 1.5.1 — Launcher 2.0.11
+# TABS Live Arena 1.6.0 — Launcher 2.0.11
 
 TABS Live Arena is the first game in the catalog and the only game carrying the gold NEW badge. It opens without a purchase, sign-in or play ticket. Other games retain their existing access rules.
 
-TikTok LIVE viewers choose red or blue with chat `1` / `2`; a first gift assigns an unassigned viewer randomly. Select a faction's seven heroes, configure gifts, likes and follows, and watch the round score and surviving units. The game uses its original native camera controls. English is the default; switch English/Thai in the LIVE panel. Responsive landscape/portrait UI and a TikTok 9:16 window preset are included.
+TikTok LIVE viewers choose red or blue with chat `1` / `2`; viewers must choose again each round or map. Rewards wait for a team choice, confirmed by square profile photos in the side lists. Select a faction's seven heroes, configure gifts, likes and follows, and watch the round score and surviving units. The game uses its original native camera controls. English is the default; switch English/Thai in the LIVE panel. Responsive landscape/portrait UI and a TikTok 9:16 window preset are included.
 
-- [Windows game package](https://github.com/Poom99tv/PTVgame/releases/tag/tabslive-v1.5.1)
+- [Windows game package](https://github.com/Poom99tv/PTVgame/releases/tag/tabslive-v1.6.0)
 - [Launcher 2.0.11](https://github.com/Poom99tv/PTVgame/releases/tag/launcher-v2.0.11)
 - [Integration source and build notes](unity-update/TABSLIVE/README.md)
 

@@ -144,7 +144,12 @@ public sealed class PTVTikTokLive : MonoBehaviour
         }
     }
 
-    void Update() { for (int i = 0; i < 32 && incoming.TryDequeue(out var line); i++) AcceptJson(line); }
+    void Update() {
+        long start=System.Diagnostics.Stopwatch.GetTimestamp();
+        for(int i=0;i<256&&incoming.TryDequeue(out var line);i++){
+            AcceptJson(line);if((System.Diagnostics.Stopwatch.GetTimestamp()-start)*1000.0/System.Diagnostics.Stopwatch.Frequency>=3)break;
+        }
+    }
 
     void SetStatusDetail(string state, string detail)
     {
@@ -176,8 +181,8 @@ public sealed class PTVTikTokLive : MonoBehaviour
         }
         string key = string.IsNullOrEmpty(m.userId) ? m.uniqueId : m.userId;
         if (string.IsNullOrEmpty(key)) return false;
-        if (!string.IsNullOrEmpty(m.profilePictureUrl)) { if (profiles.Count > 4096) profiles.Clear(); profiles[key] = m; }
-        else if (profiles.TryGetValue(key, out var profile)) { m.profilePictureUrl = profile.profilePictureUrl; m.profilePictureUrls = profile.profilePictureUrls; }
+        if (!string.IsNullOrEmpty(m.profilePictureUrl)) { if (profiles.Count > 8192) profiles.Clear(); profiles[key] = m;if(!string.IsNullOrEmpty(m.uniqueId))profiles["@"+m.uniqueId]=m; }
+        else if (profiles.TryGetValue(key, out var profile)||(!string.IsNullOrEmpty(m.uniqueId)&&profiles.TryGetValue("@"+m.uniqueId,out profile))) { m.profilePictureUrl = profile.profilePictureUrl; m.profilePictureUrls = profile.profilePictureUrls; }
         if (m.@event == "chat") { director.SelectTeam(m); return true; }
         if (m.@event != "gift" && m.@event != "like" && m.@event != "follow") return false;
         if(m.@event=="gift"&&!string.IsNullOrEmpty(m.giftId)) {

@@ -40,7 +40,7 @@ public sealed class TabsRoundFlow : MonoBehaviour
         if(Time.unscaledTime>=nextHide){nextHide=Time.unscaledTime+1;HideHints();}
         bool battle=Battle;
         if(BetweenRounds){AdvanceRound();wasBattle=battle;return;}
-        if(!battle){armed=false;losing=-1;Countdown=-1;if(banner)banner.text="";wasBattle=false;return;}
+        if(!battle){if(wasBattle)TabsArena.I.Director.ResetTeamSelections();armed=false;losing=-1;Countdown=-1;if(banner)banner.text="";wasBattle=false;return;}
         if(!wasBattle){armed=false;losing=-1;Countdown=-1;}
         wasBattle=true;
         if(alive[0]+alive[1]>0)armed=true;
